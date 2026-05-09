@@ -349,12 +349,15 @@ var require_ai = __commonJS({
   "src/core/ai.js"(exports2, module2) {
     "use strict";
     var { execFile } = require("node:child_process");
+    var fs = require("node:fs");
+    var os = require("node:os");
+    var path = require("node:path");
     var { promisify } = require("node:util");
     var { convertMarkdownToHtml } = require_converter();
     var { looksLikeHtmlDocument, sanitizeHtml } = require_sanitizer();
     var execFileAsync = promisify(execFile);
     var providerCommands = {
-      codex: { command: "codex", args: ["exec", "--skip-git-repo-check", "-"] },
+      codex: { command: "codex", args: ["exec", "--skip-git-repo-check", "--json"], parser: "codex-json", promptAsArgument: true },
       claude: { command: "claude", args: ["-p"] },
       gemini: { command: "gemini", args: ["-p"] }
     };
@@ -405,17 +408,31 @@ var require_ai = __commonJS({
       const prompt = buildPrompt(markdown, options);
       const timeout = Number(options.timeoutMs || 6e4);
       const command = options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command;
-      const shellCommand = [command, ...provider.args].map(shellQuote).join(" ");
-      const { stdout } = await execFileAsync(loginShellPath, ["-lc", shellCommand], {
-        input: prompt,
+      const args = provider.promptAsArgument ? [...provider.args, prompt] : provider.args;
+      const baseShellCommand = [command, ...args].map(shellQuote).join(" ");
+      const shellCommand = provider.promptAsArgument ? `${baseShellCommand} < /dev/null` : baseShellCommand;
+      const execOptions = {
         timeout,
         maxBuffer: 10 * 1024 * 1024,
         env: {
           ...process.env,
           PATH: mergePath(process.env.PATH)
         }
-      });
-      return stdout;
+      };
+      if (!provider.promptAsArgument) {
+        execOptions.input = prompt;
+      }
+      try {
+        const { stdout, stderr } = await execFileAsync(loginShellPath, ["-lic", shellCommand], execOptions);
+        const output = parseProviderOutput(stdout, provider);
+        if (!String(output || "").trim()) {
+          throw new Error(`AI provider returned empty output${stderr ? `: ${stderr.trim()}` : ""}`);
+        }
+        return output;
+      } catch (error) {
+        const details = [error.message, error.stderr && error.stderr.trim(), error.stdout && error.stdout.trim()].filter(Boolean).join("\n");
+        throw new Error(details || String(error));
+      }
     }
     function buildPrompt(markdown, options = {}) {
       const modeInstruction = {
@@ -457,15 +474,68 @@ ${markdown}`;
       }
       return candidate;
     }
-    function mergePath(existingPath = "") {
+    function mergePath(existingPath = "", options = {}) {
       const seen = /* @__PURE__ */ new Set();
-      return [...cliPath.split(":"), ...String(existingPath).split(":")].filter(Boolean).filter((entry) => {
+      return [
+        ...cliPath.split(":"),
+        ...discoverUserCliPaths(options.homeDir),
+        ...String(existingPath).split(":")
+      ].filter(Boolean).filter((entry) => {
         if (seen.has(entry)) {
           return false;
         }
         seen.add(entry);
         return true;
       }).join(":");
+    }
+    function discoverUserCliPaths(homeDir = os.homedir()) {
+      const paths = [];
+      if (!homeDir) {
+        return paths;
+      }
+      paths.push(path.join(homeDir, ".local/bin"));
+      paths.push(path.join(homeDir, ".volta/bin"));
+      const nvmVersions = path.join(homeDir, ".nvm/versions/node");
+      try {
+        const versions = fs.readdirSync(nvmVersions).filter((entry) => fs.existsSync(path.join(nvmVersions, entry, "bin/node"))).sort(compareNodeVersionsDesc);
+        for (const version of versions) {
+          paths.push(path.join(nvmVersions, version, "bin"));
+        }
+      } catch (e) {
+      }
+      return paths;
+    }
+    function compareNodeVersionsDesc(a, b) {
+      const parse = (value) => value.replace(/^v/, "").split(".").map((part) => Number(part) || 0);
+      const left = parse(a);
+      const right = parse(b);
+      for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+        const diff = (right[index] || 0) - (left[index] || 0);
+        if (diff !== 0) {
+          return diff;
+        }
+      }
+      return b.localeCompare(a);
+    }
+    function parseProviderOutput(stdout, provider = {}) {
+      if (provider.parser !== "codex-json") {
+        return stdout;
+      }
+      let lastMessage = "";
+      for (const line of String(stdout || "").split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("{")) {
+          continue;
+        }
+        try {
+          const event = JSON.parse(trimmed);
+          if (event.type === "item.completed" && event.item && event.item.type === "agent_message") {
+            lastMessage = event.item.text || "";
+          }
+        } catch (e) {
+        }
+      }
+      return lastMessage || stdout;
     }
     function shellQuote(value) {
       return `'${String(value).replace(/'/g, `'\\''`)}'`;
@@ -474,7 +544,9 @@ ${markdown}`;
       buildPrompt,
       convertWithAiFallback: convertWithAiFallback2,
       extractHtmlFromAiOutput,
+      discoverUserCliPaths,
       mergePath,
+      parseProviderOutput,
       runCliProvider,
       shellQuote
     };

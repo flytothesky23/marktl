@@ -3,7 +3,11 @@ const assert = require('node:assert/strict');
 
 const { convertMarkdownToHtml } = require('../src/core/converter.js');
 const { sanitizeHtml } = require('../src/core/sanitizer.js');
-const { buildPrompt, convertWithAiFallback, extractHtmlFromAiOutput, mergePath, shellQuote } = require('../src/core/ai.js');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+const { buildPrompt, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, mergePath, parseProviderOutput, shellQuote } = require('../src/core/ai.js');
 
 test('local conversion renders frontmatter, callouts, embeds, and Markdown content', () => {
   const markdown = `---
@@ -126,11 +130,52 @@ test('AI conversion accepts fenced or explained HTML responses by extracting the
   assert.match(result.html, /Designed Note/);
 });
 
+test('Codex JSON event output is parsed from the final agent message', () => {
+  const stdout = [
+    'Reading additional input from stdin...',
+    '{"type":"thread.started","thread_id":"abc"}',
+    '{"type":"item.completed","item":{"id":"1","type":"agent_message","text":"<html><body><h1>First</h1></body></html>"}}',
+    '{"type":"item.completed","item":{"id":"2","type":"agent_message","text":"<!doctype html><html><body><h1>Final</h1></body></html>"}}',
+  ].join('\n');
+
+  const parsed = parseProviderOutput(stdout, { parser: 'codex-json' });
+
+  assert.match(parsed, /<h1>Final<\/h1>/);
+  assert.equal(parsed.includes('Reading additional input'), false);
+});
+
+test('Codex prompt can be passed as an argument instead of stdin-only dash mode', () => {
+  const prompt = buildPrompt('# Arg Mode', {
+    mode: 'preserve',
+    template: 'minimal',
+    trusted: false,
+  });
+
+  assert.match(prompt, /Arg Mode/);
+  assert.equal(prompt.includes('Return only HTML'), true);
+});
+
 test('CLI shell helpers preserve paths with spaces and prepend common Node locations', () => {
   assert.equal(shellQuote("/tmp/my cli's/bin/codex"), "'/tmp/my cli'\\''s/bin/codex'");
 
-  const path = mergePath('/custom/bin:/opt/homebrew/bin');
-  assert.equal(path.split(':')[0], '/opt/homebrew/bin');
-  assert.equal(path.includes('/usr/local/bin'), true);
-  assert.equal(path.includes('/custom/bin'), true);
+  const mergedPath = mergePath('/custom/bin:/opt/homebrew/bin', { homeDir: '' });
+  assert.equal(mergedPath.split(':')[0], '/opt/homebrew/bin');
+  assert.equal(mergedPath.includes('/usr/local/bin'), true);
+  assert.equal(mergedPath.includes('/custom/bin'), true);
+});
+
+test('CLI path discovery includes nvm and volta bins for Obsidian app launches', () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'marktl-home-'));
+  try {
+    const nodeBin = path.join(home, '.nvm/versions/node/v24.14.0/bin');
+    fs.mkdirSync(nodeBin, { recursive: true });
+    fs.writeFileSync(path.join(nodeBin, 'node'), '');
+
+    const paths = discoverUserCliPaths(home);
+
+    assert.equal(paths.includes(path.join(home, '.volta/bin')), true);
+    assert.equal(paths.includes(nodeBin), true);
+  } finally {
+    fs.rmSync(home, { force: true, recursive: true });
+  }
 });
