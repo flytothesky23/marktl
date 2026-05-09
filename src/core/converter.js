@@ -13,6 +13,7 @@ function convertMarkdownToHtml(markdown, options = {}) {
   const html = wrapWithTemplate(`${frontmatterHtml}${bodyHtml}`, {
     template: options.template,
     title,
+    trusted: Boolean(options.trusted),
   });
 
   return sanitizeHtml(html, { trusted: Boolean(options.trusted) });

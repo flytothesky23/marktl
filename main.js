@@ -114,9 +114,121 @@ var require_templates = __commonJS({
       .callout { border-left: 5px solid #2563eb; }
       .callout-title { font-weight: 800; }
     `
+      },
+      {
+        id: "dashboard",
+        name: "Dashboard",
+        description: "Dense report dashboard with KPI-like sections and scan-friendly cards.",
+        css: `
+      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #182230; background: #f3f6fb; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 22px 56px; }
+      article { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+      article > * { grid-column: 1 / -1; background: #ffffff; border: 1px solid #d9e2ef; border-radius: 8px; padding: 18px 20px; box-shadow: 0 8px 24px rgba(22, 34, 51, .05); }
+      h1 { font-size: 34px; border-left: 6px solid #0f766e; }
+      h2 { font-size: 24px; color: #0f3d4c; }
+      p, li { line-height: 1.62; }
+      pre { overflow: auto; background: #101828; color: #f8fafc; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #d9e2ef; padding: 10px; }
+      .callout { border-left: 5px solid #0f766e; background: #ecfdf5; }
+      img { max-width: 100%; height: auto; }
+    `
+      },
+      {
+        id: "investor-brief",
+        name: "Investor Brief",
+        description: "Sharp memo style for strategy, market, and investment analysis.",
+        css: `
+      body { margin: 0; font-family: "Avenir Next", Inter, ui-sans-serif, system-ui, sans-serif; background: #111318; color: #eceff4; }
+      main { max-width: 960px; margin: 0 auto; padding: 56px 28px 80px; }
+      article { border-top: 4px solid #d7b56d; }
+      h1 { font-size: 46px; line-height: 1.05; color: #f5ddb0; }
+      h2 { margin-top: 42px; color: #ffffff; border-bottom: 1px solid #343946; padding-bottom: 10px; }
+      p, li { color: #d8dee9; line-height: 1.72; font-size: 17px; }
+      strong { color: #ffffff; }
+      a { color: #8ecae6; }
+      pre, table, .frontmatter, .callout { background: #1d222c; border: 1px solid #343946; border-radius: 8px; }
+      pre { overflow: auto; padding: 16px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #343946; padding: 10px; }
+      .callout { border-left: 4px solid #d7b56d; padding: 16px; }
+      img { max-width: 100%; height: auto; border-radius: 8px; }
+    `
+      },
+      {
+        id: "research-memo",
+        name: "Research Memo",
+        description: "Academic memo styling for long-form reasoning and source-heavy notes.",
+        css: `
+      body { margin: 0; font-family: "Source Serif 4", Georgia, serif; color: #1c2331; background: #f6f8fb; }
+      main { max-width: 860px; margin: 0 auto; padding: 64px 28px 88px; }
+      article { counter-reset: section; }
+      h1 { font-size: 42px; line-height: 1.12; }
+      h2 { counter-increment: section; margin-top: 44px; color: #243b53; }
+      h2::before { content: counter(section) ". "; color: #627d98; }
+      p, li { font-size: 18px; line-height: 1.78; }
+      blockquote, .callout { background: #eef4fb; border-left: 4px solid #486581; padding: 14px 18px; }
+      pre { overflow: auto; background: #102a43; color: #f0f4f8; padding: 16px; border-radius: 8px; }
+      table { width: 100%; border-collapse: collapse; background: #fff; }
+      th, td { border: 1px solid #d9e2ec; padding: 10px; }
+      img { max-width: 100%; height: auto; }
+    `
+      },
+      {
+        id: "interactive-report",
+        name: "Interactive Report",
+        description: "Self-contained report with progress, generated TOC, and collapsible sections in trusted mode.",
+        css: `
+      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7fafc; color: #1a202c; }
+      .progress { position: fixed; top: 0; left: 0; height: 4px; width: 0; background: #2563eb; z-index: 10; }
+      main { max-width: 1040px; margin: 0 auto; padding: 48px 24px 80px; }
+      .toc { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
+      .toc a { display: inline-block; margin: 4px 12px 4px 0; color: #1d4ed8; text-decoration: none; }
+      article { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 34px; }
+      h1 { font-size: 42px; line-height: 1.08; }
+      h2 { cursor: pointer; margin-top: 34px; padding: 14px 16px; background: #eef4ff; border-radius: 8px; }
+      p, li { line-height: 1.68; }
+      pre { overflow: auto; background: #111827; color: #f9fafb; padding: 16px; border-radius: 8px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #dbe4f0; padding: 10px; }
+      .callout { border-left: 5px solid #2563eb; background: #eff6ff; padding: 14px 18px; border-radius: 8px; }
+      img { max-width: 100%; height: auto; border-radius: 8px; }
+    `,
+        script: `
+      const progress = document.createElement('div');
+      progress.className = 'progress';
+      document.body.prepend(progress);
+      const updateProgress = () => {
+        const max = document.documentElement.scrollHeight - innerHeight;
+        progress.style.width = max > 0 ? ((scrollY / max) * 100) + '%' : '0';
+      };
+      addEventListener('scroll', updateProgress, { passive: true });
+      updateProgress();
+      const headings = [...document.querySelectorAll('article h2')];
+      if (headings.length) {
+        const toc = document.createElement('nav');
+        toc.className = 'toc';
+        toc.innerHTML = '<strong>Contents</strong> ';
+        headings.forEach((heading, index) => {
+          heading.id = heading.id || 'section-' + (index + 1);
+          const link = document.createElement('a');
+          link.href = '#' + heading.id;
+          link.textContent = heading.textContent;
+          toc.append(link);
+          heading.addEventListener('click', () => {
+            let node = heading.nextElementSibling;
+            while (node && !/^H2$/.test(node.tagName)) {
+              node.hidden = !node.hidden;
+              node = node.nextElementSibling;
+            }
+          });
+        });
+        document.querySelector('main').prepend(toc);
+      }
+    `
       }
     ];
-    function listTemplates2() {
+    function listTemplates3() {
       return templates.map(({ id, name, description }) => ({ id, name, description }));
     }
     function getTemplate(id) {
@@ -125,6 +237,7 @@ var require_templates = __commonJS({
     function wrapWithTemplate(bodyHtml, options = {}) {
       const template = getTemplate(options.template);
       const title = options.title || "Exported note";
+      const script = options.trusted && template.script ? `<script>${template.script}</script>` : "";
       return `<!doctype html>
 <html lang="en">
 <head>
@@ -139,12 +252,13 @@ var require_templates = __commonJS({
 ${bodyHtml}
 </article>
 </main>
+${script}
 </body>
 </html>`;
     }
     module2.exports = {
       getTemplate,
-      listTemplates: listTemplates2,
+      listTemplates: listTemplates3,
       wrapWithTemplate
     };
   }
@@ -187,7 +301,8 @@ var require_converter = __commonJS({
       const title = inferTitle(parsed.body, options.sourcePath);
       const html = wrapWithTemplate(`${frontmatterHtml}${bodyHtml}`, {
         template: options.template,
-        title
+        title,
+        trusted: Boolean(options.trusted)
       });
       return sanitizeHtml(html, { trusted: Boolean(options.trusted) });
     }
@@ -358,8 +473,8 @@ var require_ai = __commonJS({
     var execFileAsync = promisify(execFile);
     var providerCommands = {
       codex: { command: "codex", args: ["exec", "--skip-git-repo-check", "--json"], parser: "codex-json", promptAsArgument: true },
-      claude: { command: "claude", args: ["-p"] },
-      gemini: { command: "gemini", args: ["-p"] }
+      claude: { command: "claude", args: ["-p"], promptAsArgument: true },
+      gemini: { command: "gemini", args: ["-p"], promptAsArgument: true }
     };
     var loginShellPath = "/bin/zsh";
     var cliPath = [
@@ -559,10 +674,115 @@ __export(main_exports, {
   default: () => MarktlPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian3 = require("obsidian");
+var import_obsidian5 = require("obsidian");
+
+// src/export-modal.ts
+var import_obsidian = require("obsidian");
+var import_templates = __toESM(require_templates());
+var MarktlExportModal = class extends import_obsidian.Modal {
+  constructor(app, plugin, onSubmit) {
+    super(app);
+    this.plugin = plugin;
+    this.onSubmit = onSubmit;
+    this.options = {
+      template: plugin.settings.template,
+      aiProvider: plugin.settings.aiProvider,
+      conversionMode: plugin.settings.conversionMode,
+      failurePolicy: plugin.settings.failurePolicy,
+      previewSecurity: plugin.settings.previewSecurity,
+      copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport
+    };
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    this.setTitle("Export note to HTML");
+    contentEl.createEl("p", {
+      cls: "marktl-modal-intro",
+      text: "Choose a template, AI CLI, and preview mode for this export."
+    });
+    new import_obsidian.Setting(contentEl).setName("Template").setDesc("Controls the visual direction and local fallback style.").addDropdown((dropdown) => {
+      for (const template of (0, import_templates.listTemplates)()) {
+        dropdown.addOption(template.id, template.name);
+      }
+      dropdown.setValue(this.options.template).onChange((value) => {
+        this.options.template = value;
+      });
+    });
+    new import_obsidian.Setting(contentEl).setName("AI CLI").setDesc("Codex, Claude, and Gemini were tested with prompt-argument execution.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("codex", "Codex CLI").addOption("claude", "Claude Code CLI").addOption("gemini", "Gemini CLI").setValue(this.options.aiProvider).onChange((value) => {
+      this.options.aiProvider = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("Mode").setDesc("Preserve keeps content faithful; other modes allow AI restructuring.").addDropdown((dropdown) => dropdown.addOption("preserve", "Preserve content").addOption("presentation", "Presentation").addOption("blog", "Blog article").addOption("landing", "Landing page").setValue(this.options.conversionMode).onChange((value) => {
+      this.options.conversionMode = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("Preview security").setDesc("Trusted mode allows inline JavaScript for interactive HTML.").addDropdown((dropdown) => dropdown.addOption("sanitized", "Sanitized static preview").addOption("trusted", "Trusted interactive preview").setValue(this.options.previewSecurity).onChange((value) => {
+      this.options.previewSecurity = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("AI failure").setDesc("Fallback keeps exporting; strict stops when the CLI fails.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.options.failurePolicy).onChange((value) => {
+      this.options.failurePolicy = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("Copy share link").setDesc("Copies a local file:// link for the generated self-contained HTML.").addToggle((toggle) => toggle.setValue(this.options.copyShareLinkAfterExport).onChange((value) => {
+      this.options.copyShareLinkAfterExport = value;
+    }));
+    new import_obsidian.Setting(contentEl).addButton((button) => button.setButtonText("Export").setCta().onClick(() => {
+      this.close();
+      this.onSubmit(this.options);
+    })).addButton((button) => button.setButtonText("Save as defaults").onClick(async () => {
+      Object.assign(this.plugin.settings, this.options);
+      await this.plugin.saveSettings();
+      this.close();
+      this.onSubmit(this.options);
+    }));
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+
+// src/progress-modal.ts
+var import_obsidian2 = require("obsidian");
+var MarktlProgressModal = class extends import_obsidian2.Modal {
+  constructor(app) {
+    super(app);
+    this.listEl = null;
+  }
+  onOpen() {
+    this.contentEl.empty();
+    this.setTitle("Export progress");
+    this.contentEl.createEl("p", {
+      cls: "marktl-modal-intro",
+      text: "MarkTL is converting this note to HTML."
+    });
+    this.listEl = this.contentEl.createEl("ol", { cls: "marktl-progress-list" });
+  }
+  addStep(text) {
+    if (!this.listEl) {
+      return;
+    }
+    this.listEl.createEl("li", { text });
+  }
+  complete(text) {
+    this.addStep(text);
+    this.contentEl.createEl("p", {
+      cls: "marktl-progress-done",
+      text: "You can close this window."
+    });
+  }
+  fail(text) {
+    this.addStep(text);
+    this.contentEl.createEl("p", {
+      cls: "marktl-progress-error",
+      text: "Export stopped. Check the message above."
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
+    this.listEl = null;
+  }
+};
 
 // src/preview-view.ts
-var import_obsidian = require("obsidian");
+var import_obsidian3 = require("obsidian");
 var VIEW_TYPE_MARKTL_PREVIEW = "marktl-html-preview";
 var emptyState = {
   html: "<!doctype html><html><body><p>No preview loaded.</p></body></html>",
@@ -570,7 +790,7 @@ var emptyState = {
   warnings: [],
   trusted: false
 };
-var MarktlPreviewView = class extends import_obsidian.ItemView {
+var MarktlPreviewView = class extends import_obsidian3.ItemView {
   constructor(leaf) {
     super(leaf);
     this.state = emptyState;
@@ -617,9 +837,9 @@ var MarktlPreviewView = class extends import_obsidian.ItemView {
 };
 
 // src/settings-tab.ts
-var import_obsidian2 = require("obsidian");
-var import_templates = __toESM(require_templates());
-var MarktlSettingTab = class extends import_obsidian2.PluginSettingTab {
+var import_obsidian4 = require("obsidian");
+var import_templates2 = __toESM(require_templates());
+var MarktlSettingTab = class extends import_obsidian4.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -628,12 +848,12 @@ var MarktlSettingTab = class extends import_obsidian2.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "MarkTL HTML Exporter" });
-    new import_obsidian2.Setting(containerEl).setName("Export folder").setDesc("Vault-relative folder for generated HTML files.").addText((text) => text.setPlaceholder("html-exports").setValue(this.plugin.settings.exportFolder).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName("Export folder").setDesc("Vault-relative folder for generated HTML files.").addText((text) => text.setPlaceholder("html-exports").setValue(this.plugin.settings.exportFolder).onChange(async (value) => {
       this.plugin.settings.exportFolder = value.trim() || "html-exports";
       await this.plugin.saveSettings();
     }));
-    new import_obsidian2.Setting(containerEl).setName("Template").setDesc("Default HTML style template.").addDropdown((dropdown) => {
-      for (const template of (0, import_templates.listTemplates)()) {
+    new import_obsidian4.Setting(containerEl).setName("Template").setDesc("Default HTML style template.").addDropdown((dropdown) => {
+      for (const template of (0, import_templates2.listTemplates)()) {
         dropdown.addOption(template.id, template.name);
       }
       dropdown.setValue(this.plugin.settings.template).onChange(async (value) => {
@@ -641,23 +861,23 @@ var MarktlSettingTab = class extends import_obsidian2.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian2.Setting(containerEl).setName("AI provider").setDesc("Optional CLI provider for high-quality AI conversion.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("codex", "Codex CLI").addOption("claude", "Claude Code CLI").addOption("gemini", "Gemini CLI").setValue(this.plugin.settings.aiProvider).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName("AI provider").setDesc("Optional CLI provider for high-quality AI conversion.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("codex", "Codex CLI").addOption("claude", "Claude Code CLI").addOption("gemini", "Gemini CLI").setValue(this.plugin.settings.aiProvider).onChange(async (value) => {
       this.plugin.settings.aiProvider = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian2.Setting(containerEl).setName("Conversion mode").setDesc("Preserve mode keeps the note faithful. Other modes allow AI restructuring.").addDropdown((dropdown) => dropdown.addOption("preserve", "Preserve content").addOption("presentation", "Presentation").addOption("blog", "Blog article").addOption("landing", "Landing page").setValue(this.plugin.settings.conversionMode).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName("Conversion mode").setDesc("Preserve mode keeps the note faithful. Other modes allow AI restructuring.").addDropdown((dropdown) => dropdown.addOption("preserve", "Preserve content").addOption("presentation", "Presentation").addOption("blog", "Blog article").addOption("landing", "Landing page").setValue(this.plugin.settings.conversionMode).onChange(async (value) => {
       this.plugin.settings.conversionMode = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian2.Setting(containerEl).setName("Preview security").setDesc("Sanitized mode blocks scripts, iframes, external assets, and event handlers.").addDropdown((dropdown) => dropdown.addOption("sanitized", "Sanitized static preview").addOption("trusted", "Trusted preview/export").setValue(this.plugin.settings.previewSecurity).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName("Preview security").setDesc("Sanitized mode blocks scripts, iframes, external assets, and event handlers.").addDropdown((dropdown) => dropdown.addOption("sanitized", "Sanitized static preview").addOption("trusted", "Trusted preview/export").setValue(this.plugin.settings.previewSecurity).onChange(async (value) => {
       this.plugin.settings.previewSecurity = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian2.Setting(containerEl).setName("AI failure policy").setDesc("Fallback creates local HTML with a warning. Strict stops generation.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.plugin.settings.failurePolicy).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName("AI failure policy").setDesc("Fallback creates local HTML with a warning. Strict stops generation.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.plugin.settings.failurePolicy).onChange(async (value) => {
       this.plugin.settings.failurePolicy = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian2.Setting(containerEl).setName("CLI timeout").setDesc("Maximum AI CLI runtime in milliseconds.").addText((text) => text.setPlaceholder("60000").setValue(String(this.plugin.settings.timeoutMs)).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName("CLI timeout").setDesc("Maximum AI CLI runtime in milliseconds.").addText((text) => text.setPlaceholder("60000").setValue(String(this.plugin.settings.timeoutMs)).onChange(async (value) => {
       const parsed = Number(value);
       this.plugin.settings.timeoutMs = Number.isFinite(parsed) && parsed > 0 ? parsed : 6e4;
       await this.plugin.saveSettings();
@@ -665,9 +885,13 @@ var MarktlSettingTab = class extends import_obsidian2.PluginSettingTab {
     this.addCliPathSetting(containerEl, "Codex CLI path", "codexPath", "codex");
     this.addCliPathSetting(containerEl, "Claude Code CLI path", "claudePath", "claude");
     this.addCliPathSetting(containerEl, "Gemini CLI path", "geminiPath", "gemini");
+    new import_obsidian4.Setting(containerEl).setName("Copy share link by default").setDesc("Copies a local file:// link after export. Public hosting is planned separately.").addToggle((toggle) => toggle.setValue(this.plugin.settings.copyShareLinkAfterExport).onChange(async (value) => {
+      this.plugin.settings.copyShareLinkAfterExport = value;
+      await this.plugin.saveSettings();
+    }));
   }
   addCliPathSetting(containerEl, name, key, placeholder) {
-    new import_obsidian2.Setting(containerEl).setName(name).setDesc("Leave blank to use the command from PATH.").addText((text) => text.setPlaceholder(placeholder).setValue(this.plugin.settings[key]).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName(name).setDesc("Leave blank to use the command from PATH.").addText((text) => text.setPlaceholder(placeholder).setValue(this.plugin.settings[key]).onChange(async (value) => {
       this.plugin.settings[key] = value.trim();
       await this.plugin.saveSettings();
     }));
@@ -687,9 +911,10 @@ var DEFAULT_SETTINGS = {
   timeoutMs: 6e4,
   codexPath: "",
   claudePath: "",
-  geminiPath: ""
+  geminiPath: "",
+  copyShareLinkAfterExport: false
 };
-var MarktlPlugin = class extends import_obsidian3.Plugin {
+var MarktlPlugin = class extends import_obsidian5.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
@@ -701,14 +926,26 @@ var MarktlPlugin = class extends import_obsidian3.Plugin {
       (leaf) => new MarktlPreviewView(leaf)
     );
     this.addRibbonIcon("file-code-2", "Export current note to HTML", () => {
-      void this.exportActiveNote();
+      this.openExportModal();
     });
     this.addCommand({
       id: "export-active-note-to-html",
-      name: "Export active note to HTML",
+      name: "Export active note to HTML...",
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
-        const canRun = file instanceof import_obsidian3.TFile && file.extension === "md";
+        const canRun = file instanceof import_obsidian5.TFile && file.extension === "md";
+        if (canRun && !checking) {
+          this.openExportModal();
+        }
+        return canRun;
+      }
+    });
+    this.addCommand({
+      id: "quick-export-active-note-to-html",
+      name: "Quick export active note to HTML",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        const canRun = file instanceof import_obsidian5.TFile && file.extension === "md";
         if (canRun && !checking) {
           void this.exportActiveNote();
         }
@@ -726,20 +963,38 @@ var MarktlPlugin = class extends import_obsidian3.Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
   }
-  async exportActiveNote() {
+  openExportModal() {
     const file = this.app.workspace.getActiveFile();
-    if (!(file instanceof import_obsidian3.TFile) || file.extension !== "md") {
-      new import_obsidian3.Notice("Open a Markdown note before exporting HTML.");
+    if (!(file instanceof import_obsidian5.TFile) || file.extension !== "md") {
+      new import_obsidian5.Notice("Open a Markdown note before exporting HTML.");
       return;
     }
+    new MarktlExportModal(this.app, this, (options) => {
+      void this.exportActiveNote(options);
+    }).open();
+  }
+  async exportActiveNote(overrides = {}) {
+    const file = this.app.workspace.getActiveFile();
+    if (!(file instanceof import_obsidian5.TFile) || file.extension !== "md") {
+      new import_obsidian5.Notice("Open a Markdown note before exporting HTML.");
+      return;
+    }
+    const options = this.resolveExportOptions(overrides);
+    const progress = new MarktlProgressModal(this.app);
+    progress.open();
+    progress.addStep(`Template: ${options.template}`);
+    progress.addStep(`AI CLI: ${options.aiProvider === "none" ? "local fallback" : options.aiProvider}`);
+    progress.addStep(`Mode: ${options.conversionMode}; preview: ${options.previewSecurity}`);
     try {
+      progress.addStep("Reading active Markdown note...");
       const markdown = await this.app.vault.read(file);
+      progress.addStep(options.aiProvider === "none" ? "Running local converter..." : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
-        provider: this.settings.aiProvider,
-        mode: this.settings.conversionMode,
-        template: this.settings.template,
-        trusted: this.settings.previewSecurity === "trusted",
-        strictAiFailures: this.settings.failurePolicy === "strict",
+        provider: options.aiProvider,
+        mode: options.conversionMode,
+        template: options.template,
+        trusted: options.previewSecurity === "trusted",
+        strictAiFailures: options.failurePolicy === "strict",
         timeoutMs: this.settings.timeoutMs,
         sourcePath: file.path,
         cliPaths: {
@@ -748,32 +1003,59 @@ var MarktlPlugin = class extends import_obsidian3.Plugin {
           gemini: this.settings.geminiPath
         }
       });
+      progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
+      progress.addStep("Writing HTML file to vault...");
       const outputPath = await this.writeHtmlFile(file, result.html);
+      progress.addStep("Opening internal preview pane...");
       await this.openPreview({
         html: result.html,
         filePath: outputPath,
         warnings: result.warnings,
-        trusted: this.settings.previewSecurity === "trusted"
+        trusted: options.previewSecurity === "trusted"
       });
-      if (result.usedFallback && this.settings.aiProvider !== "none") {
-        new import_obsidian3.Notice("AI conversion failed; local fallback HTML was generated.");
+      if (options.copyShareLinkAfterExport) {
+        progress.addStep("Copying local share link...");
+        await this.copyShareLink(outputPath);
+      }
+      progress.complete(`Done: ${outputPath}`);
+      if (result.usedFallback && options.aiProvider !== "none") {
+        new import_obsidian5.Notice("AI conversion failed; local fallback HTML was generated.");
       } else {
-        new import_obsidian3.Notice(`HTML exported to ${outputPath}`);
+        new import_obsidian5.Notice(`HTML exported to ${outputPath}`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      new import_obsidian3.Notice(`HTML export failed: ${message}`);
+      progress.fail(message);
+      new import_obsidian5.Notice(`HTML export failed: ${message}`);
     }
   }
   async writeHtmlFile(source, html) {
-    const folder = (0, import_obsidian3.normalizePath)(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
+    const folder = (0, import_obsidian5.normalizePath)(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
     if (!await this.app.vault.adapter.exists(folder)) {
       await this.app.vault.createFolder(folder);
     }
     const basename = slugify(source.basename);
-    const outputPath = (0, import_obsidian3.normalizePath)(`${folder}/${basename}.html`);
+    const outputPath = (0, import_obsidian5.normalizePath)(`${folder}/${basename}.html`);
     await this.app.vault.adapter.write(outputPath, html);
     return outputPath;
+  }
+  resolveExportOptions(overrides) {
+    var _a;
+    return {
+      template: overrides.template || this.settings.template,
+      aiProvider: overrides.aiProvider || this.settings.aiProvider,
+      conversionMode: overrides.conversionMode || this.settings.conversionMode,
+      failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
+      previewSecurity: overrides.previewSecurity || this.settings.previewSecurity,
+      copyShareLinkAfterExport: (_a = overrides.copyShareLinkAfterExport) != null ? _a : this.settings.copyShareLinkAfterExport
+    };
+  }
+  async copyShareLink(outputPath) {
+    const adapter = this.app.vault.adapter;
+    const fullPath = adapter.getFullPath ? adapter.getFullPath(outputPath) : outputPath;
+    const link = fullPath.startsWith("/") ? `file://${encodeURI(fullPath)}` : outputPath;
+    await navigator.clipboard.writeText(link);
+    new import_obsidian5.Notice("HTML share link copied.");
   }
   async openPreview(state) {
     let leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_MARKTL_PREVIEW)[0];

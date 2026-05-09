@@ -110,6 +110,16 @@ export class MarktlSettingTab extends PluginSettingTab {
     this.addCliPathSetting(containerEl, 'Codex CLI path', 'codexPath', 'codex');
     this.addCliPathSetting(containerEl, 'Claude Code CLI path', 'claudePath', 'claude');
     this.addCliPathSetting(containerEl, 'Gemini CLI path', 'geminiPath', 'gemini');
+
+    new Setting(containerEl)
+      .setName('Copy share link by default')
+      .setDesc('Copies a local file:// link after export. Public hosting is planned separately.')
+      .addToggle((toggle) => toggle
+        .setValue(this.plugin.settings.copyShareLinkAfterExport)
+        .onChange(async (value) => {
+          this.plugin.settings.copyShareLinkAfterExport = value;
+          await this.plugin.saveSettings();
+        }));
   }
 
   private addCliPathSetting(containerEl: HTMLElement, name: string, key: 'codexPath' | 'claudePath' | 'geminiPath', placeholder: string): void {

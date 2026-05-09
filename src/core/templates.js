@@ -63,6 +63,118 @@ const templates = [
       .callout-title { font-weight: 800; }
     `,
   },
+  {
+    id: 'dashboard',
+    name: 'Dashboard',
+    description: 'Dense report dashboard with KPI-like sections and scan-friendly cards.',
+    css: `
+      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #182230; background: #f3f6fb; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 22px 56px; }
+      article { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+      article > * { grid-column: 1 / -1; background: #ffffff; border: 1px solid #d9e2ef; border-radius: 8px; padding: 18px 20px; box-shadow: 0 8px 24px rgba(22, 34, 51, .05); }
+      h1 { font-size: 34px; border-left: 6px solid #0f766e; }
+      h2 { font-size: 24px; color: #0f3d4c; }
+      p, li { line-height: 1.62; }
+      pre { overflow: auto; background: #101828; color: #f8fafc; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #d9e2ef; padding: 10px; }
+      .callout { border-left: 5px solid #0f766e; background: #ecfdf5; }
+      img { max-width: 100%; height: auto; }
+    `,
+  },
+  {
+    id: 'investor-brief',
+    name: 'Investor Brief',
+    description: 'Sharp memo style for strategy, market, and investment analysis.',
+    css: `
+      body { margin: 0; font-family: "Avenir Next", Inter, ui-sans-serif, system-ui, sans-serif; background: #111318; color: #eceff4; }
+      main { max-width: 960px; margin: 0 auto; padding: 56px 28px 80px; }
+      article { border-top: 4px solid #d7b56d; }
+      h1 { font-size: 46px; line-height: 1.05; color: #f5ddb0; }
+      h2 { margin-top: 42px; color: #ffffff; border-bottom: 1px solid #343946; padding-bottom: 10px; }
+      p, li { color: #d8dee9; line-height: 1.72; font-size: 17px; }
+      strong { color: #ffffff; }
+      a { color: #8ecae6; }
+      pre, table, .frontmatter, .callout { background: #1d222c; border: 1px solid #343946; border-radius: 8px; }
+      pre { overflow: auto; padding: 16px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #343946; padding: 10px; }
+      .callout { border-left: 4px solid #d7b56d; padding: 16px; }
+      img { max-width: 100%; height: auto; border-radius: 8px; }
+    `,
+  },
+  {
+    id: 'research-memo',
+    name: 'Research Memo',
+    description: 'Academic memo styling for long-form reasoning and source-heavy notes.',
+    css: `
+      body { margin: 0; font-family: "Source Serif 4", Georgia, serif; color: #1c2331; background: #f6f8fb; }
+      main { max-width: 860px; margin: 0 auto; padding: 64px 28px 88px; }
+      article { counter-reset: section; }
+      h1 { font-size: 42px; line-height: 1.12; }
+      h2 { counter-increment: section; margin-top: 44px; color: #243b53; }
+      h2::before { content: counter(section) ". "; color: #627d98; }
+      p, li { font-size: 18px; line-height: 1.78; }
+      blockquote, .callout { background: #eef4fb; border-left: 4px solid #486581; padding: 14px 18px; }
+      pre { overflow: auto; background: #102a43; color: #f0f4f8; padding: 16px; border-radius: 8px; }
+      table { width: 100%; border-collapse: collapse; background: #fff; }
+      th, td { border: 1px solid #d9e2ec; padding: 10px; }
+      img { max-width: 100%; height: auto; }
+    `,
+  },
+  {
+    id: 'interactive-report',
+    name: 'Interactive Report',
+    description: 'Self-contained report with progress, generated TOC, and collapsible sections in trusted mode.',
+    css: `
+      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7fafc; color: #1a202c; }
+      .progress { position: fixed; top: 0; left: 0; height: 4px; width: 0; background: #2563eb; z-index: 10; }
+      main { max-width: 1040px; margin: 0 auto; padding: 48px 24px 80px; }
+      .toc { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
+      .toc a { display: inline-block; margin: 4px 12px 4px 0; color: #1d4ed8; text-decoration: none; }
+      article { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 34px; }
+      h1 { font-size: 42px; line-height: 1.08; }
+      h2 { cursor: pointer; margin-top: 34px; padding: 14px 16px; background: #eef4ff; border-radius: 8px; }
+      p, li { line-height: 1.68; }
+      pre { overflow: auto; background: #111827; color: #f9fafb; padding: 16px; border-radius: 8px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #dbe4f0; padding: 10px; }
+      .callout { border-left: 5px solid #2563eb; background: #eff6ff; padding: 14px 18px; border-radius: 8px; }
+      img { max-width: 100%; height: auto; border-radius: 8px; }
+    `,
+    script: `
+      const progress = document.createElement('div');
+      progress.className = 'progress';
+      document.body.prepend(progress);
+      const updateProgress = () => {
+        const max = document.documentElement.scrollHeight - innerHeight;
+        progress.style.width = max > 0 ? ((scrollY / max) * 100) + '%' : '0';
+      };
+      addEventListener('scroll', updateProgress, { passive: true });
+      updateProgress();
+      const headings = [...document.querySelectorAll('article h2')];
+      if (headings.length) {
+        const toc = document.createElement('nav');
+        toc.className = 'toc';
+        toc.innerHTML = '<strong>Contents</strong> ';
+        headings.forEach((heading, index) => {
+          heading.id = heading.id || 'section-' + (index + 1);
+          const link = document.createElement('a');
+          link.href = '#' + heading.id;
+          link.textContent = heading.textContent;
+          toc.append(link);
+          heading.addEventListener('click', () => {
+            let node = heading.nextElementSibling;
+            while (node && !/^H2$/.test(node.tagName)) {
+              node.hidden = !node.hidden;
+              node = node.nextElementSibling;
+            }
+          });
+        });
+        document.querySelector('main').prepend(toc);
+      }
+    `,
+  },
 ];
 
 function listTemplates() {
@@ -76,6 +188,7 @@ function getTemplate(id) {
 function wrapWithTemplate(bodyHtml, options = {}) {
   const template = getTemplate(options.template);
   const title = options.title || 'Exported note';
+  const script = options.trusted && template.script ? `<script>${template.script}</script>` : '';
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -90,6 +203,7 @@ function wrapWithTemplate(bodyHtml, options = {}) {
 ${bodyHtml}
 </article>
 </main>
+${script}
 </body>
 </html>`;
 }

@@ -10,8 +10,8 @@ const execFileAsync = promisify(execFile);
 
 const providerCommands = {
   codex: { command: 'codex', args: ['exec', '--skip-git-repo-check', '--json'], parser: 'codex-json', promptAsArgument: true },
-  claude: { command: 'claude', args: ['-p'] },
-  gemini: { command: 'gemini', args: ['-p'] },
+  claude: { command: 'claude', args: ['-p'], promptAsArgument: true },
+  gemini: { command: 'gemini', args: ['-p'], promptAsArgument: true },
 };
 
 const loginShellPath = '/bin/zsh';

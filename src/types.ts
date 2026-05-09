@@ -14,6 +14,16 @@ export interface MarktlSettings {
   codexPath: string;
   claudePath: string;
   geminiPath: string;
+  copyShareLinkAfterExport: boolean;
+}
+
+export interface ExportOptions {
+  template: string;
+  aiProvider: AiProvider;
+  conversionMode: ConversionMode;
+  failurePolicy: FailurePolicy;
+  previewSecurity: PreviewSecurity;
+  copyShareLinkAfterExport: boolean;
 }
 
 export interface PreviewState {

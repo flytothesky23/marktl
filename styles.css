@@ -35,3 +35,27 @@
   flex: 1 1 auto;
   width: 100%;
 }
+
+.marktl-modal-intro {
+  color: var(--text-muted);
+  margin-top: 0;
+}
+
+.marktl-progress-list {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.marktl-progress-list li {
+  margin: 6px 0;
+}
+
+.marktl-progress-done {
+  color: var(--text-success);
+  font-weight: 600;
+}
+
+.marktl-progress-error {
+  color: var(--text-error);
+  font-weight: 600;
+}
