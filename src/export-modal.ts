@@ -1,7 +1,7 @@
 import { App, Modal, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listTemplates } from './core/templates.js';
-import type { AiProvider, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity } from './types';
+import type { AiProvider, ArtifactType, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity, ShareTarget } from './types';
 
 export class MarktlExportModal extends Modal {
   private options: ExportOptions;
@@ -14,10 +14,12 @@ export class MarktlExportModal extends Modal {
     this.onSubmit = onSubmit;
     this.options = {
       template: plugin.settings.template,
+      artifactType: plugin.settings.artifactType,
       aiProvider: plugin.settings.aiProvider,
       conversionMode: plugin.settings.conversionMode,
       failurePolicy: plugin.settings.failurePolicy,
       previewSecurity: plugin.settings.previewSecurity,
+      shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport,
     };
   }
@@ -31,6 +33,21 @@ export class MarktlExportModal extends Modal {
       cls: 'marktl-modal-intro',
       text: 'Choose a template, AI CLI, and preview mode for this export.',
     });
+
+    new Setting(contentEl)
+      .setName('Artifact type')
+      .setDesc('Defines the information architecture, not just the visual skin.')
+      .addDropdown((dropdown) => dropdown
+        .addOption('faithful-note', 'Faithful Note')
+        .addOption('strategy-brief', 'Strategy Brief')
+        .addOption('research-report', 'Research Report')
+        .addOption('decision-memo', 'Decision Memo')
+        .addOption('interactive-explainer', 'Interactive Explainer')
+        .addOption('slide-deck', 'Slide Deck')
+        .setValue(this.options.artifactType)
+        .onChange((value) => {
+          this.options.artifactType = value as ArtifactType;
+        }));
 
     new Setting(contentEl)
       .setName('Template')
@@ -89,6 +106,17 @@ export class MarktlExportModal extends Modal {
         .setValue(this.options.failurePolicy)
         .onChange((value) => {
           this.options.failurePolicy = value as FailurePolicy;
+        }));
+
+    new Setting(contentEl)
+      .setName('Share target')
+      .setDesc('Static bundle creates share/<slug>/index.html for GitHub Pages or any static host.')
+      .addDropdown((dropdown) => dropdown
+        .addOption('local-link', 'Local file link')
+        .addOption('static-bundle', 'Static hosting bundle')
+        .setValue(this.options.shareTarget)
+        .onChange((value) => {
+          this.options.shareTarget = value as ShareTarget;
         }));
 
     new Setting(contentEl)

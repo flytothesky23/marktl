@@ -184,6 +184,9 @@ var require_templates = __commonJS({
       main { max-width: 1040px; margin: 0 auto; padding: 48px 24px 80px; }
       .toc { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
       .toc a { display: inline-block; margin: 4px 12px 4px 0; color: #1d4ed8; text-decoration: none; }
+      .toolbox { position: sticky; top: 12px; z-index: 9; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-bottom: 12px; }
+      .toolbox button { border: 1px solid #bfdbfe; background: #ffffff; color: #1d4ed8; border-radius: 6px; padding: 8px 10px; cursor: pointer; }
+      .toolbox button:hover { background: #eff6ff; }
       article { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 34px; }
       h1 { font-size: 42px; line-height: 1.08; }
       h2 { cursor: pointer; margin-top: 34px; padding: 14px 16px; background: #eef4ff; border-radius: 8px; }
@@ -204,6 +207,29 @@ var require_templates = __commonJS({
       };
       addEventListener('scroll', updateProgress, { passive: true });
       updateProgress();
+      const copyText = async (label, text) => {
+        try {
+          await navigator.clipboard.writeText(text);
+          label.textContent = 'Copied';
+          setTimeout(() => { label.textContent = label.dataset.label; }, 1200);
+        } catch {
+          label.textContent = 'Copy failed';
+        }
+      };
+      const toolbox = document.createElement('div');
+      toolbox.className = 'toolbox';
+      const makeButton = (label, getText) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = label;
+        button.dataset.label = label;
+        button.addEventListener('click', () => copyText(button, getText()));
+        toolbox.append(button);
+      };
+      makeButton('Copy as prompt', () => 'Use this HTML artifact as context and continue from its decisions and structure:\\n\\n' + document.body.innerText);
+      makeButton('Copy as markdown', () => document.querySelector('article').innerText);
+      makeButton('Copy summary', () => [...document.querySelectorAll('h1,h2,h3')].map((h) => '- ' + h.textContent).join('\\n'));
+      document.querySelector('main').prepend(toolbox);
       const headings = [...document.querySelectorAll('article h2')];
       if (headings.length) {
         const toc = document.createElement('nav');
@@ -463,14 +489,12 @@ var require_converter = __commonJS({
 var require_ai = __commonJS({
   "src/core/ai.js"(exports2, module2) {
     "use strict";
-    var { execFile } = require("node:child_process");
+    var { spawn } = require("node:child_process");
     var fs = require("node:fs");
     var os = require("node:os");
     var path = require("node:path");
-    var { promisify } = require("node:util");
     var { convertMarkdownToHtml } = require_converter();
     var { looksLikeHtmlDocument, sanitizeHtml } = require_sanitizer();
-    var execFileAsync = promisify(execFile);
     var providerCommands = {
       claude: { command: "claude", args: ["-p"], promptAsArgument: true },
       gemini: { command: "gemini", args: ["-p"], promptAsArgument: true }
@@ -534,7 +558,7 @@ var require_ai = __commonJS({
         execOptions.input = prompt;
       }
       try {
-        const { stdout, stderr } = await execFileAsync(command, args, execOptions);
+        const { stdout, stderr } = await runProcess(command, args, execOptions);
         const output = parseProviderOutput(stdout, provider);
         if (!String(output || "").trim()) {
           throw new Error(`AI provider returned empty output${stderr ? `: ${cleanProviderError(stderr)}` : ""}`);
@@ -549,7 +573,67 @@ var require_ai = __commonJS({
         throw new Error(details || String(error));
       }
     }
+    function runProcess(command, args, options) {
+      return new Promise((resolve, reject) => {
+        const child = spawn(command, args, {
+          env: options.env,
+          stdio: ["ignore", "pipe", "pipe"]
+        });
+        let stdout = "";
+        let stderr = "";
+        let settled = false;
+        const timeout = setTimeout(() => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          child.kill("SIGTERM");
+          const error = new Error(`Provider timed out after ${options.timeout}ms`);
+          error.stdout = stdout;
+          error.stderr = stderr;
+          reject(error);
+        }, options.timeout);
+        child.stdout.on("data", (chunk) => {
+          stdout += chunk;
+          if (stdout.length > options.maxBuffer) {
+            child.kill("SIGTERM");
+          }
+        });
+        child.stderr.on("data", (chunk) => {
+          stderr += chunk;
+          if (stderr.length > options.maxBuffer) {
+            child.kill("SIGTERM");
+          }
+        });
+        child.on("error", (error) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeout);
+          error.stdout = stdout;
+          error.stderr = stderr;
+          reject(error);
+        });
+        child.on("close", (code, signal) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeout);
+          if (code === 0) {
+            resolve({ stdout, stderr });
+            return;
+          }
+          const error = new Error(`Provider exited with ${signal || code}`);
+          error.stdout = stdout;
+          error.stderr = stderr;
+          reject(error);
+        });
+      });
+    }
     function buildPrompt(markdown, options = {}) {
+      const artifactInstruction = getArtifactInstruction(options.artifactType || "faithful-note");
       const modeInstruction = {
         preserve: "Preserve the source content. Improve semantic HTML, visual hierarchy, typography, spacing, and responsive styling. Do not summarize or remove content.",
         presentation: "Create a premium presentation-style HTML document with section cards, strong visual rhythm, concise slide-like grouping, summaries, and visual emphasis.",
@@ -558,14 +642,27 @@ var require_ai = __commonJS({
       }[options.mode || "preserve"];
       const dynamicInstruction = options.trusted ? "Trusted mode is enabled: you may include small inline JavaScript for useful interactions, animations, toggles, table-of-contents behavior, or reveal effects. Keep it self-contained and do not load remote resources." : "Sanitized mode is enabled: do not use JavaScript, iframes, external CSS, external scripts, or remote assets. Use rich CSS-only layout and interactions instead.";
       return `Convert this Obsidian Markdown note to a complete standalone HTML document.
+Artifact type: ${options.artifactType || "faithful-note"}
 Template: ${options.template || "minimal"}
 Mode: ${options.mode || "preserve"}
+Artifact instruction: ${artifactInstruction}
 Instruction: ${modeInstruction}
 Design standard: produce a refined, modern, visually designed HTML page rather than plain Markdown-looking output. Use responsive CSS, strong spacing, tasteful color, cards/sections where helpful, and readable Korean typography if the content is Korean.
 Dynamic policy: ${dynamicInstruction}
+Interaction standard: when trusted mode is enabled, include useful local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, or lightweight filters when they fit the artifact type. Keep everything self-contained.
 Return only HTML. Do not wrap it in Markdown fences.
 
 ${markdown}`;
+    }
+    function getArtifactInstruction(artifactType) {
+      return {
+        "faithful-note": "Render the note faithfully with better readability, visual hierarchy, and navigation. Do not substantially reorder or summarize unless the source already does.",
+        "strategy-brief": "Create an executive strategy brief with TL;DR, decision context, options, tradeoffs, risks, recommendation, and next actions.",
+        "research-report": "Create a research report with abstract, key findings, evidence sections, source notes, diagrams or tables where useful, and implications.",
+        "decision-memo": "Create a decision memo optimized for choosing: question, criteria, options, comparison matrix, recommendation, dissenting view, and decision log.",
+        "interactive-explainer": "Create an interactive explainer with progressive disclosure, visual examples, generated TOC, copy buttons, and self-contained controls in trusted mode.",
+        "slide-deck": "Create a slide-like artifact with concise sections, strong headings, visual rhythm, and one idea per section while preserving source meaning."
+      }[artifactType] || "Render a readable, useful HTML artifact from the note.";
     }
     function extractHtmlFromAiOutput(output) {
       const value = String(output || "").trim();
@@ -679,6 +776,7 @@ ${markdown}`;
     }
     module2.exports = {
       buildPrompt,
+      getArtifactInstruction,
       convertWithAiFallback: convertWithAiFallback2,
       extractHtmlFromAiOutput,
       discoverUserCliPaths,
@@ -708,10 +806,12 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     this.onSubmit = onSubmit;
     this.options = {
       template: plugin.settings.template,
+      artifactType: plugin.settings.artifactType,
       aiProvider: plugin.settings.aiProvider,
       conversionMode: plugin.settings.conversionMode,
       failurePolicy: plugin.settings.failurePolicy,
       previewSecurity: plugin.settings.previewSecurity,
+      shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport
     };
   }
@@ -723,6 +823,9 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       cls: "marktl-modal-intro",
       text: "Choose a template, AI CLI, and preview mode for this export."
     });
+    new import_obsidian.Setting(contentEl).setName("Artifact type").setDesc("Defines the information architecture, not just the visual skin.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "Faithful Note").addOption("strategy-brief", "Strategy Brief").addOption("research-report", "Research Report").addOption("decision-memo", "Decision Memo").addOption("interactive-explainer", "Interactive Explainer").addOption("slide-deck", "Slide Deck").setValue(this.options.artifactType).onChange((value) => {
+      this.options.artifactType = value;
+    }));
     new import_obsidian.Setting(contentEl).setName("Template").setDesc("Controls the visual direction and local fallback style.").addDropdown((dropdown) => {
       for (const template of (0, import_templates.listTemplates)()) {
         dropdown.addOption(template.id, template.name);
@@ -742,6 +845,9 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     }));
     new import_obsidian.Setting(contentEl).setName("AI failure").setDesc("Fallback keeps exporting; strict stops when the CLI fails.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.options.failurePolicy).onChange((value) => {
       this.options.failurePolicy = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("Share target").setDesc("Static bundle creates share/<slug>/index.html for GitHub Pages or any static host.").addDropdown((dropdown) => dropdown.addOption("local-link", "Local file link").addOption("static-bundle", "Static hosting bundle").setValue(this.options.shareTarget).onChange((value) => {
+      this.options.shareTarget = value;
     }));
     new import_obsidian.Setting(contentEl).setName("Copy share link").setDesc("Copies a local file:// link for the generated self-contained HTML.").addToggle((toggle) => toggle.setValue(this.options.copyShareLinkAfterExport).onChange((value) => {
       this.options.copyShareLinkAfterExport = value;
@@ -874,6 +980,10 @@ var MarktlSettingTab = class extends import_obsidian4.PluginSettingTab {
       this.plugin.settings.exportFolder = value.trim() || "html-exports";
       await this.plugin.saveSettings();
     }));
+    new import_obsidian4.Setting(containerEl).setName("Artifact type").setDesc("Default information architecture for AI exports.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "Faithful Note").addOption("strategy-brief", "Strategy Brief").addOption("research-report", "Research Report").addOption("decision-memo", "Decision Memo").addOption("interactive-explainer", "Interactive Explainer").addOption("slide-deck", "Slide Deck").setValue(this.plugin.settings.artifactType).onChange(async (value) => {
+      this.plugin.settings.artifactType = value;
+      await this.plugin.saveSettings();
+    }));
     new import_obsidian4.Setting(containerEl).setName("Template").setDesc("Default HTML style template.").addDropdown((dropdown) => {
       for (const template of (0, import_templates2.listTemplates)()) {
         dropdown.addOption(template.id, template.name);
@@ -906,6 +1016,10 @@ var MarktlSettingTab = class extends import_obsidian4.PluginSettingTab {
     }));
     this.addCliPathSetting(containerEl, "Claude Code CLI path", "claudePath", "claude");
     this.addCliPathSetting(containerEl, "Gemini CLI path", "geminiPath", "gemini");
+    new import_obsidian4.Setting(containerEl).setName("Share target").setDesc("Local link copies the export file. Static bundle writes share/<slug>/index.html for hosting.").addDropdown((dropdown) => dropdown.addOption("local-link", "Local file link").addOption("static-bundle", "Static hosting bundle").setValue(this.plugin.settings.shareTarget).onChange(async (value) => {
+      this.plugin.settings.shareTarget = value;
+      await this.plugin.saveSettings();
+    }));
     new import_obsidian4.Setting(containerEl).setName("Copy share link by default").setDesc("Copies a local file:// link after export. Public hosting is planned separately.").addToggle((toggle) => toggle.setValue(this.plugin.settings.copyShareLinkAfterExport).onChange(async (value) => {
       this.plugin.settings.copyShareLinkAfterExport = value;
       await this.plugin.saveSettings();
@@ -924,11 +1038,13 @@ var { convertWithAiFallback } = require_ai();
 var { slugify } = require_html();
 var DEFAULT_SETTINGS = {
   exportFolder: "html-exports",
+  artifactType: "faithful-note",
   template: "minimal",
   aiProvider: "none",
   conversionMode: "preserve",
   failurePolicy: "fallback",
   previewSecurity: "sanitized",
+  shareTarget: "local-link",
   timeoutMs: 6e4,
   claudePath: "",
   geminiPath: "",
@@ -1005,6 +1121,7 @@ var MarktlPlugin = class extends import_obsidian5.Plugin {
     const options = this.resolveExportOptions(overrides);
     const progress = new MarktlProgressModal(this.app);
     progress.open();
+    progress.addStep(`Artifact: ${options.artifactType}`);
     progress.addStep(`Template: ${options.template}`);
     progress.addStep(`AI CLI: ${options.aiProvider === "none" ? "local fallback" : options.aiProvider}`);
     progress.addStep(`Mode: ${options.conversionMode}; preview: ${options.previewSecurity}`);
@@ -1014,6 +1131,7 @@ var MarktlPlugin = class extends import_obsidian5.Plugin {
       progress.addStep(options.aiProvider === "none" ? "Running local converter..." : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
         provider: options.aiProvider,
+        artifactType: options.artifactType,
         mode: options.conversionMode,
         template: options.template,
         trusted: options.previewSecurity === "trusted",
@@ -1027,7 +1145,7 @@ var MarktlPlugin = class extends import_obsidian5.Plugin {
       });
       progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
       progress.addStep("Writing HTML file to vault...");
-      const outputPath = await this.writeHtmlFile(file, result.html);
+      const outputPath = await this.writeHtmlFile(file, result.html, options);
       progress.addStep("Opening internal preview pane...");
       await this.openPreview({
         html: result.html,
@@ -1051,26 +1169,61 @@ var MarktlPlugin = class extends import_obsidian5.Plugin {
       new import_obsidian5.Notice(`HTML export failed: ${message}`);
     }
   }
-  async writeHtmlFile(source, html) {
+  async writeHtmlFile(source, html, options) {
     const folder = (0, import_obsidian5.normalizePath)(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
     if (!await this.app.vault.adapter.exists(folder)) {
       await this.app.vault.createFolder(folder);
     }
     const basename = slugify(source.basename);
-    const outputPath = (0, import_obsidian5.normalizePath)(`${folder}/${basename}.html`);
+    const outputPath = options.shareTarget === "static-bundle" ? (0, import_obsidian5.normalizePath)(`${folder}/share/${basename}/index.html`) : (0, import_obsidian5.normalizePath)(`${folder}/${basename}.html`);
+    await this.ensureParentFolder(outputPath);
     await this.app.vault.adapter.write(outputPath, html);
+    if (options.shareTarget === "static-bundle") {
+      await this.writeShareReadme(folder, basename, source.path, options);
+    }
     return outputPath;
   }
   resolveExportOptions(overrides) {
     var _a;
     return {
       template: overrides.template || this.settings.template,
+      artifactType: overrides.artifactType || this.settings.artifactType,
       aiProvider: overrides.aiProvider || this.settings.aiProvider,
       conversionMode: overrides.conversionMode || this.settings.conversionMode,
       failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
       previewSecurity: overrides.previewSecurity || this.settings.previewSecurity,
+      shareTarget: overrides.shareTarget || this.settings.shareTarget,
       copyShareLinkAfterExport: (_a = overrides.copyShareLinkAfterExport) != null ? _a : this.settings.copyShareLinkAfterExport
     };
+  }
+  async ensureParentFolder(filePath) {
+    const parts = filePath.split("/");
+    parts.pop();
+    let current = "";
+    for (const part of parts) {
+      current = current ? `${current}/${part}` : part;
+      if (!await this.app.vault.adapter.exists(current)) {
+        await this.app.vault.createFolder(current);
+      }
+    }
+  }
+  async writeShareReadme(folder, basename, sourcePath, options) {
+    const readmePath = (0, import_obsidian5.normalizePath)(`${folder}/share/${basename}/README.md`);
+    const content = [
+      `# ${basename}`,
+      "",
+      "This folder is a static MarkTL HTML export bundle.",
+      "",
+      `- Source note: ${sourcePath}`,
+      `- Artifact type: ${options.artifactType}`,
+      `- Template: ${options.template}`,
+      `- Preview security: ${options.previewSecurity}`,
+      "",
+      "Publish this folder with GitHub Pages, S3/R2, Netlify, Vercel, or any static host.",
+      "Do not publish it if the source note contains private vault content.",
+      ""
+    ].join("\n");
+    await this.app.vault.adapter.write(readmePath, content);
   }
   async copyShareLink(outputPath) {
     const adapter = this.app.vault.adapter;

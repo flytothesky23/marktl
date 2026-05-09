@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { buildPrompt, cleanProviderError, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, mergePath, parseProviderOutput } = require('../src/core/ai.js');
+const { buildPrompt, cleanProviderError, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, getArtifactInstruction, mergePath } = require('../src/core/ai.js');
 
 test('local conversion renders frontmatter, callouts, embeds, and Markdown content', () => {
   const markdown = `---
@@ -88,6 +88,7 @@ test('AI conversion falls back by default and stops in strict mode', async () =>
 
 test('AI prompt asks for designed output and gates dynamic HTML by trusted mode', () => {
   const sanitizedPrompt = buildPrompt('# Note', {
+    artifactType: 'decision-memo',
     mode: 'presentation',
     template: 'deck',
     trusted: false,
@@ -99,9 +100,17 @@ test('AI prompt asks for designed output and gates dynamic HTML by trusted mode'
   });
 
   assert.match(sanitizedPrompt, /refined, modern, visually designed HTML page/);
+  assert.match(sanitizedPrompt, /Artifact type: decision-memo/);
+  assert.match(sanitizedPrompt, /comparison matrix/);
   assert.match(sanitizedPrompt, /do not use JavaScript/);
   assert.match(trustedPrompt, /you may include small inline JavaScript/);
   assert.match(trustedPrompt, /do not load remote resources/);
+});
+
+test('artifact instructions cover work-oriented HTML outputs', () => {
+  assert.match(getArtifactInstruction('strategy-brief'), /executive strategy brief/);
+  assert.match(getArtifactInstruction('interactive-explainer'), /copy buttons/);
+  assert.match(getArtifactInstruction('slide-deck'), /one idea per section/);
 });
 
 test('AI conversion accepts fenced or explained HTML responses by extracting the document', async () => {
@@ -130,31 +139,7 @@ test('AI conversion accepts fenced or explained HTML responses by extracting the
   assert.match(result.html, /Designed Note/);
 });
 
-test('Codex JSON event output is parsed from the final agent message', () => {
-  const stdout = [
-    'Reading additional input from stdin...',
-    '{"type":"thread.started","thread_id":"abc"}',
-    '{"type":"item.completed","item":{"id":"1","type":"agent_message","text":"<html><body><h1>First</h1></body></html>"}}',
-    '{"type":"item.completed","item":{"id":"2","type":"agent_message","text":"<!doctype html><html><body><h1>Final</h1></body></html>"}}',
-  ].join('\n');
-
-  const parsed = parseProviderOutput(stdout, { parser: 'codex-json' });
-
-  assert.match(parsed, /<h1>Final<\/h1>/);
-  assert.equal(parsed.includes('Reading additional input'), false);
-});
-
-test('Codex JSON error event fails instead of being treated as HTML output', () => {
-  const stdout = [
-    '{"type":"thread.started","thread_id":"abc"}',
-    '{"type":"item.completed","item":{"id":"1","type":"error","message":"config is invalid"}}',
-    '{"type":"turn.completed"}',
-  ].join('\n');
-
-  assert.throws(() => parseProviderOutput(stdout, { parser: 'codex-json' }), /config is invalid/);
-});
-
-test('Codex prompt can be passed as an argument instead of stdin-only dash mode', () => {
+test('AI prompt can be passed as a provider argument', () => {
   const prompt = buildPrompt('# Arg Mode', {
     mode: 'preserve',
     template: 'minimal',
@@ -180,6 +165,19 @@ Error: Input must be provided`;
 
   assert.equal(cleaned.includes('Convert this Obsidian Markdown note'), false);
   assert.equal(cleaned.length < 400, true);
+});
+
+test('provider timeout errors are concise', async () => {
+  await assert.rejects(
+    () => convertWithAiFallback('# Slow', {
+      provider: 'claude',
+      strictAiFailures: true,
+      timeoutMs: 1,
+      cliPaths: { claude: 'node' },
+      runProvider: undefined,
+    }),
+    /timed out|Provider exited|Cannot find module/,
+  );
 });
 
 test('CLI path discovery includes nvm and volta bins for Obsidian app launches', () => {

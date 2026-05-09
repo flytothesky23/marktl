@@ -1,7 +1,7 @@
 {
   "id": "marktl",
   "name": "MarkTL HTML Exporter",
-  "version": "0.2.1",
+  "version": "0.5.0",
   "minAppVersion": "1.5.0",
   "description": "Export the current Markdown note to templated HTML and preview it inside Obsidian, with optional AI CLI conversion.",
   "author": "moon",

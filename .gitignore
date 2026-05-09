@@ -4,3 +4,4 @@ dist/
 .obsidian/
 html-exports/
 .omx/
+docs/.pdca-status.json

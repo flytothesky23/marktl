@@ -26,4 +26,6 @@ test('interactive scripts are included only for trusted template exports', () =>
   assert.equal(sanitized.includes('<script>'), false);
   assert.equal(trusted.includes('<script>'), true);
   assert.match(trusted, /querySelectorAll\('article h2'\)/);
+  assert.match(trusted, /Copy as prompt/);
+  assert.match(trusted, /Copy summary/);
 });

@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listTemplates } from './core/templates.js';
-import type { AiProvider, ConversionMode, FailurePolicy, PreviewSecurity } from './types';
+import type { AiProvider, ArtifactType, ConversionMode, FailurePolicy, PreviewSecurity, ShareTarget } from './types';
 
 export class MarktlSettingTab extends PluginSettingTab {
   plugin: MarktlPlugin;
@@ -25,6 +25,22 @@ export class MarktlSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.exportFolder)
         .onChange(async (value) => {
           this.plugin.settings.exportFolder = value.trim() || 'html-exports';
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName('Artifact type')
+      .setDesc('Default information architecture for AI exports.')
+      .addDropdown((dropdown) => dropdown
+        .addOption('faithful-note', 'Faithful Note')
+        .addOption('strategy-brief', 'Strategy Brief')
+        .addOption('research-report', 'Research Report')
+        .addOption('decision-memo', 'Decision Memo')
+        .addOption('interactive-explainer', 'Interactive Explainer')
+        .addOption('slide-deck', 'Slide Deck')
+        .setValue(this.plugin.settings.artifactType)
+        .onChange(async (value) => {
+          this.plugin.settings.artifactType = value as ArtifactType;
           await this.plugin.saveSettings();
         }));
 
@@ -108,6 +124,18 @@ export class MarktlSettingTab extends PluginSettingTab {
 
     this.addCliPathSetting(containerEl, 'Claude Code CLI path', 'claudePath', 'claude');
     this.addCliPathSetting(containerEl, 'Gemini CLI path', 'geminiPath', 'gemini');
+
+    new Setting(containerEl)
+      .setName('Share target')
+      .setDesc('Local link copies the export file. Static bundle writes share/<slug>/index.html for hosting.')
+      .addDropdown((dropdown) => dropdown
+        .addOption('local-link', 'Local file link')
+        .addOption('static-bundle', 'Static hosting bundle')
+        .setValue(this.plugin.settings.shareTarget)
+        .onChange(async (value) => {
+          this.plugin.settings.shareTarget = value as ShareTarget;
+          await this.plugin.saveSettings();
+        }));
 
     new Setting(containerEl)
       .setName('Copy share link by default')

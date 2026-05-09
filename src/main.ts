@@ -10,11 +10,13 @@ const { slugify } = require('./core/html.js');
 
 const DEFAULT_SETTINGS: MarktlSettings = {
   exportFolder: 'html-exports',
+  artifactType: 'faithful-note',
   template: 'minimal',
   aiProvider: 'none',
   conversionMode: 'preserve',
   failurePolicy: 'fallback',
   previewSecurity: 'sanitized',
+  shareTarget: 'local-link',
   timeoutMs: 60000,
   claudePath: '',
   geminiPath: '',
@@ -102,6 +104,7 @@ export default class MarktlPlugin extends Plugin {
     const options = this.resolveExportOptions(overrides);
     const progress = new MarktlProgressModal(this.app);
     progress.open();
+    progress.addStep(`Artifact: ${options.artifactType}`);
     progress.addStep(`Template: ${options.template}`);
     progress.addStep(`AI CLI: ${options.aiProvider === 'none' ? 'local fallback' : options.aiProvider}`);
     progress.addStep(`Mode: ${options.conversionMode}; preview: ${options.previewSecurity}`);
@@ -112,6 +115,7 @@ export default class MarktlPlugin extends Plugin {
       progress.addStep(options.aiProvider === 'none' ? 'Running local converter...' : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
         provider: options.aiProvider,
+        artifactType: options.artifactType,
         mode: options.conversionMode,
         template: options.template,
         trusted: options.previewSecurity === 'trusted',
@@ -126,7 +130,7 @@ export default class MarktlPlugin extends Plugin {
       progress.addStep(result.usedFallback ? 'Generated local fallback HTML.' : 'Generated AI HTML.');
 
       progress.addStep('Writing HTML file to vault...');
-      const outputPath = await this.writeHtmlFile(file, result.html);
+      const outputPath = await this.writeHtmlFile(file, result.html, options);
       progress.addStep('Opening internal preview pane...');
       await this.openPreview({
         html: result.html,
@@ -153,27 +157,66 @@ export default class MarktlPlugin extends Plugin {
     }
   }
 
-  private async writeHtmlFile(source: TFile, html: string): Promise<string> {
+  private async writeHtmlFile(source: TFile, html: string, options: ExportOptions): Promise<string> {
     const folder = normalizePath(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
     if (!(await this.app.vault.adapter.exists(folder))) {
       await this.app.vault.createFolder(folder);
     }
 
     const basename = slugify(source.basename);
-    const outputPath = normalizePath(`${folder}/${basename}.html`);
+    const outputPath = options.shareTarget === 'static-bundle'
+      ? normalizePath(`${folder}/share/${basename}/index.html`)
+      : normalizePath(`${folder}/${basename}.html`);
+    await this.ensureParentFolder(outputPath);
     await this.app.vault.adapter.write(outputPath, html);
+    if (options.shareTarget === 'static-bundle') {
+      await this.writeShareReadme(folder, basename, source.path, options);
+    }
     return outputPath;
   }
 
   private resolveExportOptions(overrides: Partial<ExportOptions>): ExportOptions {
     return {
       template: overrides.template || this.settings.template,
+      artifactType: overrides.artifactType || this.settings.artifactType,
       aiProvider: overrides.aiProvider || this.settings.aiProvider,
       conversionMode: overrides.conversionMode || this.settings.conversionMode,
       failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
       previewSecurity: overrides.previewSecurity || this.settings.previewSecurity,
+      shareTarget: overrides.shareTarget || this.settings.shareTarget,
       copyShareLinkAfterExport: overrides.copyShareLinkAfterExport ?? this.settings.copyShareLinkAfterExport,
     };
+  }
+
+  private async ensureParentFolder(filePath: string): Promise<void> {
+    const parts = filePath.split('/');
+    parts.pop();
+    let current = '';
+    for (const part of parts) {
+      current = current ? `${current}/${part}` : part;
+      if (!(await this.app.vault.adapter.exists(current))) {
+        await this.app.vault.createFolder(current);
+      }
+    }
+  }
+
+  private async writeShareReadme(folder: string, basename: string, sourcePath: string, options: ExportOptions): Promise<void> {
+    const readmePath = normalizePath(`${folder}/share/${basename}/README.md`);
+    const content = [
+      `# ${basename}`,
+      '',
+      'This folder is a static MarkTL HTML export bundle.',
+      '',
+      `- Source note: ${sourcePath}`,
+      `- Artifact type: ${options.artifactType}`,
+      `- Template: ${options.template}`,
+      `- Preview security: ${options.previewSecurity}`,
+      '',
+      'Publish this folder with GitHub Pages, S3/R2, Netlify, Vercel, or any static host.',
+      'Do not publish it if the source note contains private vault content.',
+      '',
+    ].join('\n');
+    await this.app.vault.adapter.write(readmePath, content);
   }
 
   private async copyShareLink(outputPath: string): Promise<void> {

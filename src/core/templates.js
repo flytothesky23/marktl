@@ -132,6 +132,9 @@ const templates = [
       main { max-width: 1040px; margin: 0 auto; padding: 48px 24px 80px; }
       .toc { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
       .toc a { display: inline-block; margin: 4px 12px 4px 0; color: #1d4ed8; text-decoration: none; }
+      .toolbox { position: sticky; top: 12px; z-index: 9; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-bottom: 12px; }
+      .toolbox button { border: 1px solid #bfdbfe; background: #ffffff; color: #1d4ed8; border-radius: 6px; padding: 8px 10px; cursor: pointer; }
+      .toolbox button:hover { background: #eff6ff; }
       article { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 34px; }
       h1 { font-size: 42px; line-height: 1.08; }
       h2 { cursor: pointer; margin-top: 34px; padding: 14px 16px; background: #eef4ff; border-radius: 8px; }
@@ -152,6 +155,29 @@ const templates = [
       };
       addEventListener('scroll', updateProgress, { passive: true });
       updateProgress();
+      const copyText = async (label, text) => {
+        try {
+          await navigator.clipboard.writeText(text);
+          label.textContent = 'Copied';
+          setTimeout(() => { label.textContent = label.dataset.label; }, 1200);
+        } catch {
+          label.textContent = 'Copy failed';
+        }
+      };
+      const toolbox = document.createElement('div');
+      toolbox.className = 'toolbox';
+      const makeButton = (label, getText) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = label;
+        button.dataset.label = label;
+        button.addEventListener('click', () => copyText(button, getText()));
+        toolbox.append(button);
+      };
+      makeButton('Copy as prompt', () => 'Use this HTML artifact as context and continue from its decisions and structure:\\n\\n' + document.body.innerText);
+      makeButton('Copy as markdown', () => document.querySelector('article').innerText);
+      makeButton('Copy summary', () => [...document.querySelectorAll('h1,h2,h3')].map((h) => '- ' + h.textContent).join('\\n'));
+      document.querySelector('main').prepend(toolbox);
       const headings = [...document.querySelectorAll('article h2')];
       if (headings.length) {
         const toc = document.createElement('nav');

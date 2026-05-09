@@ -1,12 +1,9 @@
-const { execFile } = require('node:child_process');
+const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { promisify } = require('node:util');
 const { convertMarkdownToHtml } = require('./converter.js');
 const { looksLikeHtmlDocument, sanitizeHtml } = require('./sanitizer.js');
-
-const execFileAsync = promisify(execFile);
 
 const providerCommands = {
   claude: { command: 'claude', args: ['-p'], promptAsArgument: true },
@@ -81,7 +78,7 @@ async function runCliProvider(markdown, options = {}) {
   }
 
   try {
-    const { stdout, stderr } = await execFileAsync(command, args, execOptions);
+    const { stdout, stderr } = await runProcess(command, args, execOptions);
 
     const output = parseProviderOutput(stdout, provider);
     if (!String(output || '').trim()) {
@@ -100,7 +97,70 @@ async function runCliProvider(markdown, options = {}) {
   }
 }
 
+function runProcess(command, args, options) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      env: options.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+
+    const timeout = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      child.kill('SIGTERM');
+      const error = new Error(`Provider timed out after ${options.timeout}ms`);
+      error.stdout = stdout;
+      error.stderr = stderr;
+      reject(error);
+    }, options.timeout);
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+      if (stdout.length > options.maxBuffer) {
+        child.kill('SIGTERM');
+      }
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+      if (stderr.length > options.maxBuffer) {
+        child.kill('SIGTERM');
+      }
+    });
+    child.on('error', (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timeout);
+      error.stdout = stdout;
+      error.stderr = stderr;
+      reject(error);
+    });
+    child.on('close', (code, signal) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timeout);
+      if (code === 0) {
+        resolve({ stdout, stderr });
+        return;
+      }
+      const error = new Error(`Provider exited with ${signal || code}`);
+      error.stdout = stdout;
+      error.stderr = stderr;
+      reject(error);
+    });
+  });
+}
+
 function buildPrompt(markdown, options = {}) {
+  const artifactInstruction = getArtifactInstruction(options.artifactType || 'faithful-note');
   const modeInstruction = {
     preserve: 'Preserve the source content. Improve semantic HTML, visual hierarchy, typography, spacing, and responsive styling. Do not summarize or remove content.',
     presentation: 'Create a premium presentation-style HTML document with section cards, strong visual rhythm, concise slide-like grouping, summaries, and visual emphasis.',
@@ -112,14 +172,28 @@ function buildPrompt(markdown, options = {}) {
     : 'Sanitized mode is enabled: do not use JavaScript, iframes, external CSS, external scripts, or remote assets. Use rich CSS-only layout and interactions instead.';
 
   return `Convert this Obsidian Markdown note to a complete standalone HTML document.
+Artifact type: ${options.artifactType || 'faithful-note'}
 Template: ${options.template || 'minimal'}
 Mode: ${options.mode || 'preserve'}
+Artifact instruction: ${artifactInstruction}
 Instruction: ${modeInstruction}
 Design standard: produce a refined, modern, visually designed HTML page rather than plain Markdown-looking output. Use responsive CSS, strong spacing, tasteful color, cards/sections where helpful, and readable Korean typography if the content is Korean.
 Dynamic policy: ${dynamicInstruction}
+Interaction standard: when trusted mode is enabled, include useful local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, or lightweight filters when they fit the artifact type. Keep everything self-contained.
 Return only HTML. Do not wrap it in Markdown fences.
 
 ${markdown}`;
+}
+
+function getArtifactInstruction(artifactType) {
+  return {
+    'faithful-note': 'Render the note faithfully with better readability, visual hierarchy, and navigation. Do not substantially reorder or summarize unless the source already does.',
+    'strategy-brief': 'Create an executive strategy brief with TL;DR, decision context, options, tradeoffs, risks, recommendation, and next actions.',
+    'research-report': 'Create a research report with abstract, key findings, evidence sections, source notes, diagrams or tables where useful, and implications.',
+    'decision-memo': 'Create a decision memo optimized for choosing: question, criteria, options, comparison matrix, recommendation, dissenting view, and decision log.',
+    'interactive-explainer': 'Create an interactive explainer with progressive disclosure, visual examples, generated TOC, copy buttons, and self-contained controls in trusted mode.',
+    'slide-deck': 'Create a slide-like artifact with concise sections, strong headings, visual rhythm, and one idea per section while preserving source meaning.',
+  }[artifactType] || 'Render a readable, useful HTML artifact from the note.';
 }
 
 function extractHtmlFromAiOutput(output) {
@@ -264,6 +338,7 @@ function cleanProviderError(value = '') {
 
 module.exports = {
   buildPrompt,
+  getArtifactInstruction,
   convertWithAiFallback,
   extractHtmlFromAiOutput,
   discoverUserCliPaths,

@@ -9,6 +9,7 @@ Obsidian plugin MVP for turning the currently open Markdown note into a template
 - Opens the generated HTML in an Obsidian preview pane.
 - Shows an export modal from the ribbon or command palette to choose template, CLI, mode, preview security, and share-link behavior.
 - Shows an export progress modal so you can see whether AI or local fallback produced the result.
+- Supports artifact types: Faithful Note, Strategy Brief, Research Report, Decision Memo, Interactive Explainer, and Slide Deck.
 - Ships templates: `minimal`, `editorial`, `deck`, `dashboard`, `investor-brief`, `research-memo`, and `interactive-report`.
 - Works without AI through local Markdown-to-HTML conversion.
 - Optional AI conversion through Claude Code CLI or Gemini CLI.
@@ -19,6 +20,7 @@ Obsidian plugin MVP for turning the currently open Markdown note into a template
 - Trusted preview/export mode is available only by explicit setting.
 - AI failures fallback to local conversion by default, with a strict failure option in settings.
 - Can copy a local `file://` share link for the generated self-contained HTML file.
+- Can create a static hosting bundle at `html-exports/share/<slug>/index.html` for GitHub Pages, S3/R2, Netlify, Vercel, or any static host.
 
 ## Development
 
@@ -45,6 +47,9 @@ Deferred: advanced wikilink resolution, Mermaid rendering, math rendering, publi
 
 ## Sharing
 
-The current sharing feature copies a local `file://` link to the generated HTML. This is useful for local review or sending the file directly.
+The current sharing feature supports two targets:
 
-Public web sharing still needs a hosting target. Good next options are GitHub Pages, a user-configured static hosting folder, or an export bundle that can be dropped into any static host.
+- Local file link: copies a `file://` URL for local review or direct file sending.
+- Static bundle: writes `html-exports/share/<slug>/index.html` plus a README describing how to publish the folder.
+
+MarkTL does not upload vault content automatically. Public web sharing still requires you to choose a hosting target and publish the generated static bundle yourself.
