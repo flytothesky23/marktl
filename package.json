@@ -1,0 +1,24 @@
+{
+  "name": "marktl",
+  "version": "0.1.0",
+  "description": "Obsidian plugin that exports Markdown notes to templated HTML previews.",
+  "main": "main.js",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "typecheck": "tsc --noEmit",
+    "build": "esbuild src/main.ts --bundle --external:obsidian --format=cjs --platform=node --target=es2018 --outfile=main.js"
+  },
+  "keywords": [
+    "obsidian",
+    "markdown",
+    "html"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.28.0",
+    "obsidian": "^1.5.12",
+    "typescript": "^5.4.5"
+  }
+}
