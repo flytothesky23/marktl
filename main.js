@@ -472,11 +472,9 @@ var require_ai = __commonJS({
     var { looksLikeHtmlDocument, sanitizeHtml } = require_sanitizer();
     var execFileAsync = promisify(execFile);
     var providerCommands = {
-      codex: { command: "codex", args: ["exec", "--skip-git-repo-check", "--json"], parser: "codex-json", promptAsArgument: true },
       claude: { command: "claude", args: ["-p"], promptAsArgument: true },
       gemini: { command: "gemini", args: ["-p"], promptAsArgument: true }
     };
-    var loginShellPath = "/bin/zsh";
     var cliPath = [
       "/opt/homebrew/bin",
       "/usr/local/bin",
@@ -524,8 +522,6 @@ var require_ai = __commonJS({
       const timeout = Number(options.timeoutMs || 6e4);
       const command = options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command;
       const args = provider.promptAsArgument ? [...provider.args, prompt] : provider.args;
-      const baseShellCommand = [command, ...args].map(shellQuote).join(" ");
-      const shellCommand = provider.promptAsArgument ? `${baseShellCommand} < /dev/null` : baseShellCommand;
       const execOptions = {
         timeout,
         maxBuffer: 10 * 1024 * 1024,
@@ -538,14 +534,18 @@ var require_ai = __commonJS({
         execOptions.input = prompt;
       }
       try {
-        const { stdout, stderr } = await execFileAsync(loginShellPath, ["-lic", shellCommand], execOptions);
+        const { stdout, stderr } = await execFileAsync(command, args, execOptions);
         const output = parseProviderOutput(stdout, provider);
         if (!String(output || "").trim()) {
-          throw new Error(`AI provider returned empty output${stderr ? `: ${stderr.trim()}` : ""}`);
+          throw new Error(`AI provider returned empty output${stderr ? `: ${cleanProviderError(stderr)}` : ""}`);
         }
         return output;
       } catch (error) {
-        const details = [error.message, error.stderr && error.stderr.trim(), error.stdout && error.stdout.trim()].filter(Boolean).join("\n");
+        const details = [
+          cleanProviderError(error.stderr),
+          parseProviderErrorOutput(error.stdout, provider),
+          cleanProviderError(error.message)
+        ].filter(Boolean).join("\n");
         throw new Error(details || String(error));
       }
     }
@@ -637,6 +637,7 @@ ${markdown}`;
         return stdout;
       }
       let lastMessage = "";
+      let lastError = "";
       for (const line of String(stdout || "").split(/\r?\n/)) {
         const trimmed = line.trim();
         if (!trimmed.startsWith("{")) {
@@ -647,13 +648,34 @@ ${markdown}`;
           if (event.type === "item.completed" && event.item && event.item.type === "agent_message") {
             lastMessage = event.item.text || "";
           }
+          if (event.type === "item.completed" && event.item && event.item.type === "error") {
+            lastError = event.item.message || "";
+          }
         } catch (e) {
         }
       }
+      if (!lastMessage && lastError) {
+        throw new Error(lastError);
+      }
       return lastMessage || stdout;
     }
-    function shellQuote(value) {
-      return `'${String(value).replace(/'/g, `'\\''`)}'`;
+    function parseProviderErrorOutput(stdout, provider = {}) {
+      if (!stdout) {
+        return "";
+      }
+      try {
+        parseProviderOutput(stdout, provider);
+      } catch (error) {
+        return cleanProviderError(error.message);
+      }
+      return "";
+    }
+    function cleanProviderError(value = "") {
+      const text = String(value || "").trim();
+      if (!text) {
+        return "";
+      }
+      return text.replace(/Command failed:[\s\S]*?(?=\n[A-Z][a-z]+:|\nError:|\nWarning:|$)/g, "").replace(/Convert this Obsidian Markdown note[\s\S]*$/g, "Provider command failed while processing the prompt.").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 8).join("\n");
     }
     module2.exports = {
       buildPrompt,
@@ -663,7 +685,7 @@ ${markdown}`;
       mergePath,
       parseProviderOutput,
       runCliProvider,
-      shellQuote
+      cleanProviderError
     };
   }
 });
@@ -709,7 +731,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
         this.options.template = value;
       });
     });
-    new import_obsidian.Setting(contentEl).setName("AI CLI").setDesc("Codex, Claude, and Gemini were tested with prompt-argument execution.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("codex", "Codex CLI").addOption("claude", "Claude Code CLI").addOption("gemini", "Gemini CLI").setValue(this.options.aiProvider).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("AI CLI").setDesc("Only providers that passed live plugin-style execution are shown.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("claude", "Claude Code CLI").addOption("gemini", "Gemini CLI").setValue(this.options.aiProvider).onChange((value) => {
       this.options.aiProvider = value;
     }));
     new import_obsidian.Setting(contentEl).setName("Mode").setDesc("Preserve keeps content faithful; other modes allow AI restructuring.").addDropdown((dropdown) => dropdown.addOption("preserve", "Preserve content").addOption("presentation", "Presentation").addOption("blog", "Blog article").addOption("landing", "Landing page").setValue(this.options.conversionMode).onChange((value) => {
@@ -861,7 +883,7 @@ var MarktlSettingTab = class extends import_obsidian4.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian4.Setting(containerEl).setName("AI provider").setDesc("Optional CLI provider for high-quality AI conversion.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("codex", "Codex CLI").addOption("claude", "Claude Code CLI").addOption("gemini", "Gemini CLI").setValue(this.plugin.settings.aiProvider).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName("AI provider").setDesc("Optional CLI provider for high-quality AI conversion.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("claude", "Claude Code CLI").addOption("gemini", "Gemini CLI").setValue(this.plugin.settings.aiProvider).onChange(async (value) => {
       this.plugin.settings.aiProvider = value;
       await this.plugin.saveSettings();
     }));
@@ -882,7 +904,6 @@ var MarktlSettingTab = class extends import_obsidian4.PluginSettingTab {
       this.plugin.settings.timeoutMs = Number.isFinite(parsed) && parsed > 0 ? parsed : 6e4;
       await this.plugin.saveSettings();
     }));
-    this.addCliPathSetting(containerEl, "Codex CLI path", "codexPath", "codex");
     this.addCliPathSetting(containerEl, "Claude Code CLI path", "claudePath", "claude");
     this.addCliPathSetting(containerEl, "Gemini CLI path", "geminiPath", "gemini");
     new import_obsidian4.Setting(containerEl).setName("Copy share link by default").setDesc("Copies a local file:// link after export. Public hosting is planned separately.").addToggle((toggle) => toggle.setValue(this.plugin.settings.copyShareLinkAfterExport).onChange(async (value) => {
@@ -909,7 +930,6 @@ var DEFAULT_SETTINGS = {
   failurePolicy: "fallback",
   previewSecurity: "sanitized",
   timeoutMs: 6e4,
-  codexPath: "",
   claudePath: "",
   geminiPath: "",
   copyShareLinkAfterExport: false
@@ -959,6 +979,9 @@ var MarktlPlugin = class extends import_obsidian5.Plugin {
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    if (this.settings.aiProvider === "codex") {
+      this.settings.aiProvider = "none";
+    }
   }
   async saveSettings() {
     await this.saveData(this.settings);
@@ -998,7 +1021,6 @@ var MarktlPlugin = class extends import_obsidian5.Plugin {
         timeoutMs: this.settings.timeoutMs,
         sourcePath: file.path,
         cliPaths: {
-          codex: this.settings.codexPath,
           claude: this.settings.claudePath,
           gemini: this.settings.geminiPath
         }

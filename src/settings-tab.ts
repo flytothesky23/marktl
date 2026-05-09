@@ -48,7 +48,6 @@ export class MarktlSettingTab extends PluginSettingTab {
       .setDesc('Optional CLI provider for high-quality AI conversion.')
       .addDropdown((dropdown) => dropdown
         .addOption('none', 'None / local fallback')
-        .addOption('codex', 'Codex CLI')
         .addOption('claude', 'Claude Code CLI')
         .addOption('gemini', 'Gemini CLI')
         .setValue(this.plugin.settings.aiProvider)
@@ -107,7 +106,6 @@ export class MarktlSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
 
-    this.addCliPathSetting(containerEl, 'Codex CLI path', 'codexPath', 'codex');
     this.addCliPathSetting(containerEl, 'Claude Code CLI path', 'claudePath', 'claude');
     this.addCliPathSetting(containerEl, 'Gemini CLI path', 'geminiPath', 'gemini');
 
@@ -122,7 +120,7 @@ export class MarktlSettingTab extends PluginSettingTab {
         }));
   }
 
-  private addCliPathSetting(containerEl: HTMLElement, name: string, key: 'codexPath' | 'claudePath' | 'geminiPath', placeholder: string): void {
+  private addCliPathSetting(containerEl: HTMLElement, name: string, key: 'claudePath' | 'geminiPath', placeholder: string): void {
     new Setting(containerEl)
       .setName(name)
       .setDesc('Leave blank to use the command from PATH.')

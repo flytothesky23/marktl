@@ -11,10 +11,9 @@ Obsidian plugin MVP for turning the currently open Markdown note into a template
 - Shows an export progress modal so you can see whether AI or local fallback produced the result.
 - Ships templates: `minimal`, `editorial`, `deck`, `dashboard`, `investor-brief`, `research-memo`, and `interactive-report`.
 - Works without AI through local Markdown-to-HTML conversion.
-- Optional AI conversion through Codex CLI, Claude Code CLI, or Gemini CLI.
+- Optional AI conversion through Claude Code CLI or Gemini CLI.
 - Conversion modes: preserve content, presentation, blog, and landing page.
-- AI CLI execution runs through a login shell so Obsidian can find Homebrew/Node-based CLIs more reliably.
-- Codex CLI uses JSON event output and reads the final `agent_message` instead of relying on stdout text.
+- AI CLI execution uses direct process invocation with prompt arguments instead of shell command strings.
 - AI responses wrapped in explanations or Markdown code fences are unwrapped before validation.
 - Default sanitized preview blocks scripts, iframes, external assets, and inline event handlers.
 - Trusted preview/export mode is available only by explicit setting.

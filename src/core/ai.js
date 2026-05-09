@@ -9,12 +9,10 @@ const { looksLikeHtmlDocument, sanitizeHtml } = require('./sanitizer.js');
 const execFileAsync = promisify(execFile);
 
 const providerCommands = {
-  codex: { command: 'codex', args: ['exec', '--skip-git-repo-check', '--json'], parser: 'codex-json', promptAsArgument: true },
   claude: { command: 'claude', args: ['-p'], promptAsArgument: true },
   gemini: { command: 'gemini', args: ['-p'], promptAsArgument: true },
 };
 
-const loginShellPath = '/bin/zsh';
 const cliPath = [
   '/opt/homebrew/bin',
   '/usr/local/bin',
@@ -70,8 +68,6 @@ async function runCliProvider(markdown, options = {}) {
     ? options.cliPaths[options.provider]
     : provider.command;
   const args = provider.promptAsArgument ? [...provider.args, prompt] : provider.args;
-  const baseShellCommand = [command, ...args].map(shellQuote).join(' ');
-  const shellCommand = provider.promptAsArgument ? `${baseShellCommand} < /dev/null` : baseShellCommand;
   const execOptions = {
     timeout,
     maxBuffer: 10 * 1024 * 1024,
@@ -85,15 +81,19 @@ async function runCliProvider(markdown, options = {}) {
   }
 
   try {
-    const { stdout, stderr } = await execFileAsync(loginShellPath, ['-lic', shellCommand], execOptions);
+    const { stdout, stderr } = await execFileAsync(command, args, execOptions);
 
     const output = parseProviderOutput(stdout, provider);
     if (!String(output || '').trim()) {
-      throw new Error(`AI provider returned empty output${stderr ? `: ${stderr.trim()}` : ''}`);
+      throw new Error(`AI provider returned empty output${stderr ? `: ${cleanProviderError(stderr)}` : ''}`);
     }
     return output;
   } catch (error) {
-    const details = [error.message, error.stderr && error.stderr.trim(), error.stdout && error.stdout.trim()]
+    const details = [
+      cleanProviderError(error.stderr),
+      parseProviderErrorOutput(error.stdout, provider),
+      cleanProviderError(error.message),
+    ]
       .filter(Boolean)
       .join('\n');
     throw new Error(details || String(error));
@@ -211,6 +211,7 @@ function parseProviderOutput(stdout, provider = {}) {
   }
 
   let lastMessage = '';
+  let lastError = '';
   for (const line of String(stdout || '').split(/\r?\n/)) {
     const trimmed = line.trim();
     if (!trimmed.startsWith('{')) {
@@ -221,15 +222,44 @@ function parseProviderOutput(stdout, provider = {}) {
       if (event.type === 'item.completed' && event.item && event.item.type === 'agent_message') {
         lastMessage = event.item.text || '';
       }
+      if (event.type === 'item.completed' && event.item && event.item.type === 'error') {
+        lastError = event.item.message || '';
+      }
     } catch {
       // Codex can emit non-JSON diagnostic lines in the same stream.
     }
   }
+  if (!lastMessage && lastError) {
+    throw new Error(lastError);
+  }
   return lastMessage || stdout;
 }
 
-function shellQuote(value) {
-  return `'${String(value).replace(/'/g, `'\\''`)}'`;
+function parseProviderErrorOutput(stdout, provider = {}) {
+  if (!stdout) {
+    return '';
+  }
+  try {
+    parseProviderOutput(stdout, provider);
+  } catch (error) {
+    return cleanProviderError(error.message);
+  }
+  return '';
+}
+
+function cleanProviderError(value = '') {
+  const text = String(value || '').trim();
+  if (!text) {
+    return '';
+  }
+  return text
+    .replace(/Command failed:[\s\S]*?(?=\n[A-Z][a-z]+:|\nError:|\nWarning:|$)/g, '')
+    .replace(/Convert this Obsidian Markdown note[\s\S]*$/g, 'Provider command failed while processing the prompt.')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 8)
+    .join('\n');
 }
 
 module.exports = {
@@ -240,5 +270,5 @@ module.exports = {
   mergePath,
   parseProviderOutput,
   runCliProvider,
-  shellQuote,
+  cleanProviderError,
 };

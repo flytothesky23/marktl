@@ -16,7 +16,6 @@ const DEFAULT_SETTINGS: MarktlSettings = {
   failurePolicy: 'fallback',
   previewSecurity: 'sanitized',
   timeoutMs: 60000,
-  codexPath: '',
   claudePath: '',
   geminiPath: '',
   copyShareLinkAfterExport: false,
@@ -72,6 +71,9 @@ export default class MarktlPlugin extends Plugin {
 
   async loadSettings(): Promise<void> {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    if ((this.settings.aiProvider as string) === 'codex') {
+      this.settings.aiProvider = 'none';
+    }
   }
 
   async saveSettings(): Promise<void> {
@@ -117,7 +119,6 @@ export default class MarktlPlugin extends Plugin {
         timeoutMs: this.settings.timeoutMs,
         sourcePath: file.path,
         cliPaths: {
-          codex: this.settings.codexPath,
           claude: this.settings.claudePath,
           gemini: this.settings.geminiPath,
         },

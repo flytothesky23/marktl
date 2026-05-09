@@ -1,4 +1,4 @@
-export type AiProvider = 'none' | 'codex' | 'claude' | 'gemini';
+export type AiProvider = 'none' | 'claude' | 'gemini';
 export type ConversionMode = 'preserve' | 'presentation' | 'blog' | 'landing';
 export type FailurePolicy = 'fallback' | 'strict';
 export type PreviewSecurity = 'sanitized' | 'trusted';
@@ -11,7 +11,6 @@ export interface MarktlSettings {
   failurePolicy: FailurePolicy;
   previewSecurity: PreviewSecurity;
   timeoutMs: number;
-  codexPath: string;
   claudePath: string;
   geminiPath: string;
   copyShareLinkAfterExport: boolean;

@@ -46,10 +46,9 @@ export class MarktlExportModal extends Modal {
 
     new Setting(contentEl)
       .setName('AI CLI')
-      .setDesc('Codex, Claude, and Gemini were tested with prompt-argument execution.')
+      .setDesc('Only providers that passed live plugin-style execution are shown.')
       .addDropdown((dropdown) => dropdown
         .addOption('none', 'None / local fallback')
-        .addOption('codex', 'Codex CLI')
         .addOption('claude', 'Claude Code CLI')
         .addOption('gemini', 'Gemini CLI')
         .setValue(this.options.aiProvider)

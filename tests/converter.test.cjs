@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { buildPrompt, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, mergePath, parseProviderOutput, shellQuote } = require('../src/core/ai.js');
+const { buildPrompt, cleanProviderError, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, mergePath, parseProviderOutput } = require('../src/core/ai.js');
 
 test('local conversion renders frontmatter, callouts, embeds, and Markdown content', () => {
   const markdown = `---
@@ -144,6 +144,16 @@ test('Codex JSON event output is parsed from the final agent message', () => {
   assert.equal(parsed.includes('Reading additional input'), false);
 });
 
+test('Codex JSON error event fails instead of being treated as HTML output', () => {
+  const stdout = [
+    '{"type":"thread.started","thread_id":"abc"}',
+    '{"type":"item.completed","item":{"id":"1","type":"error","message":"config is invalid"}}',
+    '{"type":"turn.completed"}',
+  ].join('\n');
+
+  assert.throws(() => parseProviderOutput(stdout, { parser: 'codex-json' }), /config is invalid/);
+});
+
 test('Codex prompt can be passed as an argument instead of stdin-only dash mode', () => {
   const prompt = buildPrompt('# Arg Mode', {
     mode: 'preserve',
@@ -155,13 +165,21 @@ test('Codex prompt can be passed as an argument instead of stdin-only dash mode'
   assert.equal(prompt.includes('Return only HTML'), true);
 });
 
-test('CLI shell helpers preserve paths with spaces and prepend common Node locations', () => {
-  assert.equal(shellQuote("/tmp/my cli's/bin/codex"), "'/tmp/my cli'\\''s/bin/codex'");
-
+test('CLI path helper prepends common Node locations', () => {
   const mergedPath = mergePath('/custom/bin:/opt/homebrew/bin', { homeDir: '' });
   assert.equal(mergedPath.split(':')[0], '/opt/homebrew/bin');
   assert.equal(mergedPath.includes('/usr/local/bin'), true);
   assert.equal(mergedPath.includes('/custom/bin'), true);
+});
+
+test('provider errors do not leak the full Markdown prompt', () => {
+  const raw = `Command failed: /bin/zsh -lic 'claude' '-p' 'Convert this Obsidian Markdown note to a complete standalone HTML document. ${'x'.repeat(1000)}'
+Error: Input must be provided`;
+
+  const cleaned = cleanProviderError(raw);
+
+  assert.equal(cleaned.includes('Convert this Obsidian Markdown note'), false);
+  assert.equal(cleaned.length < 400, true);
 });
 
 test('CLI path discovery includes nvm and volta bins for Obsidian app launches', () => {
