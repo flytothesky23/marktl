@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 const { convertMarkdownToHtml } = require('../src/core/converter.js');
 const { sanitizeHtml } = require('../src/core/sanitizer.js');
-const { buildPrompt, convertWithAiFallback, mergePath, shellQuote } = require('../src/core/ai.js');
+const { buildPrompt, convertWithAiFallback, extractHtmlFromAiOutput, mergePath, shellQuote } = require('../src/core/ai.js');
 
 test('local conversion renders frontmatter, callouts, embeds, and Markdown content', () => {
   const markdown = `---
@@ -98,6 +98,32 @@ test('AI prompt asks for designed output and gates dynamic HTML by trusted mode'
   assert.match(sanitizedPrompt, /do not use JavaScript/);
   assert.match(trustedPrompt, /you may include small inline JavaScript/);
   assert.match(trustedPrompt, /do not load remote resources/);
+});
+
+test('AI conversion accepts fenced or explained HTML responses by extracting the document', async () => {
+  const aiOutput = `Here is the generated page:
+
+\`\`\`html
+<!doctype html>
+<html>
+<head><title>Designed</title></head>
+<body><main><h1>Designed Note</h1></main></body>
+</html>
+\`\`\`
+`;
+
+  assert.match(extractHtmlFromAiOutput(aiOutput), /<h1>Designed Note<\/h1>/);
+
+  const result = await convertWithAiFallback('# Source', {
+    provider: 'codex',
+    mode: 'presentation',
+    template: 'deck',
+    strictAiFailures: false,
+    runProvider: async () => aiOutput,
+  });
+
+  assert.equal(result.usedFallback, false);
+  assert.match(result.html, /Designed Note/);
 });
 
 test('CLI shell helpers preserve paths with spaces and prepend common Node locations', () => {

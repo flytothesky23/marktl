@@ -33,7 +33,7 @@ async function convertWithAiFallback(markdown, options = {}) {
   const runProvider = options.runProvider || runCliProvider;
 
   try {
-    const aiHtml = await runProvider(markdown, options);
+    const aiHtml = extractHtmlFromAiOutput(await runProvider(markdown, options));
     if (!looksLikeHtmlDocument(aiHtml)) {
       throw new Error('AI provider returned invalid HTML');
     }
@@ -102,6 +102,34 @@ Return only HTML. Do not wrap it in Markdown fences.
 ${markdown}`;
 }
 
+function extractHtmlFromAiOutput(output) {
+  const value = String(output || '').trim();
+  if (!value) {
+    return '';
+  }
+
+  const fenced = /```(?:html)?\s*([\s\S]*?)```/i.exec(value);
+  const candidate = fenced ? fenced[1].trim() : value;
+
+  const documentMatch = /(?:<!doctype\s+html[^>]*>\s*)?<html\b[\s\S]*<\/html>/i.exec(candidate);
+  if (documentMatch) {
+    return documentMatch[0].trim();
+  }
+
+  const bodyMatch = /<body\b[^>]*>([\s\S]*?)<\/body>/i.exec(candidate);
+  if (bodyMatch) {
+    return `<!doctype html><html><body>${bodyMatch[1].trim()}</body></html>`;
+  }
+
+  const firstTag = candidate.search(/<[a-z][\s\S]*?>/i);
+  const lastTag = Math.max(candidate.lastIndexOf('>'), candidate.lastIndexOf('/>'));
+  if (firstTag !== -1 && lastTag > firstTag) {
+    return candidate.slice(firstTag, lastTag + 1).trim();
+  }
+
+  return candidate;
+}
+
 function mergePath(existingPath = '') {
   const seen = new Set();
   return [...cliPath.split(':'), ...String(existingPath).split(':')]
@@ -123,6 +151,7 @@ function shellQuote(value) {
 module.exports = {
   buildPrompt,
   convertWithAiFallback,
+  extractHtmlFromAiOutput,
   mergePath,
   runCliProvider,
   shellQuote,
