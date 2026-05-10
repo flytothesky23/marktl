@@ -1239,6 +1239,95 @@ var require_context_pack = __commonJS({
   }
 });
 
+// src/core/feedback.js
+var require_feedback = __commonJS({
+  "src/core/feedback.js"(exports2, module2) {
+    "use strict";
+    var { escapeHtml } = require_html();
+    function buildGiscusFeedbackSection(options = {}) {
+      const config = normalizeGiscusConfig(options);
+      if (!config.ready) {
+        return "";
+      }
+      return `<section class="marktl-reader-feedback" aria-label="Reader feedback">
+<style>
+.marktl-reader-feedback { margin: 48px auto 0; padding: 24px; border: 1px solid #d8e2ef; border-radius: 8px; background: #ffffff; }
+.marktl-reader-feedback h2 { margin-top: 0; }
+.marktl-reader-feedback p { color: #526173; }
+.marktl-github-login-note { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 18px; padding: 10px 12px; border-radius: 6px; background: #f2f5f9; color: #243b53; font-weight: 700; }
+</style>
+<h2>Reader feedback</h2>
+<p>Sign in with GitHub in the comment box below to leave a public comment or reaction.</p>
+<div class="marktl-github-login-note">GitHub login is handled by Giscus.</div>
+<script src="https://giscus.app/client.js"
+        data-repo="${escapeAttr(config.repo)}"
+        data-repo-id="${escapeAttr(config.repoId)}"
+        data-category="${escapeAttr(config.category)}"
+        data-category-id="${escapeAttr(config.categoryId)}"
+        data-mapping="${escapeAttr(config.mapping)}"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="${escapeAttr(config.theme)}"
+        data-lang="${escapeAttr(config.lang)}"
+        crossorigin="anonymous"
+        async>
+</script>
+</section>`;
+    }
+    function injectReaderFeedback2(html, options = {}) {
+      const section = buildGiscusFeedbackSection(options);
+      if (!section) {
+        return String(html || "");
+      }
+      const value = String(html || "");
+      if (/<\/main>/i.test(value)) {
+        return value.replace(/<\/main>/i, `${section}
+</main>`);
+      }
+      if (/<\/body>/i.test(value)) {
+        return value.replace(/<\/body>/i, `${section}
+</body>`);
+      }
+      return `${value}
+${section}`;
+    }
+    function validateGiscusConfig2(options = {}) {
+      const config = normalizeGiscusConfig(options);
+      const warnings = [];
+      if (!config.repo) warnings.push("Giscus feedback is missing repository.");
+      if (!config.repoId) warnings.push("Giscus feedback is missing repository ID.");
+      if (!config.category) warnings.push("Giscus feedback is missing discussion category.");
+      if (!config.categoryId) warnings.push("Giscus feedback is missing discussion category ID.");
+      return warnings;
+    }
+    function normalizeGiscusConfig(options = {}) {
+      const config = {
+        repo: String(options.repo || "").trim(),
+        repoId: String(options.repoId || "").trim(),
+        category: String(options.category || "").trim(),
+        categoryId: String(options.categoryId || "").trim(),
+        mapping: String(options.mapping || "pathname").trim() || "pathname",
+        theme: String(options.theme || "preferred_color_scheme").trim() || "preferred_color_scheme",
+        lang: String(options.lang || "ko").trim() || "ko"
+      };
+      return {
+        ...config,
+        ready: Boolean(config.repo && config.repoId && config.category && config.categoryId)
+      };
+    }
+    function escapeAttr(value) {
+      return escapeHtml(String(value || "")).replace(/"/g, "&quot;");
+    }
+    module2.exports = {
+      buildGiscusFeedbackSection,
+      injectReaderFeedback: injectReaderFeedback2,
+      validateGiscusConfig: validateGiscusConfig2
+    };
+  }
+});
+
 // src/core/github-pages.js
 var require_github_pages = __commonJS({
   "src/core/github-pages.js"(exports2, module2) {
@@ -1431,6 +1520,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       failurePolicy: plugin.settings.failurePolicy,
       previewSecurity: plugin.settings.previewSecurity,
       contextPackMode: plugin.settings.contextPackMode,
+      readerFeedbackMode: plugin.settings.readerFeedbackMode,
       shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport
     };
@@ -1484,6 +1574,9 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     }));
     new import_obsidian.Setting(contentEl).setName("Context pack").setDesc("Optionally lets AI read linked Markdown notes as supporting context.").addDropdown((dropdown) => dropdown.addOption("none", "Active note only").addOption("linked-notes", "Include linked notes").setValue(this.options.contextPackMode).onChange((value) => {
       this.options.contextPackMode = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("Reader feedback").setDesc("Giscus adds GitHub login, reactions, and public comments to trusted exports.").addDropdown((dropdown) => dropdown.addOption("none", "No reader comments").addOption("giscus", "Giscus GitHub comments").setValue(this.options.readerFeedbackMode).onChange((value) => {
+      this.options.readerFeedbackMode = value;
     }));
     new import_obsidian.Setting(contentEl).setName("AI failure").setDesc("Fallback keeps exporting; strict stops when the CLI fails.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.options.failurePolicy).onChange((value) => {
       this.options.failurePolicy = value;
@@ -1629,7 +1722,7 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
       if (brokenImages.length > 0) {
         warnings.push(`${brokenImages.length} broken image(s)`);
       }
-      if (this.state.trusted && !doc.querySelector('button,input,select,textarea,[contenteditable="true"]')) {
+      if (this.state.trusted && !doc.querySelector('button,input,select,textarea,[contenteditable="true"]') && !doc.querySelector('script[src*="giscus.app/client.js"]')) {
         warnings.push("trusted preview has no interactive controls");
       }
       const scrollHeight = ((_c = doc.scrollingElement) == null ? void 0 : _c.scrollHeight) || ((_d = doc.body) == null ? void 0 : _d.scrollHeight) || 0;
@@ -1762,6 +1855,21 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       this.plugin.settings.shareTarget = value;
       await this.plugin.saveSettings();
     }));
+    containerEl.createEl("h3", { text: "Reader feedback" });
+    containerEl.createEl("p", {
+      cls: "marktl-modal-intro",
+      text: "Giscus uses GitHub Discussions for public comments. It requires trusted exports because it loads the Giscus script."
+    });
+    new import_obsidian5.Setting(containerEl).setName("Reader feedback mode").setDesc("Adds a GitHub login/comment box to exported HTML when configured.").addDropdown((dropdown) => dropdown.addOption("none", "None").addOption("giscus", "Giscus GitHub comments").setValue(this.plugin.settings.readerFeedbackMode).onChange(async (value) => {
+      this.plugin.settings.readerFeedbackMode = value;
+      await this.plugin.saveSettings();
+    }));
+    this.addTextSetting(containerEl, "Giscus repository", "owner/repo where GitHub Discussions are enabled.", "giscusRepo", "reallygood83/moondoc");
+    this.addTextSetting(containerEl, "Giscus repository ID", "Repository ID from giscus.app.", "giscusRepoId", "R_...");
+    this.addTextSetting(containerEl, "Giscus category", "Discussion category name, for example Announcements or General.", "giscusCategory", "Announcements");
+    this.addTextSetting(containerEl, "Giscus category ID", "Discussion category ID from giscus.app.", "giscusCategoryId", "DIC_...");
+    this.addTextSetting(containerEl, "Giscus mapping", "Discussion mapping strategy. Usually pathname for GitHub Pages.", "giscusMapping", "pathname");
+    this.addTextSetting(containerEl, "Giscus theme", "Theme name such as preferred_color_scheme, light, dark.", "giscusTheme", "preferred_color_scheme");
     containerEl.createEl("h3", { text: "GitHub Pages publishing" });
     containerEl.createEl("p", {
       cls: "marktl-modal-intro",
@@ -1932,6 +2040,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
 var { convertWithAiFallback } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
+var { injectReaderFeedback, validateGiscusConfig } = require_feedback();
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require_github_pages();
 var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
@@ -1945,6 +2054,7 @@ var DEFAULT_SETTINGS = {
   failurePolicy: "fallback",
   previewSecurity: "sanitized",
   contextPackMode: "none",
+  readerFeedbackMode: "none",
   shareTarget: "local-link",
   githubRepo: "",
   githubBranch: "main",
@@ -1952,6 +2062,12 @@ var DEFAULT_SETTINGS = {
   githubPagesBaseUrl: "",
   githubPublishPath: "marktl",
   githubShareHomeTitle: "MarkTL Shared HTML",
+  giscusRepo: "",
+  giscusRepoId: "",
+  giscusCategory: "Announcements",
+  giscusCategoryId: "",
+  giscusMapping: "pathname",
+  giscusTheme: "preferred_color_scheme",
   timeoutMs: 3e5,
   claudePath: "",
   geminiPath: "",
@@ -2032,6 +2148,10 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       this.settings.contextPackMode = DEFAULT_SETTINGS.contextPackMode;
       shouldSave = true;
     }
+    if (!["none", "giscus"].includes(this.settings.readerFeedbackMode)) {
+      this.settings.readerFeedbackMode = DEFAULT_SETTINGS.readerFeedbackMode;
+      shouldSave = true;
+    }
     if (shouldSave) {
       await this.saveSettings();
     }
@@ -2095,7 +2215,12 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         }
       });
       progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
-      const html = rewriteHtmlImageSources(result.html, assetResult.mappings);
+      const imageRewrittenHtml = rewriteHtmlImageSources(result.html, assetResult.mappings);
+      const feedbackResult = this.applyReaderFeedback(imageRewrittenHtml, options);
+      const html = feedbackResult.html;
+      if (feedbackResult.injected) {
+        progress.addStep("Added Giscus reader feedback.");
+      }
       const qaWarnings = validateHtmlArtifact(html, {
         trusted: options.previewSecurity === "trusted",
         assetMappings: assetResult.mappings
@@ -2105,7 +2230,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       } else {
         progress.addStep("HTML QA passed basic checks.");
       }
-      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...qaWarnings];
+      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...feedbackResult.warnings, ...qaWarnings];
       let publicUrl = "";
       let shareHomeUrl = "";
       progress.addStep("Writing HTML file to vault...");
@@ -2245,8 +2370,39 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
       previewSecurity: overrides.previewSecurity || this.settings.previewSecurity,
       contextPackMode: overrides.contextPackMode || this.settings.contextPackMode,
+      readerFeedbackMode: overrides.readerFeedbackMode || this.settings.readerFeedbackMode,
       shareTarget: overrides.shareTarget || this.settings.shareTarget,
       copyShareLinkAfterExport: (_a = overrides.copyShareLinkAfterExport) != null ? _a : this.settings.copyShareLinkAfterExport
+    };
+  }
+  applyReaderFeedback(html, options) {
+    if (options.readerFeedbackMode !== "giscus") {
+      return { html, warnings: [], injected: false };
+    }
+    if (options.previewSecurity !== "trusted") {
+      return {
+        html,
+        warnings: ["Giscus feedback requires Trusted preview/export because it loads an external comments script."],
+        injected: false
+      };
+    }
+    const giscusConfig = {
+      repo: this.settings.giscusRepo,
+      repoId: this.settings.giscusRepoId,
+      category: this.settings.giscusCategory,
+      categoryId: this.settings.giscusCategoryId,
+      mapping: this.settings.giscusMapping,
+      theme: this.settings.giscusTheme,
+      lang: "ko"
+    };
+    const warnings = validateGiscusConfig(giscusConfig);
+    if (warnings.length > 0) {
+      return { html, warnings, injected: false };
+    }
+    return {
+      html: injectReaderFeedback(html, giscusConfig),
+      warnings: [],
+      injected: true
     };
   }
   async resolveContextPack(markdown, source, options) {

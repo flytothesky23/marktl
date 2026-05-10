@@ -2,7 +2,7 @@ import { App, Modal, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listExportPresets, findExportPreset } from './core/presets.js';
 import { listTemplates } from './core/templates.js';
-import type { AiProvider, ArtifactType, ContextPackMode, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity, ShareTarget } from './types';
+import type { AiProvider, ArtifactType, ContextPackMode, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareTarget } from './types';
 
 export class MarktlExportModal extends Modal {
   private options: ExportOptions;
@@ -22,6 +22,7 @@ export class MarktlExportModal extends Modal {
       failurePolicy: plugin.settings.failurePolicy,
       previewSecurity: plugin.settings.previewSecurity,
       contextPackMode: plugin.settings.contextPackMode,
+      readerFeedbackMode: plugin.settings.readerFeedbackMode,
       shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport,
     };
@@ -131,6 +132,17 @@ export class MarktlExportModal extends Modal {
         .setValue(this.options.contextPackMode)
         .onChange((value) => {
           this.options.contextPackMode = value as ContextPackMode;
+        }));
+
+    new Setting(contentEl)
+      .setName('Reader feedback')
+      .setDesc('Giscus adds GitHub login, reactions, and public comments to trusted exports.')
+      .addDropdown((dropdown) => dropdown
+        .addOption('none', 'No reader comments')
+        .addOption('giscus', 'Giscus GitHub comments')
+        .setValue(this.options.readerFeedbackMode)
+        .onChange((value) => {
+          this.options.readerFeedbackMode = value as ReaderFeedbackMode;
         }));
 
     new Setting(contentEl)

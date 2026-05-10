@@ -10,6 +10,7 @@ import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState } from 
 const { convertWithAiFallback } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
 const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
+const { injectReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
 const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
 const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { slugify } = require('./core/html.js');
@@ -24,6 +25,7 @@ const DEFAULT_SETTINGS: MarktlSettings = {
   failurePolicy: 'fallback',
   previewSecurity: 'sanitized',
   contextPackMode: 'none',
+  readerFeedbackMode: 'none',
   shareTarget: 'local-link',
   githubRepo: '',
   githubBranch: 'main',
@@ -31,6 +33,12 @@ const DEFAULT_SETTINGS: MarktlSettings = {
   githubPagesBaseUrl: '',
   githubPublishPath: 'marktl',
   githubShareHomeTitle: 'MarkTL Shared HTML',
+  giscusRepo: '',
+  giscusRepoId: '',
+  giscusCategory: 'Announcements',
+  giscusCategoryId: '',
+  giscusMapping: 'pathname',
+  giscusTheme: 'preferred_color_scheme',
   timeoutMs: 300000,
   claudePath: '',
   geminiPath: '',
@@ -136,6 +144,10 @@ export default class MarktlPlugin extends Plugin {
       this.settings.contextPackMode = DEFAULT_SETTINGS.contextPackMode;
       shouldSave = true;
     }
+    if (!['none', 'giscus'].includes(this.settings.readerFeedbackMode as string)) {
+      this.settings.readerFeedbackMode = DEFAULT_SETTINGS.readerFeedbackMode;
+      shouldSave = true;
+    }
     if (shouldSave) {
       await this.saveSettings();
     }
@@ -208,7 +220,12 @@ export default class MarktlPlugin extends Plugin {
         },
       });
       progress.addStep(result.usedFallback ? 'Generated local fallback HTML.' : 'Generated AI HTML.');
-      const html = rewriteHtmlImageSources(result.html, assetResult.mappings);
+      const imageRewrittenHtml = rewriteHtmlImageSources(result.html, assetResult.mappings);
+      const feedbackResult = this.applyReaderFeedback(imageRewrittenHtml, options);
+      const html = feedbackResult.html;
+      if (feedbackResult.injected) {
+        progress.addStep('Added Giscus reader feedback.');
+      }
       const qaWarnings = validateHtmlArtifact(html, {
         trusted: options.previewSecurity === 'trusted',
         assetMappings: assetResult.mappings,
@@ -218,7 +235,7 @@ export default class MarktlPlugin extends Plugin {
       } else {
         progress.addStep('HTML QA passed basic checks.');
       }
-      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...qaWarnings];
+      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...feedbackResult.warnings, ...qaWarnings];
       let publicUrl = '';
       let shareHomeUrl = '';
 
@@ -380,8 +397,43 @@ export default class MarktlPlugin extends Plugin {
       failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
       previewSecurity: overrides.previewSecurity || this.settings.previewSecurity,
       contextPackMode: overrides.contextPackMode || this.settings.contextPackMode,
+      readerFeedbackMode: overrides.readerFeedbackMode || this.settings.readerFeedbackMode,
       shareTarget: overrides.shareTarget || this.settings.shareTarget,
       copyShareLinkAfterExport: overrides.copyShareLinkAfterExport ?? this.settings.copyShareLinkAfterExport,
+    };
+  }
+
+  private applyReaderFeedback(html: string, options: ExportOptions): { html: string; warnings: string[]; injected: boolean } {
+    if (options.readerFeedbackMode !== 'giscus') {
+      return { html, warnings: [], injected: false };
+    }
+
+    if (options.previewSecurity !== 'trusted') {
+      return {
+        html,
+        warnings: ['Giscus feedback requires Trusted preview/export because it loads an external comments script.'],
+        injected: false,
+      };
+    }
+
+    const giscusConfig = {
+      repo: this.settings.giscusRepo,
+      repoId: this.settings.giscusRepoId,
+      category: this.settings.giscusCategory,
+      categoryId: this.settings.giscusCategoryId,
+      mapping: this.settings.giscusMapping,
+      theme: this.settings.giscusTheme,
+      lang: 'ko',
+    };
+    const warnings = validateGiscusConfig(giscusConfig);
+    if (warnings.length > 0) {
+      return { html, warnings, injected: false };
+    }
+
+    return {
+      html: injectReaderFeedback(html, giscusConfig),
+      warnings: [],
+      injected: true,
     };
   }
 

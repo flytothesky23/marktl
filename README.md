@@ -115,6 +115,20 @@ Context packs are supporting material only. The active note remains the source o
 
 In `Trusted interactive preview`, the `interactive-report` template can add local-only controls such as generated contents, collapsible sections, reading progress, section filtering, expand all, copy as prompt, copy as markdown, copy summary, and copy outline JSON. The `playground` template adds editable review notes, an emphasis slider, and copyable state JSON for iterative work.
 
+### Reader Feedback With Giscus
+
+MarkTL can append a `Reader feedback` section powered by Giscus. Readers sign in with GitHub inside the Giscus comment box, then leave public comments and reactions stored in GitHub Discussions.
+
+To use it:
+
+1. Enable GitHub Discussions on the feedback repository.
+2. Install/configure Giscus for that repository at `https://giscus.app`.
+3. Copy the generated `repo`, `repo-id`, `category`, and `category-id` values into MarkTL settings.
+4. Set `Reader feedback mode` to `Giscus GitHub comments`.
+5. Export with `Trusted preview/export`.
+
+Giscus loads an external script from `https://giscus.app/client.js`, so it is intentionally disabled for sanitized exports.
+
 ### Export QA
 
 MarkTL runs a basic post-generation HTML QA pass before writing and previewing the result. It warns about missing document structure, missing responsive viewport, missing CSS, trusted exports with no script, dynamic markup in sanitized mode, missing bundled image references, and missing image alt text. The internal preview also runs a render QA pass after the iframe loads to flag nearly empty output, missing H1, broken images, unusually short renders, or trusted previews with no controls.
@@ -329,6 +343,20 @@ Context pack은 보조 자료입니다. 현재 열린 노트가 항상 기준이
 ### 인터랙티브 컨트롤
 
 `Trusted interactive preview`에서 `interactive-report` 템플릿은 자동 목차, 접기/펼치기, 읽기 progress, 섹션 필터, 전체 펼치기, copy as prompt, copy as markdown, copy summary, copy outline JSON 같은 로컬 전용 컨트롤을 넣을 수 있습니다. `playground` 템플릿은 편집 가능한 리뷰 메모, 강조도 slider, copyable state JSON을 제공합니다.
+
+### Giscus 독자 피드백
+
+MarkTL은 Giscus 기반 `Reader feedback` 섹션을 HTML 하단에 붙일 수 있습니다. 독자는 Giscus 댓글창 안에서 GitHub로 로그인하고, 댓글과 reaction을 GitHub Discussions에 남깁니다.
+
+사용 방법:
+
+1. 피드백을 저장할 GitHub repo에서 Discussions를 활성화합니다.
+2. `https://giscus.app`에서 해당 repo의 Giscus 설정을 만듭니다.
+3. 생성된 `repo`, `repo-id`, `category`, `category-id` 값을 MarkTL 설정에 입력합니다.
+4. `Reader feedback mode`를 `Giscus GitHub comments`로 설정합니다.
+5. `Trusted preview/export`로 export합니다.
+
+Giscus는 `https://giscus.app/client.js` 외부 스크립트를 로드하므로 sanitized export에서는 의도적으로 비활성화됩니다.
 
 ### Export QA
 

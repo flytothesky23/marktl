@@ -5,6 +5,7 @@ export type FailurePolicy = 'fallback' | 'strict';
 export type PreviewSecurity = 'sanitized' | 'trusted';
 export type ShareTarget = 'local-link' | 'static-bundle' | 'github-pages';
 export type ContextPackMode = 'none' | 'linked-notes';
+export type ReaderFeedbackMode = 'none' | 'giscus';
 
 export interface MarktlSettings {
   exportFolder: string;
@@ -16,6 +17,7 @@ export interface MarktlSettings {
   failurePolicy: FailurePolicy;
   previewSecurity: PreviewSecurity;
   contextPackMode: ContextPackMode;
+  readerFeedbackMode: ReaderFeedbackMode;
   shareTarget: ShareTarget;
   githubRepo: string;
   githubBranch: string;
@@ -23,6 +25,12 @@ export interface MarktlSettings {
   githubPagesBaseUrl: string;
   githubPublishPath: string;
   githubShareHomeTitle: string;
+  giscusRepo: string;
+  giscusRepoId: string;
+  giscusCategory: string;
+  giscusCategoryId: string;
+  giscusMapping: string;
+  giscusTheme: string;
   timeoutMs: number;
   claudePath: string;
   geminiPath: string;
@@ -37,6 +45,7 @@ export interface ExportOptions {
   failurePolicy: FailurePolicy;
   previewSecurity: PreviewSecurity;
   contextPackMode: ContextPackMode;
+  readerFeedbackMode: ReaderFeedbackMode;
   shareTarget: ShareTarget;
   copyShareLinkAfterExport: boolean;
 }

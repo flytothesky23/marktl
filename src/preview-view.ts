@@ -92,7 +92,7 @@ export class MarktlPreviewView extends ItemView {
       if (brokenImages.length > 0) {
         warnings.push(`${brokenImages.length} broken image(s)`);
       }
-      if (this.state.trusted && !doc.querySelector('button,input,select,textarea,[contenteditable="true"]')) {
+      if (this.state.trusted && !doc.querySelector('button,input,select,textarea,[contenteditable="true"]') && !doc.querySelector('script[src*="giscus.app/client.js"]')) {
         warnings.push('trusted preview has no interactive controls');
       }
       const scrollHeight = doc.scrollingElement?.scrollHeight || doc.body?.scrollHeight || 0;

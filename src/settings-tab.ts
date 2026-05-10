@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listTemplates } from './core/templates.js';
-import type { AiProvider, ArtifactType, ContextPackMode, ConversionMode, FailurePolicy, PreviewSecurity, ShareTarget } from './types';
+import type { AiProvider, ArtifactType, ContextPackMode, ConversionMode, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareTarget } from './types';
 
 export class MarktlSettingTab extends PluginSettingTab {
   plugin: MarktlPlugin;
@@ -158,6 +158,31 @@ export class MarktlSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
 
+    containerEl.createEl('h3', { text: 'Reader feedback' });
+    containerEl.createEl('p', {
+      cls: 'marktl-modal-intro',
+      text: 'Giscus uses GitHub Discussions for public comments. It requires trusted exports because it loads the Giscus script.',
+    });
+
+    new Setting(containerEl)
+      .setName('Reader feedback mode')
+      .setDesc('Adds a GitHub login/comment box to exported HTML when configured.')
+      .addDropdown((dropdown) => dropdown
+        .addOption('none', 'None')
+        .addOption('giscus', 'Giscus GitHub comments')
+        .setValue(this.plugin.settings.readerFeedbackMode)
+        .onChange(async (value) => {
+          this.plugin.settings.readerFeedbackMode = value as ReaderFeedbackMode;
+          await this.plugin.saveSettings();
+        }));
+
+    this.addTextSetting(containerEl, 'Giscus repository', 'owner/repo where GitHub Discussions are enabled.', 'giscusRepo', 'reallygood83/moondoc');
+    this.addTextSetting(containerEl, 'Giscus repository ID', 'Repository ID from giscus.app.', 'giscusRepoId', 'R_...');
+    this.addTextSetting(containerEl, 'Giscus category', 'Discussion category name, for example Announcements or General.', 'giscusCategory', 'Announcements');
+    this.addTextSetting(containerEl, 'Giscus category ID', 'Discussion category ID from giscus.app.', 'giscusCategoryId', 'DIC_...');
+    this.addTextSetting(containerEl, 'Giscus mapping', 'Discussion mapping strategy. Usually pathname for GitHub Pages.', 'giscusMapping', 'pathname');
+    this.addTextSetting(containerEl, 'Giscus theme', 'Theme name such as preferred_color_scheme, light, dark.', 'giscusTheme', 'preferred_color_scheme');
+
     containerEl.createEl('h3', { text: 'GitHub Pages publishing' });
     containerEl.createEl('p', {
       cls: 'marktl-modal-intro',
@@ -199,7 +224,7 @@ export class MarktlSettingTab extends PluginSettingTab {
     containerEl: HTMLElement,
     name: string,
     description: string,
-    key: 'githubRepo' | 'githubBranch' | 'githubPagesBaseUrl' | 'githubPublishPath' | 'githubShareHomeTitle' | 'githubToken',
+    key: 'githubRepo' | 'githubBranch' | 'githubPagesBaseUrl' | 'githubPublishPath' | 'githubShareHomeTitle' | 'githubToken' | 'giscusRepo' | 'giscusRepoId' | 'giscusCategory' | 'giscusCategoryId' | 'giscusMapping' | 'giscusTheme',
     placeholder: string,
     password = false,
   ): void {
