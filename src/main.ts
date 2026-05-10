@@ -9,7 +9,9 @@ import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState } from 
 
 const { convertWithAiFallback } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
+const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
 const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
+const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { slugify } = require('./core/html.js');
 
 const DEFAULT_SETTINGS: MarktlSettings = {
@@ -21,6 +23,7 @@ const DEFAULT_SETTINGS: MarktlSettings = {
   conversionMode: 'preserve',
   failurePolicy: 'fallback',
   previewSecurity: 'sanitized',
+  contextPackMode: 'none',
   shareTarget: 'local-link',
   githubRepo: '',
   githubBranch: 'main',
@@ -129,6 +132,10 @@ export default class MarktlPlugin extends Plugin {
       this.settings.timeoutMs = DEFAULT_SETTINGS.timeoutMs;
       shouldSave = true;
     }
+    if (!['none', 'linked-notes'].includes(this.settings.contextPackMode as string)) {
+      this.settings.contextPackMode = DEFAULT_SETTINGS.contextPackMode;
+      shouldSave = true;
+    }
     if (shouldSave) {
       await this.saveSettings();
     }
@@ -178,6 +185,12 @@ export default class MarktlPlugin extends Plugin {
       progress.addStep(assetResult.mappings.length > 0
         ? `Resolved ${assetResult.mappings.length} local image asset(s).`
         : 'No local image assets found.');
+      const contextResult = await this.resolveContextPack(markdown, file, options);
+      if (contextResult.count > 0) {
+        progress.addStep(`Loaded ${contextResult.count} linked context note(s).`);
+      } else if (options.contextPackMode !== 'none') {
+        progress.addStep('No linked context notes found.');
+      }
       progress.addStep(options.aiProvider === 'none' ? 'Running local converter...' : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
         provider: options.aiProvider,
@@ -189,13 +202,23 @@ export default class MarktlPlugin extends Plugin {
         timeoutMs: this.settings.timeoutMs,
         sourcePath: file.path,
         assetMappings: assetResult.mappings,
+        contextPack: contextResult.markdown,
         cliPaths: {
           claude: this.settings.claudePath,
         },
       });
       progress.addStep(result.usedFallback ? 'Generated local fallback HTML.' : 'Generated AI HTML.');
       const html = rewriteHtmlImageSources(result.html, assetResult.mappings);
-      const warnings = [...result.warnings, ...assetResult.warnings];
+      const qaWarnings = validateHtmlArtifact(html, {
+        trusted: options.previewSecurity === 'trusted',
+        assetMappings: assetResult.mappings,
+      });
+      if (qaWarnings.length > 0) {
+        progress.addStep(`HTML QA produced ${qaWarnings.length} warning(s).`);
+      } else {
+        progress.addStep('HTML QA passed basic checks.');
+      }
+      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...qaWarnings];
       let publicUrl = '';
       let shareHomeUrl = '';
 
@@ -356,9 +379,67 @@ export default class MarktlPlugin extends Plugin {
       conversionMode: overrides.conversionMode || this.settings.conversionMode,
       failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
       previewSecurity: overrides.previewSecurity || this.settings.previewSecurity,
+      contextPackMode: overrides.contextPackMode || this.settings.contextPackMode,
       shareTarget: overrides.shareTarget || this.settings.shareTarget,
       copyShareLinkAfterExport: overrides.copyShareLinkAfterExport ?? this.settings.copyShareLinkAfterExport,
     };
+  }
+
+  private async resolveContextPack(markdown: string, source: TFile, options: ExportOptions): Promise<{ markdown: string; count: number; warnings: string[] }> {
+    if (options.contextPackMode !== 'linked-notes') {
+      return { markdown: '', count: 0, warnings: [] };
+    }
+
+    const warnings: string[] = [];
+    const items = [];
+    for (const target of extractMarkdownContextTargets(markdown)) {
+      const linked = this.resolveMarkdownContextFile(target, source);
+      if (!linked) {
+        warnings.push(`Context note not found: ${target}`);
+        continue;
+      }
+      if (linked.path === source.path) {
+        continue;
+      }
+      try {
+        items.push({
+          target,
+          path: linked.path,
+          content: await this.app.vault.read(linked),
+        });
+      } catch (error) {
+        warnings.push(`Context note unreadable: ${target}`);
+      }
+    }
+
+    return {
+      markdown: buildContextPackMarkdown(items),
+      count: items.length,
+      warnings,
+    };
+  }
+
+  private resolveMarkdownContextFile(target: string, source: TFile): TFile | null {
+    const linked = this.app.metadataCache.getFirstLinkpathDest(target, source.path);
+    if (linked instanceof TFile && linked.extension === 'md') {
+      return linked;
+    }
+
+    const normalized = normalizePath(target.endsWith('.md') ? target : `${target}.md`);
+    const direct = this.app.vault.getAbstractFileByPath(normalized);
+    if (direct instanceof TFile && direct.extension === 'md') {
+      return direct;
+    }
+
+    if (source.parent?.path) {
+      const relative = this.app.vault.getAbstractFileByPath(normalizePath(`${source.parent.path}/${normalized}`));
+      if (relative instanceof TFile && relative.extension === 'md') {
+        return relative;
+      }
+    }
+
+    const byName = this.app.vault.getFiles().find((file) => file.extension === 'md' && (file.basename === target || file.name === target || file.path.endsWith(`/${normalized}`)));
+    return byName instanceof TFile ? byName : null;
   }
 
   private async ensureParentFolder(filePath: string): Promise<void> {

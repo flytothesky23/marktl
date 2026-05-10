@@ -2,7 +2,7 @@ import { App, Modal, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listExportPresets, findExportPreset } from './core/presets.js';
 import { listTemplates } from './core/templates.js';
-import type { AiProvider, ArtifactType, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity, ShareTarget } from './types';
+import type { AiProvider, ArtifactType, ContextPackMode, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity, ShareTarget } from './types';
 
 export class MarktlExportModal extends Modal {
   private options: ExportOptions;
@@ -21,6 +21,7 @@ export class MarktlExportModal extends Modal {
       conversionMode: plugin.settings.conversionMode,
       failurePolicy: plugin.settings.failurePolicy,
       previewSecurity: plugin.settings.previewSecurity,
+      contextPackMode: plugin.settings.contextPackMode,
       shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport,
     };
@@ -119,6 +120,17 @@ export class MarktlExportModal extends Modal {
         .setValue(this.options.previewSecurity)
         .onChange((value) => {
           this.options.previewSecurity = value as PreviewSecurity;
+        }));
+
+    new Setting(contentEl)
+      .setName('Context pack')
+      .setDesc('Optionally lets AI read linked Markdown notes as supporting context.')
+      .addDropdown((dropdown) => dropdown
+        .addOption('none', 'Active note only')
+        .addOption('linked-notes', 'Include linked notes')
+        .setValue(this.options.contextPackMode)
+        .onChange((value) => {
+          this.options.contextPackMode = value as ContextPackMode;
         }));
 
     new Setting(contentEl)

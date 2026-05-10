@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listTemplates } from './core/templates.js';
-import type { AiProvider, ArtifactType, ConversionMode, FailurePolicy, PreviewSecurity, ShareTarget } from './types';
+import type { AiProvider, ArtifactType, ContextPackMode, ConversionMode, FailurePolicy, PreviewSecurity, ShareTarget } from './types';
 
 export class MarktlSettingTab extends PluginSettingTab {
   plugin: MarktlPlugin;
@@ -104,6 +104,18 @@ export class MarktlSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.previewSecurity)
         .onChange(async (value) => {
           this.plugin.settings.previewSecurity = value as PreviewSecurity;
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName('Context pack')
+      .setDesc('Linked notes mode gives AI extra vault context from Markdown links and wikilinks.')
+      .addDropdown((dropdown) => dropdown
+        .addOption('none', 'Active note only')
+        .addOption('linked-notes', 'Include linked notes')
+        .setValue(this.plugin.settings.contextPackMode)
+        .onChange(async (value) => {
+          this.plugin.settings.contextPackMode = value as ContextPackMode;
           await this.plugin.saveSettings();
         }));
 

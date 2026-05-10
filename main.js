@@ -249,8 +249,10 @@ var require_templates = __commonJS({
       .toc { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
       .toc a { display: inline-block; margin: 4px 12px 4px 0; color: #1d4ed8; text-decoration: none; }
       .toolbox { position: sticky; top: 12px; z-index: 9; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-bottom: 12px; }
+      .toolbox input { min-width: 220px; border: 1px solid #bfdbfe; background: #ffffff; color: #1a202c; border-radius: 6px; padding: 8px 10px; }
       .toolbox button { border: 1px solid #bfdbfe; background: #ffffff; color: #1d4ed8; border-radius: 6px; padding: 8px 10px; cursor: pointer; }
       .toolbox button:hover { background: #eff6ff; }
+      article section.marktl-filter-hidden, article .marktl-filter-hidden { display: none; }
       article { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 34px; }
       h1 { font-size: 42px; line-height: 1.08; }
       h2 { cursor: pointer; margin-top: 34px; padding: 14px 16px; background: #eef4ff; border-radius: 8px; }
@@ -282,6 +284,11 @@ var require_templates = __commonJS({
       };
       const toolbox = document.createElement('div');
       toolbox.className = 'toolbox';
+      const filter = document.createElement('input');
+      filter.type = 'search';
+      filter.placeholder = 'Filter sections';
+      filter.setAttribute('aria-label', 'Filter sections');
+      toolbox.append(filter);
       const makeButton = (label, getText) => {
         const button = document.createElement('button');
         button.type = 'button';
@@ -293,8 +300,29 @@ var require_templates = __commonJS({
       makeButton('Copy as prompt', () => 'Use this HTML artifact as context and continue from its decisions and structure:\\n\\n' + document.body.innerText);
       makeButton('Copy as markdown', () => document.querySelector('article').innerText);
       makeButton('Copy summary', () => [...document.querySelectorAll('h1,h2,h3')].map((h) => '- ' + h.textContent).join('\\n'));
+      makeButton('Copy outline JSON', () => JSON.stringify([...document.querySelectorAll('h1,h2,h3')].map((h) => ({ level: h.tagName, text: h.textContent.trim(), id: h.id || '' })), null, 2));
+      const expandButton = document.createElement('button');
+      expandButton.type = 'button';
+      expandButton.textContent = 'Expand all';
+      expandButton.addEventListener('click', () => {
+        document.querySelectorAll('article [hidden]').forEach((node) => { node.hidden = false; });
+      });
+      toolbox.append(expandButton);
       document.querySelector('main').prepend(toolbox);
       const headings = [...document.querySelectorAll('article h2')];
+      filter.addEventListener('input', () => {
+        const query = filter.value.trim().toLowerCase();
+        headings.forEach((heading) => {
+          const group = [heading];
+          let node = heading.nextElementSibling;
+          while (node && !/^H2$/.test(node.tagName)) {
+            group.push(node);
+            node = node.nextElementSibling;
+          }
+          const text = group.map((node) => node.textContent || '').join(' ').toLowerCase();
+          group.forEach((node) => node.classList.toggle('marktl-filter-hidden', Boolean(query && !text.includes(query))));
+        });
+      });
       if (headings.length) {
         const toc = document.createElement('nav');
         toc.className = 'toc';
@@ -839,6 +867,10 @@ Design standard: produce a refined, modern, visually designed HTML page rather t
 Dynamic policy: ${dynamicInstruction}
 Interaction standard: when trusted mode is enabled, include useful local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, or lightweight filters when they fit the artifact type. Keep everything self-contained.
 ${buildAiAssetInstruction(options.assetMappings)}
+${options.contextPack ? `
+Context pack:
+${options.contextPack}
+` : ""}
 Return only HTML. Do not wrap it in Markdown fences.
 
 ${markdown}`;
@@ -1067,6 +1099,76 @@ var require_provider_doctor = __commonJS({
   }
 });
 
+// src/core/context-pack.js
+var require_context_pack = __commonJS({
+  "src/core/context-pack.js"(exports2, module2) {
+    "use strict";
+    var { escapeHtml } = require_html();
+    var MAX_CONTEXT_NOTES = 6;
+    var MAX_CONTEXT_CHARS = 1400;
+    function extractMarkdownContextTargets2(markdown) {
+      const targets = [];
+      const seen = /* @__PURE__ */ new Set();
+      const add = (target) => {
+        const clean = normalizeContextTarget(target);
+        if (!clean || seen.has(clean)) {
+          return;
+        }
+        seen.add(clean);
+        targets.push(clean);
+      };
+      const wikiPattern = /(^|[^!])\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]/g;
+      let match;
+      while ((match = wikiPattern.exec(String(markdown || ""))) !== null) {
+        add(match[2]);
+      }
+      const markdownLinkPattern = /(^|[^!])\[[^\]]*]\((?!https?:|data:|blob:|mailto:|#)([^)#]+)(?:#[^)]*)?\)/gi;
+      while ((match = markdownLinkPattern.exec(String(markdown || ""))) !== null) {
+        add(decodeURI(match[2]));
+      }
+      return targets.slice(0, MAX_CONTEXT_NOTES);
+    }
+    function normalizeContextTarget(target) {
+      return String(target || "").replace(/\\/g, "/").replace(/^\.\//, "").trim();
+    }
+    function compactMarkdownForContext(markdown, maxChars = MAX_CONTEXT_CHARS) {
+      const compact = String(markdown || "").replace(/^---[\s\S]*?---\s*/m, "").replace(/```[\s\S]*?```/g, "[code block omitted]").replace(/!\[\[[^\]]+]]/g, "[embedded asset]").replace(/!\[[^\]]*]\([^)]+\)/g, "[image]").split("\n").map((line) => line.trim()).filter(Boolean).join("\n");
+      if (compact.length <= maxChars) {
+        return compact;
+      }
+      return `${compact.slice(0, maxChars).trim()}
+[truncated]`;
+    }
+    function buildContextPackMarkdown2(items) {
+      const usable = Array.isArray(items) ? items.filter((item) => item && item.content) : [];
+      if (!usable.length) {
+        return "";
+      }
+      return [
+        "Additional vault context is available. Use it only to clarify the active note; do not let it override the source note.",
+        ...usable.map((item, index) => [
+          `
+[Context note ${index + 1}: ${item.path || item.target || "linked note"}]`,
+          compactMarkdownForContext(item.content)
+        ].join("\n"))
+      ].join("\n");
+    }
+    function buildContextPackHtml(items) {
+      const usable = Array.isArray(items) ? items.filter((item) => item && item.content) : [];
+      if (!usable.length) {
+        return "";
+      }
+      return `<aside class="callout callout-context"><div class="callout-title">Linked context</div><div class="callout-body">${usable.map((item) => `<section><strong>${escapeHtml(item.path || item.target || "linked note")}</strong><pre>${escapeHtml(compactMarkdownForContext(item.content, 700))}</pre></section>`).join("")}</div></aside>`;
+    }
+    module2.exports = {
+      buildContextPackHtml,
+      buildContextPackMarkdown: buildContextPackMarkdown2,
+      compactMarkdownForContext,
+      extractMarkdownContextTargets: extractMarkdownContextTargets2
+    };
+  }
+});
+
 // src/core/github-pages.js
 var require_github_pages = __commonJS({
   "src/core/github-pages.js"(exports2, module2) {
@@ -1190,6 +1292,49 @@ h1{font-size:34px;margin:0 0 8px}.meta{color:#68737d;margin:0 0 24px}
   }
 });
 
+// src/core/html-qa.js
+var require_html_qa = __commonJS({
+  "src/core/html-qa.js"(exports2, module2) {
+    "use strict";
+    function validateHtmlArtifact2(html, options = {}) {
+      const warnings = [];
+      const value = String(html || "");
+      if (!/<!doctype\s+html/i.test(value)) {
+        warnings.push("HTML QA: missing <!doctype html>.");
+      }
+      if (!/<meta\s+name=["']viewport["']/i.test(value)) {
+        warnings.push("HTML QA: missing responsive viewport meta tag.");
+      }
+      if (!/<style\b/i.test(value)) {
+        warnings.push("HTML QA: no inline CSS found; output may be too plain.");
+      }
+      if (!/<h1\b/i.test(value)) {
+        warnings.push("HTML QA: no H1 heading found.");
+      }
+      const trusted = Boolean(options.trusted);
+      if (trusted && !/<script\b/i.test(value)) {
+        warnings.push("HTML QA: trusted interactive mode produced no script; artifact may be static.");
+      }
+      if (!trusted && /<script\b|<iframe\b|\son[a-z]+\s*=/i.test(value)) {
+        warnings.push("HTML QA: sanitized mode output still contains dynamic markup.");
+      }
+      const expectedAssets = Array.isArray(options.assetMappings) ? options.assetMappings.map((mapping) => mapping.relativeSrc).filter(Boolean) : [];
+      for (const src of expectedAssets) {
+        if (!value.includes(src)) {
+          warnings.push(`HTML QA: bundled image is not referenced in final HTML: ${src}`);
+        }
+      }
+      if (/<img\b/i.test(value) && !/<img\b[^>]*\balt\s*=/i.test(value)) {
+        warnings.push("HTML QA: at least one image is missing alt text.");
+      }
+      return warnings;
+    }
+    module2.exports = {
+      validateHtmlArtifact: validateHtmlArtifact2
+    };
+  }
+});
+
 // src/main.ts
 var main_exports = {};
 __export(main_exports, {
@@ -1215,6 +1360,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       conversionMode: plugin.settings.conversionMode,
       failurePolicy: plugin.settings.failurePolicy,
       previewSecurity: plugin.settings.previewSecurity,
+      contextPackMode: plugin.settings.contextPackMode,
       shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport
     };
@@ -1265,6 +1411,9 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     }));
     new import_obsidian.Setting(contentEl).setName("Preview security").setDesc("Trusted mode allows inline JavaScript for interactive HTML.").addDropdown((dropdown) => dropdown.addOption("sanitized", "Sanitized static preview").addOption("trusted", "Trusted interactive preview").setValue(this.options.previewSecurity).onChange((value) => {
       this.options.previewSecurity = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("Context pack").setDesc("Optionally lets AI read linked Markdown notes as supporting context.").addDropdown((dropdown) => dropdown.addOption("none", "Active note only").addOption("linked-notes", "Include linked notes").setValue(this.options.contextPackMode).onChange((value) => {
+      this.options.contextPackMode = value;
     }));
     new import_obsidian.Setting(contentEl).setName("AI failure").setDesc("Fallback keeps exporting; strict stops when the CLI fails.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.options.failurePolicy).onChange((value) => {
       this.options.failurePolicy = value;
@@ -1486,6 +1635,10 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       this.plugin.settings.previewSecurity = value;
       await this.plugin.saveSettings();
     }));
+    new import_obsidian5.Setting(containerEl).setName("Context pack").setDesc("Linked notes mode gives AI extra vault context from Markdown links and wikilinks.").addDropdown((dropdown) => dropdown.addOption("none", "Active note only").addOption("linked-notes", "Include linked notes").setValue(this.plugin.settings.contextPackMode).onChange(async (value) => {
+      this.plugin.settings.contextPackMode = value;
+      await this.plugin.saveSettings();
+    }));
     new import_obsidian5.Setting(containerEl).setName("AI failure policy").setDesc("Fallback creates local HTML with a warning. Strict stops generation.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.plugin.settings.failurePolicy).onChange(async (value) => {
       this.plugin.settings.failurePolicy = value;
       await this.plugin.saveSettings();
@@ -1669,7 +1822,9 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
 // src/main.ts
 var { convertWithAiFallback } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
+var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require_github_pages();
+var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
 var DEFAULT_SETTINGS = {
   exportFolder: "html-exports",
@@ -1680,6 +1835,7 @@ var DEFAULT_SETTINGS = {
   conversionMode: "preserve",
   failurePolicy: "fallback",
   previewSecurity: "sanitized",
+  contextPackMode: "none",
   shareTarget: "local-link",
   githubRepo: "",
   githubBranch: "main",
@@ -1763,6 +1919,10 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       this.settings.timeoutMs = DEFAULT_SETTINGS.timeoutMs;
       shouldSave = true;
     }
+    if (!["none", "linked-notes"].includes(this.settings.contextPackMode)) {
+      this.settings.contextPackMode = DEFAULT_SETTINGS.contextPackMode;
+      shouldSave = true;
+    }
     if (shouldSave) {
       await this.saveSettings();
     }
@@ -1803,6 +1963,12 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       const outputPlan = await this.prepareOutputPlan(file, options);
       const assetResult = await this.resolveImageAssets(markdown, file, outputPlan);
       progress.addStep(assetResult.mappings.length > 0 ? `Resolved ${assetResult.mappings.length} local image asset(s).` : "No local image assets found.");
+      const contextResult = await this.resolveContextPack(markdown, file, options);
+      if (contextResult.count > 0) {
+        progress.addStep(`Loaded ${contextResult.count} linked context note(s).`);
+      } else if (options.contextPackMode !== "none") {
+        progress.addStep("No linked context notes found.");
+      }
       progress.addStep(options.aiProvider === "none" ? "Running local converter..." : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
         provider: options.aiProvider,
@@ -1814,13 +1980,23 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         timeoutMs: this.settings.timeoutMs,
         sourcePath: file.path,
         assetMappings: assetResult.mappings,
+        contextPack: contextResult.markdown,
         cliPaths: {
           claude: this.settings.claudePath
         }
       });
       progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
       const html = rewriteHtmlImageSources(result.html, assetResult.mappings);
-      const warnings = [...result.warnings, ...assetResult.warnings];
+      const qaWarnings = validateHtmlArtifact(html, {
+        trusted: options.previewSecurity === "trusted",
+        assetMappings: assetResult.mappings
+      });
+      if (qaWarnings.length > 0) {
+        progress.addStep(`HTML QA produced ${qaWarnings.length} warning(s).`);
+      } else {
+        progress.addStep("HTML QA passed basic checks.");
+      }
+      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...qaWarnings];
       let publicUrl = "";
       let shareHomeUrl = "";
       progress.addStep("Writing HTML file to vault...");
@@ -1959,9 +2135,61 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       conversionMode: overrides.conversionMode || this.settings.conversionMode,
       failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
       previewSecurity: overrides.previewSecurity || this.settings.previewSecurity,
+      contextPackMode: overrides.contextPackMode || this.settings.contextPackMode,
       shareTarget: overrides.shareTarget || this.settings.shareTarget,
       copyShareLinkAfterExport: (_a = overrides.copyShareLinkAfterExport) != null ? _a : this.settings.copyShareLinkAfterExport
     };
+  }
+  async resolveContextPack(markdown, source, options) {
+    if (options.contextPackMode !== "linked-notes") {
+      return { markdown: "", count: 0, warnings: [] };
+    }
+    const warnings = [];
+    const items = [];
+    for (const target of extractMarkdownContextTargets(markdown)) {
+      const linked = this.resolveMarkdownContextFile(target, source);
+      if (!linked) {
+        warnings.push(`Context note not found: ${target}`);
+        continue;
+      }
+      if (linked.path === source.path) {
+        continue;
+      }
+      try {
+        items.push({
+          target,
+          path: linked.path,
+          content: await this.app.vault.read(linked)
+        });
+      } catch (error) {
+        warnings.push(`Context note unreadable: ${target}`);
+      }
+    }
+    return {
+      markdown: buildContextPackMarkdown(items),
+      count: items.length,
+      warnings
+    };
+  }
+  resolveMarkdownContextFile(target, source) {
+    var _a;
+    const linked = this.app.metadataCache.getFirstLinkpathDest(target, source.path);
+    if (linked instanceof import_obsidian7.TFile && linked.extension === "md") {
+      return linked;
+    }
+    const normalized = (0, import_obsidian7.normalizePath)(target.endsWith(".md") ? target : `${target}.md`);
+    const direct = this.app.vault.getAbstractFileByPath(normalized);
+    if (direct instanceof import_obsidian7.TFile && direct.extension === "md") {
+      return direct;
+    }
+    if ((_a = source.parent) == null ? void 0 : _a.path) {
+      const relative = this.app.vault.getAbstractFileByPath((0, import_obsidian7.normalizePath)(`${source.parent.path}/${normalized}`));
+      if (relative instanceof import_obsidian7.TFile && relative.extension === "md") {
+        return relative;
+      }
+    }
+    const byName = this.app.vault.getFiles().find((file) => file.extension === "md" && (file.basename === target || file.name === target || file.path.endsWith(`/${normalized}`)));
+    return byName instanceof import_obsidian7.TFile ? byName : null;
   }
   async ensureParentFolder(filePath) {
     const parts = filePath.split("/");

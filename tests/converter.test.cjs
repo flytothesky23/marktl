@@ -107,6 +107,18 @@ test('AI prompt asks for designed output and gates dynamic HTML by trusted mode'
   assert.match(trustedPrompt, /do not load remote resources/);
 });
 
+test('AI prompt can include linked-note context packs', () => {
+  const prompt = buildPrompt('# Active', {
+    mode: 'presentation',
+    template: 'interactive-report',
+    trusted: true,
+    contextPack: 'Additional vault context is available.\n[Context note 1: Linked.md]\nLinked evidence',
+  });
+
+  assert.match(prompt, /Context pack:/);
+  assert.match(prompt, /Linked evidence/);
+});
+
 test('artifact instructions cover work-oriented HTML outputs', () => {
   assert.match(getArtifactInstruction('strategy-brief'), /executive strategy brief/);
   assert.match(getArtifactInstruction('interactive-explainer'), /copy buttons/);

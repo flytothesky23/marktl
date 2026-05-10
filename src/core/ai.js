@@ -182,6 +182,7 @@ Design standard: produce a refined, modern, visually designed HTML page rather t
 Dynamic policy: ${dynamicInstruction}
 Interaction standard: when trusted mode is enabled, include useful local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, or lightweight filters when they fit the artifact type. Keep everything self-contained.
 ${buildAiAssetInstruction(options.assetMappings)}
+${options.contextPack ? `\nContext pack:\n${options.contextPack}\n` : ''}
 Return only HTML. Do not wrap it in Markdown fences.
 
 ${markdown}`;

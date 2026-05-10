@@ -133,8 +133,10 @@ const templates = [
       .toc { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
       .toc a { display: inline-block; margin: 4px 12px 4px 0; color: #1d4ed8; text-decoration: none; }
       .toolbox { position: sticky; top: 12px; z-index: 9; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-bottom: 12px; }
+      .toolbox input { min-width: 220px; border: 1px solid #bfdbfe; background: #ffffff; color: #1a202c; border-radius: 6px; padding: 8px 10px; }
       .toolbox button { border: 1px solid #bfdbfe; background: #ffffff; color: #1d4ed8; border-radius: 6px; padding: 8px 10px; cursor: pointer; }
       .toolbox button:hover { background: #eff6ff; }
+      article section.marktl-filter-hidden, article .marktl-filter-hidden { display: none; }
       article { background: #ffffff; border: 1px solid #dbe4f0; border-radius: 8px; padding: 34px; }
       h1 { font-size: 42px; line-height: 1.08; }
       h2 { cursor: pointer; margin-top: 34px; padding: 14px 16px; background: #eef4ff; border-radius: 8px; }
@@ -166,6 +168,11 @@ const templates = [
       };
       const toolbox = document.createElement('div');
       toolbox.className = 'toolbox';
+      const filter = document.createElement('input');
+      filter.type = 'search';
+      filter.placeholder = 'Filter sections';
+      filter.setAttribute('aria-label', 'Filter sections');
+      toolbox.append(filter);
       const makeButton = (label, getText) => {
         const button = document.createElement('button');
         button.type = 'button';
@@ -177,8 +184,29 @@ const templates = [
       makeButton('Copy as prompt', () => 'Use this HTML artifact as context and continue from its decisions and structure:\\n\\n' + document.body.innerText);
       makeButton('Copy as markdown', () => document.querySelector('article').innerText);
       makeButton('Copy summary', () => [...document.querySelectorAll('h1,h2,h3')].map((h) => '- ' + h.textContent).join('\\n'));
+      makeButton('Copy outline JSON', () => JSON.stringify([...document.querySelectorAll('h1,h2,h3')].map((h) => ({ level: h.tagName, text: h.textContent.trim(), id: h.id || '' })), null, 2));
+      const expandButton = document.createElement('button');
+      expandButton.type = 'button';
+      expandButton.textContent = 'Expand all';
+      expandButton.addEventListener('click', () => {
+        document.querySelectorAll('article [hidden]').forEach((node) => { node.hidden = false; });
+      });
+      toolbox.append(expandButton);
       document.querySelector('main').prepend(toolbox);
       const headings = [...document.querySelectorAll('article h2')];
+      filter.addEventListener('input', () => {
+        const query = filter.value.trim().toLowerCase();
+        headings.forEach((heading) => {
+          const group = [heading];
+          let node = heading.nextElementSibling;
+          while (node && !/^H2$/.test(node.tagName)) {
+            group.push(node);
+            node = node.nextElementSibling;
+          }
+          const text = group.map((node) => node.textContent || '').join(' ').toLowerCase();
+          group.forEach((node) => node.classList.toggle('marktl-filter-hidden', Boolean(query && !text.includes(query))));
+        });
+      });
       if (headings.length) {
         const toc = document.createElement('nav');
         toc.className = 'toc';
