@@ -1413,9 +1413,30 @@ var require_github_pages = __commonJS({
       const title = options.title || "MarkTL Shared HTML";
       const baseUrl = String(options.baseUrl || "").replace(/\/+$/g, "");
       const items = Array.isArray(index == null ? void 0 : index.items) ? index.items : [];
+      const tagCounts = /* @__PURE__ */ new Map();
+      for (const item of items) {
+        for (const tag of normalizeTags(item.tags)) {
+          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        }
+      }
+      const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} <span>${count}</span></button>`).join("");
       const list = items.map((item) => {
         const href = item.url || (baseUrl ? `${baseUrl}/${encodeURIComponent(item.slug)}/` : `${encodeURIComponent(item.slug)}/`);
-        return `<article class="item"><a href="${escapeHtml(href)}">${escapeHtml(item.title || item.slug)}</a><span>${escapeHtml(item.updatedAt || "")}</span><p>${escapeHtml(item.sourcePath || "")}</p></article>`;
+        const tags = normalizeTags(item.tags);
+        const searchText = [
+          item.title,
+          item.slug,
+          item.excerpt,
+          item.sourcePath,
+          item.artifactType,
+          ...tags
+        ].filter(Boolean).join(" ").toLowerCase();
+        return `<article class="item" data-search="${escapeHtml(searchText)}" data-tags="${escapeHtml(tags.join(" "))}">
+<div class="item-top"><a href="${escapeHtml(href)}">${escapeHtml(item.title || item.slug)}</a><span>${escapeHtml(formatDate(item.updatedAt))}</span></div>
+<p>${escapeHtml(item.excerpt || item.sourcePath || "")}</p>
+<div class="item-meta"><span>${escapeHtml(item.artifactType || "HTML artifact")}</span><span>${escapeHtml(item.sourcePath || "")}</span></div>
+${tags.length ? `<div class="tags">${tags.map((tag) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")}</div>` : ""}
+</article>`;
       }).join("\n");
       return `<!doctype html>
 <html lang="en">
@@ -1424,15 +1445,68 @@ var require_github_pages = __commonJS({
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f7f7f4;color:#1f2933}
-main{max-width:960px;margin:0 auto;padding:40px 20px}
-h1{font-size:34px;margin:0 0 8px}.meta{color:#68737d;margin:0 0 24px}
-.item{background:#fff;border:1px solid #dde2e6;border-radius:8px;margin:12px 0;padding:16px}
-.item a{color:#174ea6;font-size:20px;font-weight:700;text-decoration:none}.item span{display:block;color:#68737d;margin-top:6px}.item p{color:#4b5563;margin:8px 0 0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f6f7f4;color:#172033}
+main{max-width:1120px;margin:0 auto;padding:44px 22px 72px}
+.hero{display:grid;gap:14px;margin-bottom:22px}.eyebrow{color:#8a4b64;font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.08em}
+h1{font-size:clamp(34px,6vw,72px);line-height:.98;margin:0}.meta{color:#68737d;margin:0;font-size:18px}
+.toolbar{position:sticky;top:0;z-index:2;display:grid;gap:12px;background:rgba(246,247,244,.94);backdrop-filter:blur(12px);border-bottom:1px solid #dde2e6;padding:14px 0;margin-bottom:18px}
+.toolbar input{width:100%;border:1px solid #cfd8e5;border-radius:8px;padding:12px 14px;font-size:16px;background:#fff;color:#172033}
+.tagbar{display:flex;flex-wrap:wrap;gap:8px}.tagbar button,.tags button{border:1px solid #d6dfeb;background:#fff;color:#33506d;border-radius:999px;padding:6px 10px;cursor:pointer}.tagbar button.active,.tags button:hover{background:#174ea6;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.item{display:flex;min-height:210px;flex-direction:column;gap:12px;background:#fff;border:1px solid #dde2e6;border-radius:8px;padding:18px;box-shadow:0 12px 32px rgba(23,32,51,.05)}
+.item-top{display:grid;gap:8px}.item a{color:#174ea6;font-size:20px;font-weight:800;line-height:1.2;text-decoration:none}.item a:hover{text-decoration:underline}
+.item-top span,.item-meta{color:#68737d;font-size:13px}.item p{color:#344054;line-height:1.55;margin:0;flex:1}.item-meta{display:grid;gap:4px}.tags{display:flex;flex-wrap:wrap;gap:6px}
+.empty{background:#fff;border:1px dashed #cfd8e5;border-radius:8px;padding:24px;color:#68737d}
 </style>
 </head>
-<body><main><h1>${escapeHtml(title)}</h1><p class="meta">${items.length} published document(s)</p>${list || "<p>No published documents yet.</p>"}</main></body>
+<body><main>
+<section class="hero"><div class="eyebrow">MarkTL Archive</div><h1>${escapeHtml(title)}</h1><p class="meta"><span id="count">${items.length}</span> published document(s). Search, filter, and open any shared HTML artifact.</p></section>
+<section class="toolbar" aria-label="Archive controls"><input id="search" type="search" placeholder="Search documents, tags, sources..." aria-label="Search documents"><div class="tagbar"><button type="button" data-tag="">All</button>${tagButtons}</div></section>
+<section class="grid" id="items">${list || '<p class="empty">No published documents yet.</p>'}</section>
+</main>
+<script>
+const search = document.getElementById('search');
+const count = document.getElementById('count');
+const cards = [...document.querySelectorAll('.item')];
+let activeTag = '';
+function applyFilters(){
+  const query = (search.value || '').trim().toLowerCase();
+  let visible = 0;
+  for (const card of cards) {
+    const matchesQuery = !query || card.dataset.search.includes(query);
+    const matchesTag = !activeTag || (' ' + card.dataset.tags + ' ').includes(' ' + activeTag + ' ');
+    const show = matchesQuery && matchesTag;
+    card.hidden = !show;
+    if (show) visible++;
+  }
+  count.textContent = String(visible);
+}
+document.querySelectorAll('[data-tag]').forEach((button) => {
+  button.addEventListener('click', () => {
+    activeTag = button.dataset.tag || '';
+    document.querySelectorAll('.tagbar [data-tag]').forEach((node) => node.classList.toggle('active', node.dataset.tag === activeTag));
+    applyFilters();
+  });
+});
+search.addEventListener('input', applyFilters);
+applyFilters();
+</script>
+</body>
 </html>`;
+    }
+    function normalizeTags(tags) {
+      const values = Array.isArray(tags) ? tags : String(tags || "").split(",");
+      return values.map((tag) => String(tag || "").replace(/^#/, "").trim()).filter(Boolean).slice(0, 8);
+    }
+    function formatDate(value) {
+      if (!value) {
+        return "";
+      }
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
+      return date.toISOString().slice(0, 10);
     }
     function escapeHtml(value) {
       return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -2238,7 +2312,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       const outputPath = await this.writeHtmlFile(outputPlan, html, options, file.path);
       if (options.shareTarget === "github-pages") {
         progress.addStep("Publishing GitHub Pages bundle...");
-        const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path);
+        const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path, markdown, options);
         publicUrl = publishResult.publicUrl;
         shareHomeUrl = publishResult.shareHomeUrl;
         progress.addStep(`Published: ${publicUrl}`);
@@ -2485,7 +2559,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     ].join("\n");
     await this.app.vault.adapter.write(readmePath, content);
   }
-  async publishGithubPages(plan, mappings, sourcePath) {
+  async publishGithubPages(plan, mappings, sourcePath, markdown, options) {
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
       throw new Error("GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.");
@@ -2512,11 +2586,27 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     }
     await this.publishShareIndex(repo.owner, repo.repo, branch, basePath, {
       slug: plan.basename,
-      title: plan.basename,
       url: publicUrl,
-      sourcePath
+      sourcePath,
+      artifactType: options.artifactType,
+      ...this.extractShareMetadata(markdown, plan.basename)
     }, pagesBaseUrl);
     return { publicUrl, shareHomeUrl };
+  }
+  extractShareMetadata(markdown, fallbackTitle) {
+    var _a, _b, _c, _d;
+    const value = String(markdown || "");
+    const frontmatter = ((_a = /^---\n([\s\S]*?)\n---/.exec(value)) == null ? void 0 : _a[1]) || "";
+    const title = ((_b = /^title:\s*["']?(.+?)["']?\s*$/m.exec(frontmatter)) == null ? void 0 : _b[1]) || ((_c = /^#\s+(.+)$/m.exec(value)) == null ? void 0 : _c[1]) || fallbackTitle;
+    const tagLine = ((_d = /^tags:\s*(.+)$/m.exec(frontmatter)) == null ? void 0 : _d[1]) || "";
+    const yamlListTags = [...frontmatter.matchAll(/^\s*-\s*["']?([^"'\n]+)["']?\s*$/gm)].map((match) => match[1]);
+    const inlineTags = tagLine.replace(/^\[|\]$/g, "").split(",").map((tag) => tag.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+    const body = value.replace(/^---\n[\s\S]*?\n---\s*/, "").replace(/^#\s+.+$/m, "").replace(/!\[\[[^\]]+]]/g, "").replace(/!\[[^\]]*]\([^)]+\)/g, "").replace(/\[[^\]]+]\([^)]+\)/g, "$1").replace(/[#*_`>~-]/g, "").split("\n").map((line) => line.trim()).filter(Boolean).join(" ");
+    return {
+      title: title.trim(),
+      excerpt: body.slice(0, 180),
+      tags: [...new Set([...inlineTags, ...yamlListTags].map((tag) => tag.replace(/^#/, "").trim()).filter(Boolean))].slice(0, 8)
+    };
   }
   async publishShareIndex(owner, repo, branch, basePath, entry, pagesBaseUrl) {
     const indexPath = buildPublishPath(basePath, "", "index.json");

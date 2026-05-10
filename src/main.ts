@@ -244,7 +244,7 @@ export default class MarktlPlugin extends Plugin {
       const outputPath = await this.writeHtmlFile(outputPlan, html, options, file.path);
       if (options.shareTarget === 'github-pages') {
         progress.addStep('Publishing GitHub Pages bundle...');
-        const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path);
+        const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path, markdown, options);
         publicUrl = publishResult.publicUrl;
         shareHomeUrl = publishResult.shareHomeUrl;
         progress.addStep(`Published: ${publicUrl}`);
@@ -525,7 +525,7 @@ export default class MarktlPlugin extends Plugin {
     await this.app.vault.adapter.write(readmePath, content);
   }
 
-  private async publishGithubPages(plan: OutputPlan, mappings: ImageAssetMapping[], sourcePath: string): Promise<{ publicUrl: string; shareHomeUrl: string }> {
+  private async publishGithubPages(plan: OutputPlan, mappings: ImageAssetMapping[], sourcePath: string, markdown: string, options: ExportOptions): Promise<{ publicUrl: string; shareHomeUrl: string }> {
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
       throw new Error('GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.');
@@ -555,15 +555,48 @@ export default class MarktlPlugin extends Plugin {
 
     await this.publishShareIndex(repo.owner, repo.repo, branch, basePath, {
       slug: plan.basename,
-      title: plan.basename,
       url: publicUrl,
       sourcePath,
+      artifactType: options.artifactType,
+      ...this.extractShareMetadata(markdown, plan.basename),
     }, pagesBaseUrl);
 
     return { publicUrl, shareHomeUrl };
   }
 
-  private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: { slug: string; title: string; url: string; sourcePath: string }, pagesBaseUrl: string): Promise<void> {
+  private extractShareMetadata(markdown: string, fallbackTitle: string): { title: string; excerpt: string; tags: string[] } {
+    const value = String(markdown || '');
+    const frontmatter = /^---\n([\s\S]*?)\n---/.exec(value)?.[1] || '';
+    const title = /^title:\s*["']?(.+?)["']?\s*$/m.exec(frontmatter)?.[1]
+      || /^#\s+(.+)$/m.exec(value)?.[1]
+      || fallbackTitle;
+    const tagLine = /^tags:\s*(.+)$/m.exec(frontmatter)?.[1] || '';
+    const yamlListTags = [...frontmatter.matchAll(/^\s*-\s*["']?([^"'\n]+)["']?\s*$/gm)].map((match) => match[1]);
+    const inlineTags = tagLine
+      .replace(/^\[|\]$/g, '')
+      .split(',')
+      .map((tag) => tag.trim().replace(/^["']|["']$/g, ''))
+      .filter(Boolean);
+    const body = value
+      .replace(/^---\n[\s\S]*?\n---\s*/, '')
+      .replace(/^#\s+.+$/m, '')
+      .replace(/!\[\[[^\]]+]]/g, '')
+      .replace(/!\[[^\]]*]\([^)]+\)/g, '')
+      .replace(/\[[^\]]+]\([^)]+\)/g, '$1')
+      .replace(/[#*_`>~-]/g, '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join(' ');
+
+    return {
+      title: title.trim(),
+      excerpt: body.slice(0, 180),
+      tags: [...new Set([...inlineTags, ...yamlListTags].map((tag) => tag.replace(/^#/, '').trim()).filter(Boolean))].slice(0, 8),
+    };
+  }
+
+  private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: { slug: string; title: string; url: string; sourcePath: string; artifactType?: string; excerpt?: string; tags?: string[] }, pagesBaseUrl: string): Promise<void> {
     const indexPath = buildPublishPath(basePath, '', 'index.json');
     const existing = await this.getGithubJson(owner, repo, branch, indexPath);
     const index = updateShareIndex(existing, entry);

@@ -65,7 +65,7 @@ test('updates share index by slug and newest first', () => {
 test('renders share home page with published links', () => {
   const html = renderShareIndexHtml({
     items: [
-      { slug: 'alpha', title: 'Alpha', url: 'https://example.com/alpha/', sourcePath: 'A.md', updatedAt: '2026-01-01' },
+      { slug: 'alpha', title: 'Alpha', url: 'https://example.com/alpha/', sourcePath: 'A.md', updatedAt: '2026-01-01', excerpt: 'First note', artifactType: 'research-report', tags: ['ai', 'strategy'] },
     ],
   }, {
     title: 'My Shares',
@@ -74,4 +74,7 @@ test('renders share home page with published links', () => {
   assert.match(html, /My Shares/);
   assert.match(html, /https:\/\/example\.com\/alpha\//);
   assert.match(html, /A\.md/);
+  assert.match(html, /Search documents/);
+  assert.match(html, /#strategy/);
+  assert.match(html, /data-search=/);
 });
