@@ -67,7 +67,7 @@ async function runCliProvider(markdown, options = {}) {
   }
 
   const prompt = buildPrompt(markdown, options);
-  const timeout = Number(options.timeoutMs || 300_000);
+  const timeout = Number(options.timeoutMs || 900_000);
   const command = options.cliPaths && options.cliPaths[options.provider]
     ? options.cliPaths[options.provider]
     : provider.command;

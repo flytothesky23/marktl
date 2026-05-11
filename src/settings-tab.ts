@@ -150,13 +150,13 @@ export class MarktlSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('CLI timeout')
-      .setDesc('Maximum AI CLI runtime in milliseconds. Rich HTML artifacts can take 2-5 minutes.')
+      .setDesc('Maximum AI CLI runtime in milliseconds. Rich HTML artifacts can take 5-15 minutes on long notes.')
       .addText((text) => text
-        .setPlaceholder('300000')
+        .setPlaceholder('900000')
         .setValue(String(this.plugin.settings.timeoutMs))
         .onChange(async (value) => {
           const parsed = Number(value);
-          this.plugin.settings.timeoutMs = Number.isFinite(parsed) && parsed > 0 ? parsed : 300000;
+          this.plugin.settings.timeoutMs = Number.isFinite(parsed) && parsed > 0 ? parsed : 900000;
           await this.plugin.saveSettings();
         }));
 

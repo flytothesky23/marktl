@@ -926,7 +926,7 @@ var require_ai = __commonJS({
         throw new Error(`Unsupported AI provider: ${options.provider}`);
       }
       const prompt = buildPrompt(markdown, options);
-      const timeout = Number(options.timeoutMs || 3e5);
+      const timeout = Number(options.timeoutMs || 9e5);
       const command = options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command;
       const args = provider.promptAsArgument ? [...provider.args, prompt] : provider.args;
       const execOptions = {
@@ -2185,9 +2185,9 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       this.plugin.settings.failurePolicy = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian5.Setting(containerEl).setName("CLI timeout").setDesc("Maximum AI CLI runtime in milliseconds. Rich HTML artifacts can take 2-5 minutes.").addText((text) => text.setPlaceholder("300000").setValue(String(this.plugin.settings.timeoutMs)).onChange(async (value) => {
+    new import_obsidian5.Setting(containerEl).setName("CLI timeout").setDesc("Maximum AI CLI runtime in milliseconds. Rich HTML artifacts can take 5-15 minutes on long notes.").addText((text) => text.setPlaceholder("900000").setValue(String(this.plugin.settings.timeoutMs)).onChange(async (value) => {
       const parsed = Number(value);
-      this.plugin.settings.timeoutMs = Number.isFinite(parsed) && parsed > 0 ? parsed : 3e5;
+      this.plugin.settings.timeoutMs = Number.isFinite(parsed) && parsed > 0 ? parsed : 9e5;
       await this.plugin.saveSettings();
     }));
     this.addCliPathSetting(containerEl, "Claude Code CLI path", "claudePath", "claude");
@@ -2414,7 +2414,7 @@ var DEFAULT_SETTINGS = {
   giscusCategoryId: "",
   giscusMapping: "pathname",
   giscusTheme: "preferred_color_scheme",
-  timeoutMs: 3e5,
+  timeoutMs: 9e5,
   claudePath: "",
   codexPath: "",
   geminiPath: "",
@@ -2491,7 +2491,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       this.settings.artifactGoal = DEFAULT_SETTINGS.artifactGoal;
       shouldSave = true;
     }
-    if (!Number.isFinite(this.settings.timeoutMs) || this.settings.timeoutMs <= 6e4) {
+    if (!Number.isFinite(this.settings.timeoutMs) || this.settings.timeoutMs <= 3e5) {
       this.settings.timeoutMs = DEFAULT_SETTINGS.timeoutMs;
       shouldSave = true;
     }

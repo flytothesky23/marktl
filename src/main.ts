@@ -41,7 +41,7 @@ const DEFAULT_SETTINGS: MarktlSettings = {
   giscusCategoryId: '',
   giscusMapping: 'pathname',
   giscusTheme: 'preferred_color_scheme',
-  timeoutMs: 300000,
+  timeoutMs: 900000,
   claudePath: '',
   codexPath: '',
   geminiPath: '',
@@ -143,7 +143,7 @@ export default class MarktlPlugin extends Plugin {
       this.settings.artifactGoal = DEFAULT_SETTINGS.artifactGoal;
       shouldSave = true;
     }
-    if (!Number.isFinite(this.settings.timeoutMs) || this.settings.timeoutMs <= 60000) {
+    if (!Number.isFinite(this.settings.timeoutMs) || this.settings.timeoutMs <= 300000) {
       this.settings.timeoutMs = DEFAULT_SETTINGS.timeoutMs;
       shouldSave = true;
     }
