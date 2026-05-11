@@ -62,6 +62,8 @@ export interface ExportSummary {
   warnings: string[];
   shareTarget: ShareTarget;
   copiedShareLink: boolean;
+  commentsEnabled: boolean;
+  commentsStatus: string;
   publicUrl?: string;
   shareHomeUrl?: string;
 }

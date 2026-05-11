@@ -16,6 +16,23 @@ export class MarktlResultModal extends Modal {
     contentEl.empty();
     this.setTitle('HTML export ready');
 
+    if (this.summary.publicUrl) {
+      const shareCard = contentEl.createDiv({ cls: 'marktl-share-card' });
+      shareCard.createEl('span', { cls: 'marktl-share-eyebrow', text: 'Share this page' });
+      const link = shareCard.createEl('a', {
+        cls: 'marktl-share-link',
+        href: this.summary.publicUrl,
+        text: this.summary.publicUrl,
+      });
+      link.setAttr('target', '_blank');
+      link.setAttr('rel', 'noopener noreferrer');
+      shareCard.createEl('p', {
+        text: this.summary.commentsEnabled
+          ? 'Readers can open this link and comment with GitHub through Giscus.'
+          : 'Readers can open this link. Comments need Giscus settings before they appear.',
+      });
+    }
+
     const facts = contentEl.createDiv({ cls: 'marktl-summary-grid' });
     this.addFact(facts, 'Output', this.summary.outputPath);
     this.addFact(facts, 'AI', this.summary.aiProvider === 'none'
@@ -23,6 +40,7 @@ export class MarktlResultModal extends Modal {
       : this.summary.usedFallback ? `${this.summary.aiProvider} failed; local fallback used` : `${this.summary.aiProvider} generated HTML`);
     this.addFact(facts, 'Images', `${this.summary.assetCount} bundled local image(s)`);
     this.addFact(facts, 'Share target', this.describeShareTarget());
+    this.addFact(facts, 'Comments', this.summary.commentsStatus);
     if (this.summary.publicUrl) {
       this.addFact(facts, 'Public URL', this.summary.publicUrl);
     }
@@ -54,6 +72,26 @@ export class MarktlResultModal extends Modal {
           const link = await this.copyLink(this.summary.outputPath, this.summary.publicUrl);
           new Notice(`Copied: ${link}`);
         }))
+      .addButton((button) => {
+        button
+          .setButtonText('Open page')
+          .setDisabled(!this.summary.publicUrl)
+          .onClick(() => {
+            if (this.summary.publicUrl) {
+              window.open(this.summary.publicUrl, '_blank', 'noopener,noreferrer');
+            }
+          });
+      })
+      .addButton((button) => {
+        button
+          .setButtonText('Open archive')
+          .setDisabled(!this.summary.shareHomeUrl)
+          .onClick(() => {
+            if (this.summary.shareHomeUrl) {
+              window.open(this.summary.shareHomeUrl, '_blank', 'noopener,noreferrer');
+            }
+          });
+      })
       .addButton((button) => button
         .setButtonText('Close')
         .setCta()

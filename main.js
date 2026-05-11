@@ -2153,11 +2153,26 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
     const { contentEl } = this;
     contentEl.empty();
     this.setTitle("HTML export ready");
+    if (this.summary.publicUrl) {
+      const shareCard = contentEl.createDiv({ cls: "marktl-share-card" });
+      shareCard.createEl("span", { cls: "marktl-share-eyebrow", text: "Share this page" });
+      const link = shareCard.createEl("a", {
+        cls: "marktl-share-link",
+        href: this.summary.publicUrl,
+        text: this.summary.publicUrl
+      });
+      link.setAttr("target", "_blank");
+      link.setAttr("rel", "noopener noreferrer");
+      shareCard.createEl("p", {
+        text: this.summary.commentsEnabled ? "Readers can open this link and comment with GitHub through Giscus." : "Readers can open this link. Comments need Giscus settings before they appear."
+      });
+    }
     const facts = contentEl.createDiv({ cls: "marktl-summary-grid" });
     this.addFact(facts, "Output", this.summary.outputPath);
     this.addFact(facts, "AI", this.summary.aiProvider === "none" ? "Local converter" : this.summary.usedFallback ? `${this.summary.aiProvider} failed; local fallback used` : `${this.summary.aiProvider} generated HTML`);
     this.addFact(facts, "Images", `${this.summary.assetCount} bundled local image(s)`);
     this.addFact(facts, "Share target", this.describeShareTarget());
+    this.addFact(facts, "Comments", this.summary.commentsStatus);
     if (this.summary.publicUrl) {
       this.addFact(facts, "Public URL", this.summary.publicUrl);
     }
@@ -2178,7 +2193,19 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
     new import_obsidian4.Setting(contentEl).addButton((button) => button.setButtonText(this.summary.publicUrl ? "Copy public link" : "Copy local link").onClick(async () => {
       const link = await this.copyLink(this.summary.outputPath, this.summary.publicUrl);
       new import_obsidian4.Notice(`Copied: ${link}`);
-    })).addButton((button) => button.setButtonText("Close").setCta().onClick(() => this.close()));
+    })).addButton((button) => {
+      button.setButtonText("Open page").setDisabled(!this.summary.publicUrl).onClick(() => {
+        if (this.summary.publicUrl) {
+          window.open(this.summary.publicUrl, "_blank", "noopener,noreferrer");
+        }
+      });
+    }).addButton((button) => {
+      button.setButtonText("Open archive").setDisabled(!this.summary.shareHomeUrl).onClick(() => {
+        if (this.summary.shareHomeUrl) {
+          window.open(this.summary.shareHomeUrl, "_blank", "noopener,noreferrer");
+        }
+      });
+    }).addButton((button) => button.setButtonText("Close").setCta().onClick(() => this.close()));
   }
   onClose() {
     this.contentEl.empty();
@@ -2295,7 +2322,7 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
     this.addTextSetting(containerEl, "Publish path", "Folder path inside the repository. Exports go to <path>/<slug>/index.html.", "githubPublishPath", "marktl");
     this.addTextSetting(containerEl, "Share home title", "Title for the generated index page that lists published exports.", "githubShareHomeTitle", "MarkTL Shared HTML");
     this.addTextSetting(containerEl, "GitHub token", "Fine-grained token with Contents read/write permission for the repository.", "githubToken", "github_pat_...", true);
-    new import_obsidian5.Setting(containerEl).setName("Copy share link by default").setDesc("Copies a local file:// link after export. Public hosting is planned separately.").addToggle((toggle) => toggle.setValue(this.plugin.settings.copyShareLinkAfterExport).onChange(async (value) => {
+    new import_obsidian5.Setting(containerEl).setName("Copy share link by default").setDesc("Copies the public GitHub Pages URL after publish, or a local file:// link for local exports.").addToggle((toggle) => toggle.setValue(this.plugin.settings.copyShareLinkAfterExport).onChange(async (value) => {
       this.plugin.settings.copyShareLinkAfterExport = value;
       await this.plugin.saveSettings();
     }));
@@ -2728,6 +2755,8 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         warnings,
         shareTarget: options.shareTarget,
         copiedShareLink: options.copyShareLinkAfterExport,
+        commentsEnabled: feedbackResult.injected,
+        commentsStatus: this.describeReaderFeedback(options, feedbackResult),
         publicUrl,
         shareHomeUrl
       });
@@ -2870,6 +2899,15 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       warnings: [],
       injected: true
     };
+  }
+  describeReaderFeedback(options, feedback) {
+    if (options.readerFeedbackMode !== "giscus") {
+      return "Reader comments disabled";
+    }
+    if (feedback.injected) {
+      return "Giscus GitHub comments enabled";
+    }
+    return feedback.warnings.length > 0 ? `Giscus setup needed: ${feedback.warnings[0]}` : "Giscus comments were not added";
   }
   async resolveContextPack(markdown, source, options) {
     if (options.contextPackMode !== "linked-notes") {

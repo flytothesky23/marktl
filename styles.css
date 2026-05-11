@@ -280,6 +280,35 @@
   margin: 12px 0;
 }
 
+.marktl-share-card {
+  background: var(--background-secondary);
+  border: 1px solid var(--interactive-accent);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 14px;
+}
+
+.marktl-share-eyebrow {
+  color: var(--text-accent);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.marktl-share-link {
+  color: var(--text-accent);
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.marktl-share-card p {
+  color: var(--text-muted);
+  margin: 0;
+}
+
 .marktl-summary-item {
   border-bottom: 1px solid var(--background-modifier-border);
   display: grid;

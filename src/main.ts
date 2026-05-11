@@ -297,6 +297,8 @@ export default class MarktlPlugin extends Plugin {
         warnings,
         shareTarget: options.shareTarget,
         copiedShareLink: options.copyShareLinkAfterExport,
+        commentsEnabled: feedbackResult.injected,
+        commentsStatus: this.describeReaderFeedback(options, feedbackResult),
         publicUrl,
         shareHomeUrl,
       });
@@ -462,6 +464,18 @@ export default class MarktlPlugin extends Plugin {
       warnings: [],
       injected: true,
     };
+  }
+
+  private describeReaderFeedback(options: ExportOptions, feedback: { warnings: string[]; injected: boolean }): string {
+    if (options.readerFeedbackMode !== 'giscus') {
+      return 'Reader comments disabled';
+    }
+    if (feedback.injected) {
+      return 'Giscus GitHub comments enabled';
+    }
+    return feedback.warnings.length > 0
+      ? `Giscus setup needed: ${feedback.warnings[0]}`
+      : 'Giscus comments were not added';
   }
 
   private async resolveContextPack(markdown: string, source: TFile, options: ExportOptions): Promise<{ markdown: string; count: number; warnings: string[] }> {

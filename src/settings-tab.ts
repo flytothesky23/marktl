@@ -216,7 +216,7 @@ export class MarktlSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Copy share link by default')
-      .setDesc('Copies a local file:// link after export. Public hosting is planned separately.')
+      .setDesc('Copies the public GitHub Pages URL after publish, or a local file:// link for local exports.')
       .addToggle((toggle) => toggle
         .setValue(this.plugin.settings.copyShareLinkAfterExport)
         .onChange(async (value) => {
