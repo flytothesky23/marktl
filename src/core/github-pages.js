@@ -40,6 +40,10 @@ function buildPagesUrl(baseUrl, basePath, slug) {
   return `${root}/${suffix ? `${suffix}/` : ''}`;
 }
 
+function buildShortPagesUrl(baseUrl, basePath, shortId) {
+  return buildPagesUrl(baseUrl, basePath, `s/${shortId}`);
+}
+
 function buildShareHomeUrl(baseUrl, basePath) {
   const root = String(baseUrl || '').trim().replace(/\/+$/g, '');
   if (!root) {
@@ -225,6 +229,7 @@ module.exports = {
   buildPagesUrl,
   buildPublishPath,
   buildShareHomeUrl,
+  buildShortPagesUrl,
   inferPagesBaseUrl,
   mimeTypeForPath,
   normalizePublishPath,

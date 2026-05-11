@@ -785,14 +785,14 @@ var require_ai = __commonJS({
       claude: { command: "claude", args: ["-p"], promptAsArgument: true },
       codex: { command: "codex", args: ["exec", "--json", "--sandbox", "read-only", "-"], parser: "codex-json", promptAsArgument: false }
     };
-    var cliPath = [
+    var unixCliPath = [
       "/opt/homebrew/bin",
       "/usr/local/bin",
       "/usr/bin",
       "/bin",
       "/usr/sbin",
       "/sbin"
-    ].join(":");
+    ];
     async function convertWithAiFallback2(markdown, options = {}) {
       if (!options.provider || options.provider === "none") {
         return {
@@ -838,7 +838,8 @@ var require_ai = __commonJS({
         env: {
           ...process.env,
           PATH: mergePath(process.env.PATH)
-        }
+        },
+        shell: process.platform === "win32"
       };
       if (!provider.promptAsArgument) {
         execOptions.input = prompt;
@@ -865,6 +866,7 @@ var require_ai = __commonJS({
       return new Promise((resolve, reject) => {
         const child = spawn(command, args, {
           env: options.env,
+          shell: Boolean(options.shell),
           stdio: ["ignore", "pipe", "pipe"]
         });
         let stdout = "";
@@ -980,23 +982,43 @@ ${markdown}`;
       return candidate;
     }
     function mergePath(existingPath = "", options = {}) {
+      const platform = options.platform || process.platform;
+      const delimiter = options.delimiter || (platform === "win32" ? ";" : path.delimiter);
       const seen = /* @__PURE__ */ new Set();
       return [
-        ...cliPath.split(":"),
-        ...discoverUserCliPaths(options.homeDir),
-        ...String(existingPath).split(":")
+        ...defaultCliPaths(platform, options.env || process.env, options.homeDir),
+        ...discoverUserCliPaths(options.homeDir, platform, options.env || process.env),
+        ...String(existingPath).split(delimiter)
       ].filter(Boolean).filter((entry) => {
         if (seen.has(entry)) {
           return false;
         }
         seen.add(entry);
         return true;
-      }).join(":");
+      }).join(delimiter);
     }
-    function discoverUserCliPaths(homeDir = os.homedir()) {
+    function defaultCliPaths(platform = process.platform, env = process.env, homeDir = os.homedir()) {
+      if (platform !== "win32") {
+        return unixCliPath;
+      }
+      return [
+        env.APPDATA ? path.join(env.APPDATA, "npm") : "",
+        env.LOCALAPPDATA ? path.join(env.LOCALAPPDATA, "Programs", "nodejs") : "",
+        homeDir ? path.join(homeDir, "AppData", "Roaming", "npm") : "",
+        "C:\\Program Files\\nodejs"
+      ].filter(Boolean);
+    }
+    function discoverUserCliPaths(homeDir = os.homedir(), platform = process.platform, env = process.env) {
       const paths = [];
       if (!homeDir) {
         return paths;
+      }
+      if (platform === "win32") {
+        if (env.APPDATA) {
+          paths.push(path.join(env.APPDATA, "npm"));
+        }
+        paths.push(path.join(homeDir, "AppData", "Roaming", "npm"));
+        return [...new Set(paths)];
       }
       paths.push(path.join(homeDir, ".local/bin"));
       paths.push(path.join(homeDir, ".volta/bin"));
@@ -1357,6 +1379,9 @@ var require_github_pages = __commonJS({
       const suffix = [normalizePublishPath(basePath), slug].filter(Boolean).map((part) => encodePathPart(part)).join("/");
       return `${root}/${suffix ? `${suffix}/` : ""}`;
     }
+    function buildShortPagesUrl2(baseUrl, basePath, shortId) {
+      return buildPagesUrl2(baseUrl, basePath, `s/${shortId}`);
+    }
     function buildShareHomeUrl2(baseUrl, basePath) {
       const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
       if (!root) {
@@ -1517,6 +1542,7 @@ applyFilters();
       buildPagesUrl: buildPagesUrl2,
       buildPublishPath: buildPublishPath2,
       buildShareHomeUrl: buildShareHomeUrl2,
+      buildShortPagesUrl: buildShortPagesUrl2,
       inferPagesBaseUrl: inferPagesBaseUrl2,
       mimeTypeForPath,
       normalizePublishPath,
@@ -1566,6 +1592,54 @@ var require_html_qa = __commonJS({
     }
     module2.exports = {
       validateHtmlArtifact: validateHtmlArtifact2
+    };
+  }
+});
+
+// src/core/social.js
+var require_social = __commonJS({
+  "src/core/social.js"(exports2, module2) {
+    "use strict";
+    var { escapeHtml } = require_html();
+    function buildShortId2(value) {
+      let hash = 2166136261;
+      for (const char of String(value || "")) {
+        hash ^= char.codePointAt(0) || 0;
+        hash = Math.imul(hash, 16777619);
+      }
+      return Math.abs(hash >>> 0).toString(36).slice(0, 7) || "doc";
+    }
+    function injectSocialMeta2(html, options = {}) {
+      const title = options.title || "MarkTL HTML artifact";
+      const description = options.description || "A shared HTML document generated with MarkTL.";
+      const url = options.url || "";
+      const image = options.image || "";
+      const tags = [
+        `<meta property="og:type" content="article">`,
+        `<meta property="og:title" content="${escapeAttr(title)}">`,
+        `<meta property="og:description" content="${escapeAttr(description)}">`,
+        url ? `<meta property="og:url" content="${escapeAttr(url)}">` : "",
+        image ? `<meta property="og:image" content="${escapeAttr(image)}">` : "",
+        `<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}">`,
+        `<meta name="twitter:title" content="${escapeAttr(title)}">`,
+        `<meta name="twitter:description" content="${escapeAttr(description)}">`,
+        image ? `<meta name="twitter:image" content="${escapeAttr(image)}">` : "",
+        url ? `<link rel="canonical" href="${escapeAttr(url)}">` : ""
+      ].filter(Boolean).join("\n");
+      const value = String(html || "");
+      if (/<\/head>/i.test(value)) {
+        return value.replace(/<\/head>/i, `${tags}
+</head>`);
+      }
+      return `${tags}
+${value}`;
+    }
+    function escapeAttr(value) {
+      return escapeHtml(String(value || "")).replace(/"/g, "&quot;");
+    }
+    module2.exports = {
+      buildShortId: buildShortId2,
+      injectSocialMeta: injectSocialMeta2
     };
   }
 });
@@ -2118,9 +2192,10 @@ var { convertWithAiFallback } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
 var { injectReaderFeedback, validateGiscusConfig } = require_feedback();
-var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require_github_pages();
+var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require_github_pages();
 var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
+var { buildShortId, injectSocialMeta } = require_social();
 var DEFAULT_SETTINGS = {
   exportFolder: "html-exports",
   setupCompleted: false,
@@ -2294,7 +2369,17 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         }
       });
       progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
-      const imageRewrittenHtml = rewriteHtmlImageSources(result.html, assetResult.mappings);
+      const shareMetadata = this.extractShareMetadata(markdown, outputPlan.basename);
+      const shortId = buildShortId(outputPlan.basename);
+      const socialUrl = options.shareTarget === "github-pages" ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo), this.settings.githubPublishPath, shortId) : "";
+      const socialImage = options.shareTarget === "github-pages" && assetResult.mappings[0] ? `${socialUrl}assets/${assetResult.mappings[0].destinationPath.split("/").pop() || ""}` : "";
+      const socialHtml = injectSocialMeta(result.html, {
+        title: shareMetadata.title,
+        description: shareMetadata.excerpt,
+        url: socialUrl,
+        image: socialImage
+      });
+      const imageRewrittenHtml = rewriteHtmlImageSources(socialHtml, assetResult.mappings);
       const feedbackResult = this.applyReaderFeedback(imageRewrittenHtml, options);
       const html = feedbackResult.html;
       if (feedbackResult.injected) {
@@ -2317,7 +2402,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       const outputPath = await this.writeHtmlFile(outputPlan, html, options, file.path);
       if (options.shareTarget === "github-pages") {
         progress.addStep("Publishing GitHub Pages bundle...");
-        const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path, markdown, options);
+        const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path, markdown, options, shortId, shareMetadata);
         publicUrl = publishResult.publicUrl;
         shareHomeUrl = publishResult.shareHomeUrl;
         progress.addStep(`Published: ${publicUrl}`);
@@ -2564,7 +2649,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     ].join("\n");
     await this.app.vault.adapter.write(readmePath, content);
   }
-  async publishGithubPages(plan, mappings, sourcePath, markdown, options) {
+  async publishGithubPages(plan, mappings, sourcePath, markdown, options, shortId = buildShortId(plan.basename), metadata = this.extractShareMetadata(markdown, plan.basename)) {
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
       throw new Error("GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.");
@@ -2575,9 +2660,10 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     const branch = this.settings.githubBranch.trim() || "main";
     const basePath = this.settings.githubPublishPath;
     const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
-    const publicUrl = buildPagesUrl(pagesBaseUrl, basePath, plan.basename);
+    const canonicalUrl = buildPagesUrl(pagesBaseUrl, basePath, plan.basename);
+    const publicUrl = buildShortPagesUrl(pagesBaseUrl, basePath, shortId);
     const shareHomeUrl = buildShareHomeUrl(pagesBaseUrl, basePath);
-    const files = [
+    const canonicalFiles = [
       { localPath: plan.outputPath, publishPath: buildPublishPath(basePath, plan.basename, "index.html") },
       { localPath: (0, import_obsidian7.normalizePath)(`${plan.folder}/share/${plan.basename}/README.md`), publishPath: buildPublishPath(basePath, plan.basename, "README.md") },
       ...mappings.map((mapping) => ({
@@ -2585,16 +2671,23 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         publishPath: buildPublishPath(basePath, plan.basename, `assets/${mapping.destinationPath.split("/").pop() || "asset"}`)
       }))
     ];
+    const shortFiles = canonicalFiles.map((file) => ({
+      localPath: file.localPath,
+      publishPath: file.publishPath.replace(buildPublishPath(basePath, plan.basename, ""), buildPublishPath(basePath, `s/${shortId}`, ""))
+    }));
+    const files = [...canonicalFiles, ...shortFiles];
     for (const file of files) {
       const binary = await this.app.vault.adapter.readBinary(file.localPath);
       await this.putGithubFile(repo.owner, repo.repo, branch, file.publishPath, binary);
     }
     await this.publishShareIndex(repo.owner, repo.repo, branch, basePath, {
       slug: plan.basename,
+      shortId,
       url: publicUrl,
+      canonicalUrl,
       sourcePath,
       artifactType: options.artifactType,
-      ...this.extractShareMetadata(markdown, plan.basename)
+      ...metadata
     }, pagesBaseUrl);
     return { publicUrl, shareHomeUrl };
   }

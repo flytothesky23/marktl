@@ -11,14 +11,14 @@ const providerCommands = {
   codex: { command: 'codex', args: ['exec', '--json', '--sandbox', 'read-only', '-'], parser: 'codex-json', promptAsArgument: false },
 };
 
-const cliPath = [
+const unixCliPath = [
   '/opt/homebrew/bin',
   '/usr/local/bin',
   '/usr/bin',
   '/bin',
   '/usr/sbin',
   '/sbin',
-].join(':');
+];
 
 async function convertWithAiFallback(markdown, options = {}) {
   if (!options.provider || options.provider === 'none') {
@@ -73,6 +73,7 @@ async function runCliProvider(markdown, options = {}) {
       ...process.env,
       PATH: mergePath(process.env.PATH),
     },
+    shell: process.platform === 'win32',
   };
   if (!provider.promptAsArgument) {
     execOptions.input = prompt;
@@ -104,6 +105,7 @@ function runProcess(command, args, options) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       env: options.env,
+      shell: Boolean(options.shell),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';
@@ -230,11 +232,13 @@ function extractHtmlFromAiOutput(output) {
 }
 
 function mergePath(existingPath = '', options = {}) {
+  const platform = options.platform || process.platform;
+  const delimiter = options.delimiter || (platform === 'win32' ? ';' : path.delimiter);
   const seen = new Set();
   return [
-    ...cliPath.split(':'),
-    ...discoverUserCliPaths(options.homeDir),
-    ...String(existingPath).split(':'),
+    ...defaultCliPaths(platform, options.env || process.env, options.homeDir),
+    ...discoverUserCliPaths(options.homeDir, platform, options.env || process.env),
+    ...String(existingPath).split(delimiter),
   ]
     .filter(Boolean)
     .filter((entry) => {
@@ -244,13 +248,33 @@ function mergePath(existingPath = '', options = {}) {
       seen.add(entry);
       return true;
     })
-    .join(':');
+    .join(delimiter);
 }
 
-function discoverUserCliPaths(homeDir = os.homedir()) {
+function defaultCliPaths(platform = process.platform, env = process.env, homeDir = os.homedir()) {
+  if (platform !== 'win32') {
+    return unixCliPath;
+  }
+  return [
+    env.APPDATA ? path.join(env.APPDATA, 'npm') : '',
+    env.LOCALAPPDATA ? path.join(env.LOCALAPPDATA, 'Programs', 'nodejs') : '',
+    homeDir ? path.join(homeDir, 'AppData', 'Roaming', 'npm') : '',
+    'C:\\Program Files\\nodejs',
+  ].filter(Boolean);
+}
+
+function discoverUserCliPaths(homeDir = os.homedir(), platform = process.platform, env = process.env) {
   const paths = [];
   if (!homeDir) {
     return paths;
+  }
+
+  if (platform === 'win32') {
+    if (env.APPDATA) {
+      paths.push(path.join(env.APPDATA, 'npm'));
+    }
+    paths.push(path.join(homeDir, 'AppData', 'Roaming', 'npm'));
+    return [...new Set(paths)];
   }
 
   paths.push(path.join(homeDir, '.local/bin'));

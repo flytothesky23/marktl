@@ -5,6 +5,7 @@ const {
   buildPagesUrl,
   buildPublishPath,
   buildShareHomeUrl,
+  buildShortPagesUrl,
   inferPagesBaseUrl,
   mimeTypeForPath,
   normalizePublishPath,
@@ -23,6 +24,7 @@ test('builds stable GitHub Pages paths and URLs', () => {
   assert.equal(normalizePublishPath('/exports//marktl/'), 'exports/marktl');
   assert.equal(buildPublishPath('/exports/', 'my-note', 'assets/chart.png'), 'exports/my-note/assets/chart.png');
   assert.equal(buildPagesUrl('https://reallygood83.github.io/marktl-shares/', 'exports', 'my note'), 'https://reallygood83.github.io/marktl-shares/exports/my%20note/');
+  assert.equal(buildShortPagesUrl('https://reallygood83.github.io/marktl-shares/', 'exports', 'abc123'), 'https://reallygood83.github.io/marktl-shares/exports/s/abc123/');
   assert.equal(buildShareHomeUrl('https://reallygood83.github.io/marktl-shares/', 'exports'), 'https://reallygood83.github.io/marktl-shares/exports/');
   assert.equal(inferPagesBaseUrl('reallygood83/marktl-shares'), 'https://reallygood83.github.io/marktl-shares');
   assert.equal(inferPagesBaseUrl('reallygood83/reallygood83.github.io'), 'https://reallygood83.github.io');

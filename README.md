@@ -143,6 +143,8 @@ Currently verified:
 Codex runs through `codex exec --json --sandbox read-only -` and reads the generated prompt from stdin. If Obsidian cannot find the command, set the full Codex CLI path in settings.
 Gemini CLI is hidden for now because the local plugin-style probe did not complete reliably.
 
+On Windows, set CLI paths explicitly if Obsidian cannot find global npm commands. MarkTL supports Windows npm shim locations and uses shell execution for Windows CLI shims.
+
 Rich AI artifacts can take several minutes. MarkTL defaults the CLI timeout to 5 minutes and migrates older 60-second settings upward because Claude Code can exceed 60 seconds on long Korean notes.
 
 ### Preview Security
@@ -188,11 +190,19 @@ For GitHub Pages publishing, fill these settings:
 - `Publish path`: folder inside the repository, for example `marktl`
 - `GitHub token`: fine-grained token with Contents read/write permission for that repository
 
-The public URL becomes:
+The canonical public URL is:
 
 ```text
 <GitHub Pages base URL>/<Publish path>/<slug>/
 ```
+
+MarkTL also publishes the same document at a shorter share URL and copies that shorter URL after export:
+
+```text
+<GitHub Pages base URL>/<Publish path>/s/<short-id>/
+```
+
+For social sharing, MarkTL injects Open Graph and Twitter card metadata into the exported HTML. The preview title comes from frontmatter `title` or the first H1, the description comes from the opening note text, and the image uses the first bundled local image when available.
 
 MarkTL also maintains a share home page and machine-readable index:
 
@@ -373,6 +383,8 @@ MarkTL은 HTML을 저장하고 preview하기 전에 기본 QA를 실행합니다
 Codex는 `codex exec --json --sandbox read-only -` 형태로 실행되며 생성 prompt를 stdin으로 전달합니다. Obsidian이 명령을 찾지 못하면 설정에 Codex CLI 전체 경로를 입력하세요.
 Gemini CLI는 현재 로컬 plugin-style probe가 안정적으로 완료되지 않아 UI에서 제외했습니다.
 
+Windows에서는 Obsidian이 전역 npm 명령을 찾지 못하면 CLI 전체 경로를 직접 입력하세요. MarkTL은 Windows npm shim 경로와 Windows CLI shim 실행 방식을 지원합니다.
+
 풍부한 AI artifact는 몇 분이 걸릴 수 있습니다. MarkTL은 CLI timeout 기본값을 5분으로 두며, 기존 60초 설정은 자동으로 5분으로 올립니다. 긴 한국어 노트에서 Claude Code가 60초를 넘는 경우가 있었기 때문입니다.
 
 ### Preview 보안
@@ -418,11 +430,19 @@ GitHub Pages publish를 쓰려면 설정에 아래 값을 입력합니다.
 - `Publish path`: repo 안의 폴더, 예 `marktl`
 - `GitHub token`: 해당 repo에 Contents read/write 권한이 있는 fine-grained token
 
-공개 URL은 아래처럼 만들어집니다.
+정식 공개 URL은 아래처럼 만들어집니다.
 
 ```text
 <GitHub Pages base URL>/<Publish path>/<slug>/
 ```
+
+MarkTL은 같은 문서를 짧은 공유 URL에도 함께 발행하고, export 후에는 이 짧은 URL을 복사합니다.
+
+```text
+<GitHub Pages base URL>/<Publish path>/s/<short-id>/
+```
+
+SNS 공유를 위해 exported HTML에는 Open Graph와 Twitter card metadata가 들어갑니다. 미리보기 제목은 frontmatter `title` 또는 첫 H1에서 가져오고, 설명은 노트 앞부분에서 만들며, 이미지는 가능한 경우 첫 번째 bundled local image를 사용합니다.
 
 MarkTL은 공유 홈 페이지와 기계가 읽을 수 있는 index도 함께 관리합니다.
 

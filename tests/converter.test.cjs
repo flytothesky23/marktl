@@ -192,6 +192,25 @@ test('codex provider uses stdin JSON exec mode', async () => {
   assert.match(captured.input, /# Prompt/);
 });
 
+test('provider process uses shell mode when requested for Windows CLI shims', async () => {
+  let captured = null;
+
+  await assert.rejects(
+    () => runCliProvider('# Prompt', {
+      provider: 'codex',
+      timeoutMs: 1,
+      cliPaths: { codex: 'codex' },
+      runProcess: (command, args, options) => {
+        captured = { command, args, shell: options.shell };
+        throw new Error('stop');
+      },
+    }),
+    /stop/,
+  );
+
+  assert.equal(captured.shell, process.platform === 'win32');
+});
+
 test('AI prompt can be passed as a provider argument', () => {
   const prompt = buildPrompt('# Arg Mode', {
     mode: 'preserve',
@@ -208,6 +227,23 @@ test('CLI path helper prepends common Node locations', () => {
   assert.equal(mergedPath.split(':')[0], '/opt/homebrew/bin');
   assert.equal(mergedPath.includes('/usr/local/bin'), true);
   assert.equal(mergedPath.includes('/custom/bin'), true);
+});
+
+test('CLI path helper supports Windows npm shim locations', () => {
+  const mergedPath = mergePath('C:\\Custom\\bin;C:\\Program Files\\nodejs', {
+    delimiter: ';',
+    env: {
+      APPDATA: 'C:\\Users\\Moon\\AppData\\Roaming',
+      LOCALAPPDATA: 'C:\\Users\\Moon\\AppData\\Local',
+    },
+    homeDir: 'C:\\Users\\Moon',
+    platform: 'win32',
+  });
+  const parts = mergedPath.split(';');
+
+  assert.equal(parts[0], 'C:\\Users\\Moon\\AppData\\Roaming/npm');
+  assert.equal(parts.includes('C:\\Custom\\bin'), true);
+  assert.equal(parts.includes('C:\\Program Files\\nodejs'), true);
 });
 
 test('provider errors do not leak the full Markdown prompt', () => {

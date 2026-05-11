@@ -11,9 +11,10 @@ const { convertWithAiFallback } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
 const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
 const { injectReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
-const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
+const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
 const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { slugify } = require('./core/html.js');
+const { buildShortId, injectSocialMeta } = require('./core/social.js');
 
 const DEFAULT_SETTINGS: MarktlSettings = {
   exportFolder: 'html-exports',
@@ -222,7 +223,21 @@ export default class MarktlPlugin extends Plugin {
         },
       });
       progress.addStep(result.usedFallback ? 'Generated local fallback HTML.' : 'Generated AI HTML.');
-      const imageRewrittenHtml = rewriteHtmlImageSources(result.html, assetResult.mappings);
+      const shareMetadata = this.extractShareMetadata(markdown, outputPlan.basename);
+      const shortId = buildShortId(outputPlan.basename);
+      const socialUrl = options.shareTarget === 'github-pages'
+        ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo), this.settings.githubPublishPath, shortId)
+        : '';
+      const socialImage = options.shareTarget === 'github-pages' && assetResult.mappings[0]
+        ? `${socialUrl}assets/${assetResult.mappings[0].destinationPath.split('/').pop() || ''}`
+        : '';
+      const socialHtml = injectSocialMeta(result.html, {
+        title: shareMetadata.title,
+        description: shareMetadata.excerpt,
+        url: socialUrl,
+        image: socialImage,
+      });
+      const imageRewrittenHtml = rewriteHtmlImageSources(socialHtml, assetResult.mappings);
       const feedbackResult = this.applyReaderFeedback(imageRewrittenHtml, options);
       const html = feedbackResult.html;
       if (feedbackResult.injected) {
@@ -246,7 +261,7 @@ export default class MarktlPlugin extends Plugin {
       const outputPath = await this.writeHtmlFile(outputPlan, html, options, file.path);
       if (options.shareTarget === 'github-pages') {
         progress.addStep('Publishing GitHub Pages bundle...');
-        const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path, markdown, options);
+        const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path, markdown, options, shortId, shareMetadata);
         publicUrl = publishResult.publicUrl;
         shareHomeUrl = publishResult.shareHomeUrl;
         progress.addStep(`Published: ${publicUrl}`);
@@ -527,7 +542,7 @@ export default class MarktlPlugin extends Plugin {
     await this.app.vault.adapter.write(readmePath, content);
   }
 
-  private async publishGithubPages(plan: OutputPlan, mappings: ImageAssetMapping[], sourcePath: string, markdown: string, options: ExportOptions): Promise<{ publicUrl: string; shareHomeUrl: string }> {
+  private async publishGithubPages(plan: OutputPlan, mappings: ImageAssetMapping[], sourcePath: string, markdown: string, options: ExportOptions, shortId = buildShortId(plan.basename), metadata = this.extractShareMetadata(markdown, plan.basename)): Promise<{ publicUrl: string; shareHomeUrl: string }> {
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
       throw new Error('GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.');
@@ -539,9 +554,10 @@ export default class MarktlPlugin extends Plugin {
     const branch = this.settings.githubBranch.trim() || 'main';
     const basePath = this.settings.githubPublishPath;
     const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
-    const publicUrl = buildPagesUrl(pagesBaseUrl, basePath, plan.basename);
+    const canonicalUrl = buildPagesUrl(pagesBaseUrl, basePath, plan.basename);
+    const publicUrl = buildShortPagesUrl(pagesBaseUrl, basePath, shortId);
     const shareHomeUrl = buildShareHomeUrl(pagesBaseUrl, basePath);
-    const files = [
+    const canonicalFiles = [
       { localPath: plan.outputPath, publishPath: buildPublishPath(basePath, plan.basename, 'index.html') },
       { localPath: normalizePath(`${plan.folder}/share/${plan.basename}/README.md`), publishPath: buildPublishPath(basePath, plan.basename, 'README.md') },
       ...mappings.map((mapping) => ({
@@ -549,6 +565,11 @@ export default class MarktlPlugin extends Plugin {
         publishPath: buildPublishPath(basePath, plan.basename, `assets/${mapping.destinationPath.split('/').pop() || 'asset'}`),
       })),
     ];
+    const shortFiles = canonicalFiles.map((file) => ({
+      localPath: file.localPath,
+      publishPath: file.publishPath.replace(buildPublishPath(basePath, plan.basename, ''), buildPublishPath(basePath, `s/${shortId}`, '')),
+    }));
+    const files = [...canonicalFiles, ...shortFiles];
 
     for (const file of files) {
       const binary = await this.app.vault.adapter.readBinary(file.localPath);
@@ -557,10 +578,12 @@ export default class MarktlPlugin extends Plugin {
 
     await this.publishShareIndex(repo.owner, repo.repo, branch, basePath, {
       slug: plan.basename,
+      shortId,
       url: publicUrl,
+      canonicalUrl,
       sourcePath,
       artifactType: options.artifactType,
-      ...this.extractShareMetadata(markdown, plan.basename),
+      ...metadata,
     }, pagesBaseUrl);
 
     return { publicUrl, shareHomeUrl };
@@ -598,7 +621,7 @@ export default class MarktlPlugin extends Plugin {
     };
   }
 
-  private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: { slug: string; title: string; url: string; sourcePath: string; artifactType?: string; excerpt?: string; tags?: string[] }, pagesBaseUrl: string): Promise<void> {
+  private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: { slug: string; title: string; url: string; sourcePath: string; shortId?: string; canonicalUrl?: string; artifactType?: string; excerpt?: string; tags?: string[] }, pagesBaseUrl: string): Promise<void> {
     const indexPath = buildPublishPath(basePath, '', 'index.json');
     const existing = await this.getGithubJson(owner, repo, branch, indexPath);
     const index = updateShareIndex(existing, entry);
