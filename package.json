@@ -1,6 +1,6 @@
 {
   "name": "marktl",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "description": "Obsidian plugin that exports Markdown notes to templated HTML previews.",
   "main": "main.js",
   "scripts": {

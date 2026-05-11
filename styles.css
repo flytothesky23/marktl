@@ -70,6 +70,7 @@
   font-weight: 600;
   gap: 8px;
   min-height: 24px;
+  overflow-wrap: anywhere;
 }
 
 .marktl-progress-status::before {
@@ -207,8 +208,13 @@
 }
 
 .marktl-progress-error {
+  background: rgba(var(--background-modifier-error-rgb), 0.16);
+  border: 1px solid var(--background-modifier-error);
+  border-radius: 8px;
   color: var(--text-error);
   font-weight: 600;
+  padding: 10px 12px;
+  white-space: pre-wrap;
 }
 
 @keyframes marktl-progress-pulse {

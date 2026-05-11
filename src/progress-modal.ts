@@ -42,6 +42,7 @@ export class MarktlProgressModal extends Modal {
     });
     this.steps.push(item);
     this.updateVisual(text);
+    item.scrollIntoView({ block: 'nearest' });
   }
 
   complete(text: string): void {
@@ -73,13 +74,16 @@ export class MarktlProgressModal extends Modal {
       current.addClass('marktl-progress-step-error');
     }
     if (this.statusEl) {
-      this.statusEl.setText('Export stopped.');
+      this.statusEl.setText(`Export stopped: ${text}`);
       this.statusEl.removeClass('marktl-progress-status-done');
       this.statusEl.addClass('marktl-progress-status-error');
     }
+    if (this.barEl) {
+      this.barEl.setAttr('style', 'width: 100%;');
+    }
     this.contentEl.createEl('p', {
       cls: 'marktl-progress-error',
-      text: 'Export stopped. Check the message above.',
+      text,
     });
   }
 
