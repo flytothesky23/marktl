@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { listExportPresets, findExportPreset } = require('../src/core/presets.js');
+const { getArtifactGoalInstruction, listArtifactGoals } = require('../src/core/artifact-goals.js');
 const { checkClaudeProvider, cleanDoctorOutput } = require('../src/core/provider-doctor.js');
 
 test('ships beginner-facing HTML value presets', () => {
@@ -15,11 +16,28 @@ test('ships beginner-facing HTML value presets', () => {
     'decision-memo',
     'shareable-article',
     'playground',
+    'compare-options',
+    'pr-explainer',
   ]);
   assert.equal(findExportPreset('interactive-report').previewSecurity, 'trusted');
   assert.equal(findExportPreset('shareable-article').mode, 'blog');
+  assert.equal(findExportPreset('decision-memo').artifactGoal, 'decide');
   assert.equal(findExportPreset('playground').template, 'playground');
+  assert.equal(findExportPreset('compare-options').artifactGoal, 'compare');
+  assert.equal(findExportPreset('pr-explainer').artifactGoal, 'explain-code');
   assert.equal(findExportPreset('missing'), null);
+});
+
+test('artifact goals describe what the HTML should do', () => {
+  const goals = listArtifactGoals();
+
+  assert.deepEqual(
+    goals.map((goal) => goal.id),
+    ['read', 'decide', 'review', 'compare', 'tune', 'explain-code', 'publish'],
+  );
+  assert.match(getArtifactGoalInstruction('decide'), /decision room/);
+  assert.match(getArtifactGoalInstruction('review'), /copy-feedback-to-AI/);
+  assert.match(getArtifactGoalInstruction('tune'), /copy-as-prompt/);
 });
 
 test('doctor output is concise for modal display', () => {

@@ -1,7 +1,8 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
+import { listArtifactGoals } from './core/artifact-goals.js';
 import { listTemplates } from './core/templates.js';
-import type { AiProvider, ArtifactType, ContextPackMode, ConversionMode, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareTarget } from './types';
+import type { AiProvider, ArtifactGoal, ArtifactType, ContextPackMode, ConversionMode, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareTarget } from './types';
 
 export class MarktlSettingTab extends PluginSettingTab {
   plugin: MarktlPlugin;
@@ -37,6 +38,21 @@ export class MarktlSettingTab extends PluginSettingTab {
           this.plugin.settings.exportFolder = value.trim() || 'html-exports';
           await this.plugin.saveSettings();
         }));
+
+    new Setting(containerEl)
+      .setName('Artifact goal')
+      .setDesc('Default job for the HTML artifact: read, decide, review, compare, tune, explain code, or publish.')
+      .addDropdown((dropdown) => {
+        for (const goal of listArtifactGoals()) {
+          dropdown.addOption(goal.id, goal.name);
+        }
+        dropdown
+          .setValue(this.plugin.settings.artifactGoal)
+          .onChange(async (value) => {
+            this.plugin.settings.artifactGoal = value as ArtifactGoal;
+            await this.plugin.saveSettings();
+          });
+      });
 
     new Setting(containerEl)
       .setName('Artifact type')

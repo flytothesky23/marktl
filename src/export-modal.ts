@@ -1,8 +1,9 @@
 import { App, Modal, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
+import { listArtifactGoals } from './core/artifact-goals.js';
 import { listExportPresets, findExportPreset } from './core/presets.js';
 import { listTemplates } from './core/templates.js';
-import type { AiProvider, ArtifactType, ContextPackMode, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareTarget } from './types';
+import type { AiProvider, ArtifactGoal, ArtifactType, ContextPackMode, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareTarget } from './types';
 
 export class MarktlExportModal extends Modal {
   private options: ExportOptions;
@@ -16,6 +17,7 @@ export class MarktlExportModal extends Modal {
     this.onSubmit = onSubmit;
     this.options = {
       template: plugin.settings.template,
+      artifactGoal: plugin.settings.artifactGoal,
       artifactType: plugin.settings.artifactType,
       aiProvider: plugin.settings.aiProvider,
       conversionMode: plugin.settings.conversionMode,
@@ -35,7 +37,7 @@ export class MarktlExportModal extends Modal {
 
     contentEl.createEl('p', {
       cls: 'marktl-modal-intro',
-      text: 'Choose what the HTML should do: easier reading, interaction, presentation, or a share-ready article.',
+      text: 'Choose what the HTML should do, then choose the visual style. MarkTL works best when the artifact has a job.',
     });
 
     new Setting(contentEl)
@@ -53,11 +55,24 @@ export class MarktlExportModal extends Modal {
             return;
           }
           this.selectedPreset = preset.id;
+          this.options.artifactGoal = preset.artifactGoal as ArtifactGoal;
           this.options.artifactType = preset.artifactType as ArtifactType;
           this.options.template = preset.template;
           this.options.conversionMode = preset.mode as ConversionMode;
           this.options.previewSecurity = preset.previewSecurity as PreviewSecurity;
           this.onOpen();
+        });
+      });
+
+    new Setting(contentEl)
+      .setName('Artifact goal')
+      .setDesc('The job of the HTML artifact: read, decide, review, compare, tune, explain code, or publish.')
+      .addDropdown((dropdown) => {
+        for (const goal of listArtifactGoals()) {
+          dropdown.addOption(goal.id, goal.name);
+        }
+        dropdown.setValue(this.options.artifactGoal).onChange((value) => {
+          this.options.artifactGoal = value as ArtifactGoal;
         });
       });
 

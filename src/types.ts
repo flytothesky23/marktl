@@ -1,5 +1,6 @@
 export type AiProvider = 'none' | 'claude' | 'codex';
 export type ArtifactType = 'faithful-note' | 'strategy-brief' | 'research-report' | 'decision-memo' | 'interactive-explainer' | 'slide-deck';
+export type ArtifactGoal = 'read' | 'decide' | 'review' | 'compare' | 'tune' | 'explain-code' | 'publish';
 export type ConversionMode = 'preserve' | 'presentation' | 'blog' | 'landing';
 export type FailurePolicy = 'fallback' | 'strict';
 export type PreviewSecurity = 'sanitized' | 'trusted';
@@ -10,6 +11,7 @@ export type ReaderFeedbackMode = 'none' | 'giscus';
 export interface MarktlSettings {
   exportFolder: string;
   setupCompleted: boolean;
+  artifactGoal: ArtifactGoal;
   artifactType: ArtifactType;
   template: string;
   aiProvider: AiProvider;
@@ -39,6 +41,7 @@ export interface MarktlSettings {
 }
 
 export interface ExportOptions {
+  artifactGoal: ArtifactGoal;
   artifactType: ArtifactType;
   template: string;
   aiProvider: AiProvider;

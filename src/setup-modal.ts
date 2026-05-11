@@ -1,6 +1,6 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
-import type { ArtifactType, ConversionMode, PreviewSecurity } from './types';
+import type { ArtifactGoal, ArtifactType, ConversionMode, PreviewSecurity } from './types';
 
 const { checkClaudeProvider } = require('./core/provider-doctor.js');
 
@@ -85,6 +85,7 @@ export class MarktlSetupModal extends Modal {
     Object.assign(this.plugin.settings, {
       setupCompleted: true,
       aiProvider: 'none',
+      artifactGoal: 'read' as ArtifactGoal,
       artifactType: 'faithful-note' as ArtifactType,
       template: 'editorial',
       conversionMode: 'preserve' as ConversionMode,
@@ -98,6 +99,7 @@ export class MarktlSetupModal extends Modal {
     Object.assign(this.plugin.settings, {
       setupCompleted: true,
       aiProvider: 'claude',
+      artifactGoal: 'review' as ArtifactGoal,
       artifactType: 'interactive-explainer' as ArtifactType,
       template: 'interactive-report',
       conversionMode: 'presentation' as ConversionMode,
@@ -112,6 +114,7 @@ export class MarktlSetupModal extends Modal {
     Object.assign(this.plugin.settings, {
       setupCompleted: true,
       aiProvider: this.plugin.settings.aiProvider,
+      artifactGoal: 'publish' as ArtifactGoal,
       artifactType: 'research-report' as ArtifactType,
       template: 'editorial',
       conversionMode: 'blog' as ConversionMode,

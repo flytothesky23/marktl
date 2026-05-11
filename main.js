@@ -30,6 +30,71 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// src/core/artifact-goals.js
+var require_artifact_goals = __commonJS({
+  "src/core/artifact-goals.js"(exports2, module2) {
+    "use strict";
+    var artifactGoals = [
+      {
+        id: "read",
+        name: "Readable artifact",
+        description: "Make a long note easier to read, navigate, and share.",
+        instruction: "Optimize the HTML for reading and navigation. Use strong information hierarchy, scan-friendly sections, generated navigation, tables where useful, and responsive layout."
+      },
+      {
+        id: "decide",
+        name: "Decision room",
+        description: "Turn the note into an interactive decision surface.",
+        instruction: "Make the HTML behave like a decision room: extract the core question, options, criteria, tradeoffs, risks, recommendation, dissenting view, and decision log. In trusted mode, add useful local controls such as criteria weighting, option filters, editable notes, or copy-next-decision-prompt behavior."
+      },
+      {
+        id: "review",
+        name: "Review room",
+        description: "Help readers leave structured feedback and copy it back to AI.",
+        instruction: "Make the HTML behave like a review room: add section-level review prompts, findings, open questions, reader notes, and copy-feedback-to-AI affordances. If comments are enabled, make the reader feedback section feel like the natural final step."
+      },
+      {
+        id: "compare",
+        name: "Compare options",
+        description: "Lay out alternatives side by side with tradeoffs.",
+        instruction: "Make the HTML compare alternatives side by side. Use matrices, scorecards, pros/cons, visual labels, and clear tradeoff summaries. In trusted mode, add filters, sorting, or lightweight scoring controls when useful."
+      },
+      {
+        id: "tune",
+        name: "Prompt playground",
+        description: "Create a small editable interface with copyable state.",
+        instruction: "Make the HTML a purpose-built playground: identify tunable parts of the note, provide editable fields or controls, show the resulting state, and include copy-as-prompt or copy-state behavior so the reader can bring changes back into Claude/Codex."
+      },
+      {
+        id: "explain-code",
+        name: "PR / code explainer",
+        description: "Explain code, diffs, or technical plans with annotations.",
+        instruction: "Make the HTML explain technical work: show architecture, data flow, annotated snippets or diffs when present, risk areas, reviewer checklist, and gotchas. Use diagrams or structured visual explanations where useful."
+      },
+      {
+        id: "publish",
+        name: "Public article",
+        description: "Prepare a polished public page for sharing.",
+        instruction: "Make the HTML a polished public article with strong title, excerpt, section rhythm, clear takeaways, social-share-friendly framing, and a reader-friendly ending."
+      }
+    ];
+    function listArtifactGoals3() {
+      return artifactGoals.map(({ id, name, description }) => ({ id, name, description }));
+    }
+    function getArtifactGoal(id) {
+      return artifactGoals.find((goal) => goal.id === id) || artifactGoals[0];
+    }
+    function getArtifactGoalInstruction(id) {
+      return getArtifactGoal(id).instruction;
+    }
+    module2.exports = {
+      getArtifactGoal,
+      getArtifactGoalInstruction,
+      listArtifactGoals: listArtifactGoals3
+    };
+  }
+});
+
 // src/core/presets.js
 var require_presets = __commonJS({
   "src/core/presets.js"(exports2, module2) {
@@ -39,6 +104,7 @@ var require_presets = __commonJS({
         id: "readable-note",
         name: "Readable Note",
         description: "Faithful, clean reading view with better typography.",
+        artifactGoal: "read",
         artifactType: "faithful-note",
         template: "editorial",
         mode: "preserve",
@@ -48,6 +114,7 @@ var require_presets = __commonJS({
         id: "interactive-report",
         name: "Interactive Report",
         description: "HTML-native controls: table of contents, collapsible sections, copy buttons.",
+        artifactGoal: "review",
         artifactType: "interactive-explainer",
         template: "interactive-report",
         mode: "presentation",
@@ -57,6 +124,7 @@ var require_presets = __commonJS({
         id: "presentation",
         name: "Presentation",
         description: "Slide-like sections for reviewing or presenting a note.",
+        artifactGoal: "read",
         artifactType: "slide-deck",
         template: "deck",
         mode: "presentation",
@@ -64,8 +132,9 @@ var require_presets = __commonJS({
       },
       {
         id: "decision-memo",
-        name: "Decision Memo",
-        description: "Options, tradeoffs, risks, recommendation, and next actions.",
+        name: "Decision Room",
+        description: "Options, tradeoffs, risks, recommendation, decision log, and copy-back prompts.",
+        artifactGoal: "decide",
         artifactType: "decision-memo",
         template: "research-memo",
         mode: "presentation",
@@ -75,6 +144,7 @@ var require_presets = __commonJS({
         id: "shareable-article",
         name: "Shareable Article",
         description: "Polished article layout with bundled images and static-hosting-ready output.",
+        artifactGoal: "publish",
         artifactType: "research-report",
         template: "editorial",
         mode: "blog",
@@ -82,10 +152,31 @@ var require_presets = __commonJS({
       },
       {
         id: "playground",
-        name: "Playground",
+        name: "Prompt Playground",
         description: "Editable working surface with sliders and copyable state.",
+        artifactGoal: "tune",
         artifactType: "interactive-explainer",
         template: "playground",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      },
+      {
+        id: "compare-options",
+        name: "Compare Options",
+        description: "Side-by-side options, scorecards, filters, and tradeoff summaries.",
+        artifactGoal: "compare",
+        artifactType: "decision-memo",
+        template: "dashboard",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      },
+      {
+        id: "pr-explainer",
+        name: "PR / Code Explainer",
+        description: "Annotated technical explainer for code, diffs, plans, and review risks.",
+        artifactGoal: "explain-code",
+        artifactType: "research-report",
+        template: "research-memo",
         mode: "presentation",
         previewSecurity: "trusted"
       }
@@ -779,6 +870,7 @@ var require_ai = __commonJS({
     var os = require("node:os");
     var path = require("node:path");
     var { buildAiAssetInstruction } = require_assets();
+    var { getArtifactGoalInstruction } = require_artifact_goals();
     var { convertMarkdownToHtml } = require_converter();
     var { looksLikeHtmlDocument, sanitizeHtml } = require_sanitizer();
     var providerCommands = {
@@ -923,6 +1015,8 @@ var require_ai = __commonJS({
       });
     }
     function buildPrompt(markdown, options = {}) {
+      const artifactGoal = options.artifactGoal || "read";
+      const goalInstruction = getArtifactGoalInstruction(artifactGoal);
       const artifactInstruction = getArtifactInstruction(options.artifactType || "faithful-note");
       const modeInstruction = {
         preserve: "Preserve the source content. Improve semantic HTML, visual hierarchy, typography, spacing, and responsive styling. Do not summarize or remove content.",
@@ -932,14 +1026,16 @@ var require_ai = __commonJS({
       }[options.mode || "preserve"];
       const dynamicInstruction = options.trusted ? "Trusted mode is enabled: you may include small inline JavaScript for useful interactions, animations, toggles, table-of-contents behavior, or reveal effects. Keep it self-contained and do not load remote resources." : "Sanitized mode is enabled: do not use JavaScript, iframes, external CSS, external scripts, or remote assets. Use rich CSS-only layout and interactions instead.";
       return `Convert this Obsidian Markdown note to a complete standalone HTML document.
+Artifact goal: ${artifactGoal}
 Artifact type: ${options.artifactType || "faithful-note"}
 Template: ${options.template || "minimal"}
 Mode: ${options.mode || "preserve"}
+Goal instruction: ${goalInstruction}
 Artifact instruction: ${artifactInstruction}
 Instruction: ${modeInstruction}
 Design standard: produce a refined, modern, visually designed HTML page rather than plain Markdown-looking output. Use responsive CSS, strong spacing, tasteful color, cards/sections where helpful, and readable Korean typography if the content is Korean.
 Dynamic policy: ${dynamicInstruction}
-Interaction standard: when trusted mode is enabled, include useful local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, or lightweight filters when they fit the artifact type. Keep everything self-contained.
+Interaction standard: when trusted mode is enabled, make the HTML useful as an AI artifact surface, not just a document. Include local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, editable review state, sliders, scorecards, or lightweight filters when they fit the artifact goal. End with a clear copy-back-to-AI affordance when the artifact supports decisions, review, comparison, or tuning. Keep everything self-contained.
 ${buildAiAssetInstruction(options.assetMappings)}
 ${options.contextPack ? `
 Context pack:
@@ -1654,6 +1750,7 @@ var import_obsidian7 = require("obsidian");
 
 // src/export-modal.ts
 var import_obsidian = require("obsidian");
+var import_artifact_goals = __toESM(require_artifact_goals());
 var import_presets = __toESM(require_presets());
 var import_templates = __toESM(require_templates());
 var MarktlExportModal = class extends import_obsidian.Modal {
@@ -1664,6 +1761,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     this.onSubmit = onSubmit;
     this.options = {
       template: plugin.settings.template,
+      artifactGoal: plugin.settings.artifactGoal,
       artifactType: plugin.settings.artifactType,
       aiProvider: plugin.settings.aiProvider,
       conversionMode: plugin.settings.conversionMode,
@@ -1681,7 +1779,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     this.setTitle("Export note to HTML");
     contentEl.createEl("p", {
       cls: "marktl-modal-intro",
-      text: "Choose what the HTML should do: easier reading, interaction, presentation, or a share-ready article."
+      text: "Choose what the HTML should do, then choose the visual style. MarkTL works best when the artifact has a job."
     });
     new import_obsidian.Setting(contentEl).setName("HTML preset").setDesc("Applies sensible defaults. You can still adjust individual fields below.").addDropdown((dropdown) => {
       dropdown.addOption("custom", "Custom");
@@ -1695,11 +1793,20 @@ var MarktlExportModal = class extends import_obsidian.Modal {
           return;
         }
         this.selectedPreset = preset.id;
+        this.options.artifactGoal = preset.artifactGoal;
         this.options.artifactType = preset.artifactType;
         this.options.template = preset.template;
         this.options.conversionMode = preset.mode;
         this.options.previewSecurity = preset.previewSecurity;
         this.onOpen();
+      });
+    });
+    new import_obsidian.Setting(contentEl).setName("Artifact goal").setDesc("The job of the HTML artifact: read, decide, review, compare, tune, explain code, or publish.").addDropdown((dropdown) => {
+      for (const goal of (0, import_artifact_goals.listArtifactGoals)()) {
+        dropdown.addOption(goal.id, goal.name);
+      }
+      dropdown.setValue(this.options.artifactGoal).onChange((value) => {
+        this.options.artifactGoal = value;
       });
     });
     new import_obsidian.Setting(contentEl).setName("Artifact type").setDesc("Defines the information architecture, not just the visual skin.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "Faithful Note").addOption("strategy-brief", "Strategy Brief").addOption("research-report", "Research Report").addOption("decision-memo", "Decision Memo").addOption("interactive-explainer", "Interactive Explainer").addOption("slide-deck", "Slide Deck").setValue(this.options.artifactType).onChange((value) => {
@@ -1945,6 +2052,7 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
 
 // src/settings-tab.ts
 var import_obsidian5 = require("obsidian");
+var import_artifact_goals2 = __toESM(require_artifact_goals());
 var import_templates2 = __toESM(require_templates());
 var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
   constructor(app, plugin) {
@@ -1962,6 +2070,15 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       this.plugin.settings.exportFolder = value.trim() || "html-exports";
       await this.plugin.saveSettings();
     }));
+    new import_obsidian5.Setting(containerEl).setName("Artifact goal").setDesc("Default job for the HTML artifact: read, decide, review, compare, tune, explain code, or publish.").addDropdown((dropdown) => {
+      for (const goal of (0, import_artifact_goals2.listArtifactGoals)()) {
+        dropdown.addOption(goal.id, goal.name);
+      }
+      dropdown.setValue(this.plugin.settings.artifactGoal).onChange(async (value) => {
+        this.plugin.settings.artifactGoal = value;
+        await this.plugin.saveSettings();
+      });
+    });
     new import_obsidian5.Setting(containerEl).setName("Artifact type").setDesc("Default information architecture for AI exports.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "Faithful Note").addOption("strategy-brief", "Strategy Brief").addOption("research-report", "Research Report").addOption("decision-memo", "Decision Memo").addOption("interactive-explainer", "Interactive Explainer").addOption("slide-deck", "Slide Deck").setValue(this.plugin.settings.artifactType).onChange(async (value) => {
       this.plugin.settings.artifactType = value;
       await this.plugin.saveSettings();
@@ -2120,6 +2237,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
     Object.assign(this.plugin.settings, {
       setupCompleted: true,
       aiProvider: "none",
+      artifactGoal: "read",
       artifactType: "faithful-note",
       template: "editorial",
       conversionMode: "preserve",
@@ -2132,6 +2250,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
     Object.assign(this.plugin.settings, {
       setupCompleted: true,
       aiProvider: "claude",
+      artifactGoal: "review",
       artifactType: "interactive-explainer",
       template: "interactive-report",
       conversionMode: "presentation",
@@ -2145,6 +2264,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
     Object.assign(this.plugin.settings, {
       setupCompleted: true,
       aiProvider: this.plugin.settings.aiProvider,
+      artifactGoal: "publish",
       artifactType: "research-report",
       template: "editorial",
       conversionMode: "blog",
@@ -2199,6 +2319,7 @@ var { buildShortId, injectSocialMeta } = require_social();
 var DEFAULT_SETTINGS = {
   exportFolder: "html-exports",
   setupCompleted: false,
+  artifactGoal: "read",
   artifactType: "faithful-note",
   template: "minimal",
   aiProvider: "none",
@@ -2293,6 +2414,10 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       this.settings.aiProvider = "none";
       shouldSave = true;
     }
+    if (!["read", "decide", "review", "compare", "tune", "explain-code", "publish"].includes(this.settings.artifactGoal)) {
+      this.settings.artifactGoal = DEFAULT_SETTINGS.artifactGoal;
+      shouldSave = true;
+    }
     if (!Number.isFinite(this.settings.timeoutMs) || this.settings.timeoutMs <= 6e4) {
       this.settings.timeoutMs = DEFAULT_SETTINGS.timeoutMs;
       shouldSave = true;
@@ -2334,6 +2459,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     const options = this.resolveExportOptions(overrides);
     const progress = new MarktlProgressModal(this.app);
     progress.open();
+    progress.addStep(`Goal: ${options.artifactGoal}`);
     progress.addStep(`Artifact: ${options.artifactType}`);
     progress.addStep(`Template: ${options.template}`);
     progress.addStep(`AI CLI: ${options.aiProvider === "none" ? "local fallback" : options.aiProvider}`);
@@ -2354,6 +2480,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       progress.addStep(options.aiProvider === "none" ? "Running local converter..." : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
         provider: options.aiProvider,
+        artifactGoal: options.artifactGoal,
         artifactType: options.artifactType,
         mode: options.conversionMode,
         template: options.template,
@@ -2528,6 +2655,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     var _a;
     return {
       template: overrides.template || this.settings.template,
+      artifactGoal: overrides.artifactGoal || this.settings.artifactGoal,
       artifactType: overrides.artifactType || this.settings.artifactType,
       aiProvider: overrides.aiProvider || this.settings.aiProvider,
       conversionMode: overrides.conversionMode || this.settings.conversionMode,
@@ -2639,6 +2767,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       "This folder is a static MarkTL HTML export bundle.",
       "",
       `- Source note: ${sourcePath}`,
+      `- Artifact goal: ${options.artifactGoal}`,
       `- Artifact type: ${options.artifactType}`,
       `- Template: ${options.template}`,
       `- Preview security: ${options.previewSecurity}`,

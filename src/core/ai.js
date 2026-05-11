@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { buildAiAssetInstruction } = require('./assets.js');
+const { getArtifactGoalInstruction } = require('./artifact-goals.js');
 const { convertMarkdownToHtml } = require('./converter.js');
 const { looksLikeHtmlDocument, sanitizeHtml } = require('./sanitizer.js');
 
@@ -165,6 +166,8 @@ function runProcess(command, args, options) {
 }
 
 function buildPrompt(markdown, options = {}) {
+  const artifactGoal = options.artifactGoal || 'read';
+  const goalInstruction = getArtifactGoalInstruction(artifactGoal);
   const artifactInstruction = getArtifactInstruction(options.artifactType || 'faithful-note');
   const modeInstruction = {
     preserve: 'Preserve the source content. Improve semantic HTML, visual hierarchy, typography, spacing, and responsive styling. Do not summarize or remove content.',
@@ -177,14 +180,16 @@ function buildPrompt(markdown, options = {}) {
     : 'Sanitized mode is enabled: do not use JavaScript, iframes, external CSS, external scripts, or remote assets. Use rich CSS-only layout and interactions instead.';
 
   return `Convert this Obsidian Markdown note to a complete standalone HTML document.
+Artifact goal: ${artifactGoal}
 Artifact type: ${options.artifactType || 'faithful-note'}
 Template: ${options.template || 'minimal'}
 Mode: ${options.mode || 'preserve'}
+Goal instruction: ${goalInstruction}
 Artifact instruction: ${artifactInstruction}
 Instruction: ${modeInstruction}
 Design standard: produce a refined, modern, visually designed HTML page rather than plain Markdown-looking output. Use responsive CSS, strong spacing, tasteful color, cards/sections where helpful, and readable Korean typography if the content is Korean.
 Dynamic policy: ${dynamicInstruction}
-Interaction standard: when trusted mode is enabled, include useful local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, or lightweight filters when they fit the artifact type. Keep everything self-contained.
+Interaction standard: when trusted mode is enabled, make the HTML useful as an AI artifact surface, not just a document. Include local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, editable review state, sliders, scorecards, or lightweight filters when they fit the artifact goal. End with a clear copy-back-to-AI affordance when the artifact supports decisions, review, comparison, or tuning. Keep everything self-contained.
 ${buildAiAssetInstruction(options.assetMappings)}
 ${options.contextPack ? `\nContext pack:\n${options.contextPack}\n` : ''}
 Return only HTML. Do not wrap it in Markdown fences.

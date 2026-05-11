@@ -19,6 +19,7 @@ const { buildShortId, injectSocialMeta } = require('./core/social.js');
 const DEFAULT_SETTINGS: MarktlSettings = {
   exportFolder: 'html-exports',
   setupCompleted: false,
+  artifactGoal: 'read',
   artifactType: 'faithful-note',
   template: 'minimal',
   aiProvider: 'none',
@@ -138,6 +139,10 @@ export default class MarktlPlugin extends Plugin {
       this.settings.aiProvider = 'none';
       shouldSave = true;
     }
+    if (!['read', 'decide', 'review', 'compare', 'tune', 'explain-code', 'publish'].includes(this.settings.artifactGoal as string)) {
+      this.settings.artifactGoal = DEFAULT_SETTINGS.artifactGoal;
+      shouldSave = true;
+    }
     if (!Number.isFinite(this.settings.timeoutMs) || this.settings.timeoutMs <= 60000) {
       this.settings.timeoutMs = DEFAULT_SETTINGS.timeoutMs;
       shouldSave = true;
@@ -185,6 +190,7 @@ export default class MarktlPlugin extends Plugin {
     const options = this.resolveExportOptions(overrides);
     const progress = new MarktlProgressModal(this.app);
     progress.open();
+    progress.addStep(`Goal: ${options.artifactGoal}`);
     progress.addStep(`Artifact: ${options.artifactType}`);
     progress.addStep(`Template: ${options.template}`);
     progress.addStep(`AI CLI: ${options.aiProvider === 'none' ? 'local fallback' : options.aiProvider}`);
@@ -208,6 +214,7 @@ export default class MarktlPlugin extends Plugin {
       progress.addStep(options.aiProvider === 'none' ? 'Running local converter...' : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
         provider: options.aiProvider,
+        artifactGoal: options.artifactGoal,
         artifactType: options.artifactType,
         mode: options.conversionMode,
         template: options.template,
@@ -408,6 +415,7 @@ export default class MarktlPlugin extends Plugin {
   private resolveExportOptions(overrides: Partial<ExportOptions>): ExportOptions {
     return {
       template: overrides.template || this.settings.template,
+      artifactGoal: overrides.artifactGoal || this.settings.artifactGoal,
       artifactType: overrides.artifactType || this.settings.artifactType,
       aiProvider: overrides.aiProvider || this.settings.aiProvider,
       conversionMode: overrides.conversionMode || this.settings.conversionMode,
@@ -531,6 +539,7 @@ export default class MarktlPlugin extends Plugin {
       'This folder is a static MarkTL HTML export bundle.',
       '',
       `- Source note: ${sourcePath}`,
+      `- Artifact goal: ${options.artifactGoal}`,
       `- Artifact type: ${options.artifactType}`,
       `- Template: ${options.template}`,
       `- Preview security: ${options.previewSecurity}`,

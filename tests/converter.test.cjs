@@ -88,6 +88,7 @@ test('AI conversion falls back by default and stops in strict mode', async () =>
 
 test('AI prompt asks for designed output and gates dynamic HTML by trusted mode', () => {
   const sanitizedPrompt = buildPrompt('# Note', {
+    artifactGoal: 'decide',
     artifactType: 'decision-memo',
     mode: 'presentation',
     template: 'deck',
@@ -100,10 +101,14 @@ test('AI prompt asks for designed output and gates dynamic HTML by trusted mode'
   });
 
   assert.match(sanitizedPrompt, /refined, modern, visually designed HTML page/);
+  assert.match(sanitizedPrompt, /Artifact goal: decide/);
+  assert.match(sanitizedPrompt, /copy-next-decision-prompt/);
   assert.match(sanitizedPrompt, /Artifact type: decision-memo/);
   assert.match(sanitizedPrompt, /comparison matrix/);
   assert.match(sanitizedPrompt, /do not use JavaScript/);
   assert.match(trustedPrompt, /you may include small inline JavaScript/);
+  assert.match(trustedPrompt, /AI artifact surface/);
+  assert.match(trustedPrompt, /copy-back-to-AI/);
   assert.match(trustedPrompt, /do not load remote resources/);
 });
 
