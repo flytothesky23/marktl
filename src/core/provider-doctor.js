@@ -20,7 +20,7 @@ async function checkCodexProvider(options = {}) {
     command: options.command || 'codex',
     name: 'Codex CLI',
     versionArgs: ['--version'],
-    probeArgs: ['exec', '--json', '--sandbox', 'read-only', '-'],
+    probeArgs: ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '-'],
     probeInput: 'Return only this exact text: MARKTL_OK',
     readyMessage: 'Codex CLI is installed, logged in, and ready.',
     missingMessage: 'Codex CLI was not found or did not start.',

@@ -164,7 +164,7 @@ Currently verified:
 - Claude Code CLI
 - Codex CLI
 
-Codex runs through `codex exec --json --sandbox read-only -` and reads the generated prompt from stdin. If Obsidian cannot find the command, set the full Codex CLI path in settings.
+Codex runs through `codex exec --json --sandbox read-only --skip-git-repo-check -` and reads the generated prompt from stdin. If Obsidian cannot find the command, set the full Codex CLI path in settings.
 Gemini CLI is hidden for now because the local plugin-style probe did not complete reliably.
 
 On Windows, set CLI paths explicitly if Obsidian cannot find global npm commands. MarkTL supports Windows npm shim locations and uses shell execution for Windows CLI shims.
@@ -428,7 +428,7 @@ MarkTL은 HTML을 저장하고 preview하기 전에 기본 QA를 실행합니다
 - Claude Code CLI
 - Codex CLI
 
-Codex는 `codex exec --json --sandbox read-only -` 형태로 실행되며 생성 prompt를 stdin으로 전달합니다. Obsidian이 명령을 찾지 못하면 설정에 Codex CLI 전체 경로를 입력하세요.
+Codex는 `codex exec --json --sandbox read-only --skip-git-repo-check -` 형태로 실행되며 생성 prompt를 stdin으로 전달합니다. Obsidian이 명령을 찾지 못하면 설정에 Codex CLI 전체 경로를 입력하세요.
 Gemini CLI는 현재 로컬 plugin-style probe가 안정적으로 완료되지 않아 UI에서 제외했습니다.
 
 Windows에서는 Obsidian이 전역 npm 명령을 찾지 못하면 CLI 전체 경로를 직접 입력하세요. MarkTL은 Windows npm shim 경로와 Windows CLI shim 실행 방식을 지원합니다.

@@ -104,7 +104,7 @@ test('Codex doctor probes JSON exec through stdin', async () => {
 
   assert.equal(ready.ok, true);
   assert.equal(ready.status, 'ready');
-  assert.deepEqual(calls[1].args, ['exec', '--json', '--sandbox', 'read-only', '-']);
+  assert.deepEqual(calls[1].args, ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '-']);
   assert.match(calls[1].input, /MARKTL_OK/);
 });
 

@@ -880,7 +880,7 @@ var require_ai = __commonJS({
         promptAsArgument: true,
         unsetEnv: ["ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY"]
       },
-      codex: { command: "codex", args: ["exec", "--json", "--sandbox", "read-only", "-"], parser: "codex-json", promptAsArgument: false }
+      codex: { command: "codex", args: ["exec", "--json", "--sandbox", "read-only", "--skip-git-repo-check", "-"], parser: "codex-json", promptAsArgument: false }
     };
     var unixCliPath = [
       "/opt/homebrew/bin",
@@ -1239,7 +1239,7 @@ var require_provider_doctor = __commonJS({
         command: options.command || "codex",
         name: "Codex CLI",
         versionArgs: ["--version"],
-        probeArgs: ["exec", "--json", "--sandbox", "read-only", "-"],
+        probeArgs: ["exec", "--json", "--sandbox", "read-only", "--skip-git-repo-check", "-"],
         probeInput: "Return only this exact text: MARKTL_OK",
         readyMessage: "Codex CLI is installed, logged in, and ready.",
         missingMessage: "Codex CLI was not found or did not start.",

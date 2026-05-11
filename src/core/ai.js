@@ -14,7 +14,7 @@ const providerCommands = {
     promptAsArgument: true,
     unsetEnv: ['ANTHROPIC_BASE_URL', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_API_KEY'],
   },
-  codex: { command: 'codex', args: ['exec', '--json', '--sandbox', 'read-only', '-'], parser: 'codex-json', promptAsArgument: false },
+  codex: { command: 'codex', args: ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '-'], parser: 'codex-json', promptAsArgument: false },
 };
 
 const unixCliPath = [

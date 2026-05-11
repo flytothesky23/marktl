@@ -193,7 +193,7 @@ test('codex provider uses stdin JSON exec mode', async () => {
   );
 
   assert.equal(captured.command, 'node');
-  assert.deepEqual(captured.args, ['exec', '--json', '--sandbox', 'read-only', '-']);
+  assert.deepEqual(captured.args, ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '-']);
   assert.match(captured.input, /# Prompt/);
 });
 
