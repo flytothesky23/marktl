@@ -182,11 +182,16 @@ export class MarktlExportModal extends Modal {
         .setValue(this.options.shareTarget)
         .onChange((value) => {
           this.options.shareTarget = value as ShareTarget;
+          if (value === 'github-pages') {
+            this.options.previewSecurity = 'trusted';
+            this.options.readerFeedbackMode = 'giscus';
+            this.options.copyShareLinkAfterExport = true;
+          }
         }));
 
     new Setting(contentEl)
       .setName('Copy share link')
-      .setDesc('Copies a local file:// link for the generated self-contained HTML.')
+      .setDesc('Copies the public Pages URL after publish, or a local file:// link for local exports.')
       .addToggle((toggle) => toggle
         .setValue(this.options.copyShareLinkAfterExport)
         .onChange((value) => {

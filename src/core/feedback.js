@@ -12,10 +12,13 @@ function buildGiscusFeedbackSection(options = {}) {
 .marktl-reader-feedback h2 { margin-top: 0; }
 .marktl-reader-feedback p { color: #526173; }
 .marktl-github-login-note { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 18px; padding: 10px 12px; border-radius: 6px; background: #f2f5f9; color: #243b53; font-weight: 700; }
+.marktl-github-login-button { display: inline-flex; align-items: center; justify-content: center; margin: 4px 0 18px; padding: 10px 14px; border-radius: 6px; background: #24292f; color: #fff; font-weight: 800; text-decoration: none; }
+.marktl-github-login-button:hover { background: #0969da; color: #fff; }
 </style>
 <h2>Reader feedback</h2>
 <p>Sign in with GitHub in the comment box below to leave a public comment or reaction.</p>
-<div class="marktl-github-login-note">GitHub login is handled by Giscus.</div>
+<a class="marktl-github-login-button" href="https://github.com/login" target="_blank" rel="noopener noreferrer">Sign in with GitHub</a>
+<div class="marktl-github-login-note">After sign-in, use the Giscus comment box below.</div>
 <script src="https://giscus.app/client.js"
         data-repo="${escapeAttr(config.repo)}"
         data-repo-id="${escapeAttr(config.repoId)}"

@@ -1421,10 +1421,13 @@ var require_feedback = __commonJS({
 .marktl-reader-feedback h2 { margin-top: 0; }
 .marktl-reader-feedback p { color: #526173; }
 .marktl-github-login-note { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 18px; padding: 10px 12px; border-radius: 6px; background: #f2f5f9; color: #243b53; font-weight: 700; }
+.marktl-github-login-button { display: inline-flex; align-items: center; justify-content: center; margin: 4px 0 18px; padding: 10px 14px; border-radius: 6px; background: #24292f; color: #fff; font-weight: 800; text-decoration: none; }
+.marktl-github-login-button:hover { background: #0969da; color: #fff; }
 </style>
 <h2>Reader feedback</h2>
 <p>Sign in with GitHub in the comment box below to leave a public comment or reaction.</p>
-<div class="marktl-github-login-note">GitHub login is handled by Giscus.</div>
+<a class="marktl-github-login-button" href="https://github.com/login" target="_blank" rel="noopener noreferrer">Sign in with GitHub</a>
+<div class="marktl-github-login-note">After sign-in, use the Giscus comment box below.</div>
 <script src="https://giscus.app/client.js"
         data-repo="${escapeAttr(config.repo)}"
         data-repo-id="${escapeAttr(config.repoId)}"
@@ -1925,8 +1928,13 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     }));
     new import_obsidian.Setting(contentEl).setName("Share target").setDesc("GitHub Pages publishes share/<slug>/index.html and copies a public URL.").addDropdown((dropdown) => dropdown.addOption("local-link", "Local file link").addOption("static-bundle", "Static hosting bundle").addOption("github-pages", "GitHub Pages link").setValue(this.options.shareTarget).onChange((value) => {
       this.options.shareTarget = value;
+      if (value === "github-pages") {
+        this.options.previewSecurity = "trusted";
+        this.options.readerFeedbackMode = "giscus";
+        this.options.copyShareLinkAfterExport = true;
+      }
     }));
-    new import_obsidian.Setting(contentEl).setName("Copy share link").setDesc("Copies a local file:// link for the generated self-contained HTML.").addToggle((toggle) => toggle.setValue(this.options.copyShareLinkAfterExport).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("Copy share link").setDesc("Copies the public Pages URL after publish, or a local file:// link for local exports.").addToggle((toggle) => toggle.setValue(this.options.copyShareLinkAfterExport).onChange((value) => {
       this.options.copyShareLinkAfterExport = value;
     }));
     new import_obsidian.Setting(contentEl).addButton((button) => button.setButtonText("Export").setCta().onClick(() => {
@@ -2194,6 +2202,15 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
       const link = await this.copyLink(this.summary.outputPath, this.summary.publicUrl);
       new import_obsidian4.Notice(`Copied: ${link}`);
     })).addButton((button) => {
+      button.setButtonText("Copy share text").setDisabled(!this.summary.publicUrl).onClick(async () => {
+        if (!this.summary.publicUrl) {
+          return;
+        }
+        const text = [this.summary.shareTitle, this.summary.publicUrl].filter(Boolean).join("\n");
+        await navigator.clipboard.writeText(text);
+        new import_obsidian4.Notice("Copied share text.");
+      });
+    }).addButton((button) => {
       button.setButtonText("Open page").setDisabled(!this.summary.publicUrl).onClick(() => {
         if (this.summary.publicUrl) {
           window.open(this.summary.publicUrl, "_blank", "noopener,noreferrer");
@@ -2463,7 +2480,8 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
       artifactType: "research-report",
       template: "editorial",
       conversionMode: "blog",
-      previewSecurity: "sanitized",
+      previewSecurity: "trusted",
+      readerFeedbackMode: "giscus",
       shareTarget: "github-pages",
       copyShareLinkAfterExport: true
     });
@@ -2757,6 +2775,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         copiedShareLink: options.copyShareLinkAfterExport,
         commentsEnabled: feedbackResult.injected,
         commentsStatus: this.describeReaderFeedback(options, feedbackResult),
+        shareTitle: shareMetadata.title,
         publicUrl,
         shareHomeUrl
       });

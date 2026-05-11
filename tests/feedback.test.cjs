@@ -20,7 +20,9 @@ test('builds giscus reader feedback section with GitHub login guidance', () => {
   const html = buildGiscusFeedbackSection(giscus);
 
   assert.match(html, /Reader feedback/);
-  assert.match(html, /GitHub login is handled by Giscus/);
+  assert.match(html, /Sign in with GitHub/);
+  assert.match(html, /https:\/\/github\.com\/login/);
+  assert.match(html, /After sign-in, use the Giscus comment box below/);
   assert.match(html, /https:\/\/giscus\.app\/client\.js/);
   assert.match(html, /data-repo="reallygood83\/moondoc"/);
   assert.match(html, /data-mapping="pathname"/);

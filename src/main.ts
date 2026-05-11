@@ -299,6 +299,7 @@ export default class MarktlPlugin extends Plugin {
         copiedShareLink: options.copyShareLinkAfterExport,
         commentsEnabled: feedbackResult.injected,
         commentsStatus: this.describeReaderFeedback(options, feedbackResult),
+        shareTitle: shareMetadata.title,
         publicUrl,
         shareHomeUrl,
       });

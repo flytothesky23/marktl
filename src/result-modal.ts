@@ -74,6 +74,19 @@ export class MarktlResultModal extends Modal {
         }))
       .addButton((button) => {
         button
+          .setButtonText('Copy share text')
+          .setDisabled(!this.summary.publicUrl)
+          .onClick(async () => {
+            if (!this.summary.publicUrl) {
+              return;
+            }
+            const text = [this.summary.shareTitle, this.summary.publicUrl].filter(Boolean).join('\n');
+            await navigator.clipboard.writeText(text);
+            new Notice('Copied share text.');
+          });
+      })
+      .addButton((button) => {
+        button
           .setButtonText('Open page')
           .setDisabled(!this.summary.publicUrl)
           .onClick(() => {

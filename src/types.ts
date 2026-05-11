@@ -64,6 +64,7 @@ export interface ExportSummary {
   copiedShareLink: boolean;
   commentsEnabled: boolean;
   commentsStatus: string;
+  shareTitle?: string;
   publicUrl?: string;
   shareHomeUrl?: string;
 }
