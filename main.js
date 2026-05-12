@@ -1451,19 +1451,39 @@ applyFilters();
       return [...new Set(values.map((tag) => cleanArchiveText(String(tag || "").replace(/^-\s*/, "").replace(/^#/, "").trim(), "")).filter(Boolean).filter((tag) => !looksLikeMojibake(tag)).map((tag) => tag.length > 44 ? `${tag.slice(0, 41)}...` : tag))].slice(0, 8);
     }
     function cleanArchiveText(value, fallback = "") {
-      const cleaned = String(value || "").replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<iframe\b[\s\S]*?<\/iframe>/gi, " ").replace(/<[^>]+>/g, " ").replace(/<[^>]*$/g, " ").replace(/\s+/g, " ").trim();
+      const cleaned = repairMojibake(String(value || "")).replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<iframe\b[\s\S]*?<\/iframe>/gi, " ").replace(/<[^>]+>/g, " ").replace(/<[^>]*$/g, " ").replace(/\s+/g, " ").trim();
       if (!cleaned || looksLikeMojibake(cleaned)) {
         return fallback;
       }
       return cleaned.length > 220 ? `${cleaned.slice(0, 217)}...` : cleaned;
+    }
+    function repairMojibake(value) {
+      let best = String(value || "");
+      let bestScore = mojibakeScore(best);
+      for (let index = 0; index < 2; index++) {
+        const next = Buffer.from(best, "latin1").toString("utf8");
+        const score = mojibakeScore(next);
+        if (score >= bestScore) {
+          break;
+        }
+        best = next;
+        bestScore = score;
+      }
+      return best;
     }
     function looksLikeMojibake(value) {
       const text = String(value || "");
       if (!text) {
         return false;
       }
-      const odd = (text.match(/[�ÂÃìíëê¼½¾]/g) || []).length;
-      return odd >= 3 || odd / Math.max(text.length, 1) > 0.08;
+      return mojibakeScore(text) / Math.max(text.length, 1) > 0.08;
+    }
+    function mojibakeScore(value) {
+      const text = String(value || "");
+      if (!text) {
+        return 0;
+      }
+      return (text.match(/[�ÂÃìíëê¼½¾]/g) || []).length;
     }
     function formatDate(value) {
       if (!value) {

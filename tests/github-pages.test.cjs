@@ -69,6 +69,7 @@ test('renders share home page with published links', () => {
     items: [
       { slug: 'alpha', title: 'Alpha', url: 'https://example.com/alpha/', sourcePath: 'A.md', updatedAt: '2026-01-01', excerpt: 'First note', artifactType: 'research-report', tags: ['ai', 'strategy'] },
       { slug: 'broken', title: 'dell-aiìë²', url: 'https://example.com/broken/', sourcePath: 'Bad.md', updatedAt: '2026-01-02', excerpt: '<iframe src="https://example.com"', artifactType: 'HTML artifact', tags: ['- newsletter', 'newsletter', 'Yozm IT - 바이브 코딩의 진짜 시작은 이제부터다'] },
+      { slug: 'mojibake', title: 'ë°ì´ë¸ ì½ë©ì ì¢ë§', url: 'https://example.com/mojibake/', sourcePath: 'B.md', updatedAt: '2026-01-03', excerpt: 'ð§ Voice Briefing', artifactType: 'research-report', tags: ['ë°ì´ë¸ì½ë©'] },
     ],
   }, {
     title: 'My Shares',
@@ -81,10 +82,13 @@ test('renders share home page with published links', () => {
   assert.match(html, /#strategy/);
   assert.match(html, /data-search=/);
   assert.match(html, /Open artifact/);
-  assert.match(html, /Untitled HTML artifact/);
+  assert.match(html, /dell-ai서버/);
+  assert.match(html, /바이브 코딩의 종말/);
+  assert.match(html, /#바이브코딩/);
   assert.doesNotMatch(html, /<iframe/);
   assert.doesNotMatch(html, /&lt;iframe/);
   assert.doesNotMatch(html, /dell-aiì/);
+  assert.doesNotMatch(html, /ë°ì/);
   assert.doesNotMatch(html, /#- newsletter/);
   assert.doesNotMatch(html, /newsletter newsletter/);
 });

@@ -216,7 +216,7 @@ function normalizeTags(tags) {
 }
 
 function cleanArchiveText(value, fallback = '') {
-  const cleaned = String(value || '')
+  const cleaned = repairMojibake(String(value || ''))
     .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
     .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, ' ')
@@ -230,13 +230,35 @@ function cleanArchiveText(value, fallback = '') {
   return cleaned.length > 220 ? `${cleaned.slice(0, 217)}...` : cleaned;
 }
 
+function repairMojibake(value) {
+  let best = String(value || '');
+  let bestScore = mojibakeScore(best);
+  for (let index = 0; index < 2; index++) {
+    const next = Buffer.from(best, 'latin1').toString('utf8');
+    const score = mojibakeScore(next);
+    if (score >= bestScore) {
+      break;
+    }
+    best = next;
+    bestScore = score;
+  }
+  return best;
+}
+
 function looksLikeMojibake(value) {
   const text = String(value || '');
   if (!text) {
     return false;
   }
-  const odd = (text.match(/[�ÂÃìíëê¼½¾]/g) || []).length;
-  return odd >= 3 || odd / Math.max(text.length, 1) > 0.08;
+  return mojibakeScore(text) / Math.max(text.length, 1) > 0.08;
+}
+
+function mojibakeScore(value) {
+  const text = String(value || '');
+  if (!text) {
+    return 0;
+  }
+  return (text.match(/[�ÂÃìíëê¼½¾]/g) || []).length;
 }
 
 function formatDate(value) {
