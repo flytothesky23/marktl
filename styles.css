@@ -409,3 +409,17 @@
 .marktl-summary-warnings {
   margin: 8px 0 12px;
 }
+
+.marktl-result-actions {
+  border-top: 1px solid var(--background-modifier-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.marktl-result-actions button {
+  min-height: 36px;
+  white-space: normal;
+}

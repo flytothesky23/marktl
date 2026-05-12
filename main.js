@@ -949,6 +949,7 @@ var require_ai = __commonJS({
       }[options.mode || "preserve"];
       const dynamicInstruction = options.trusted ? "Trusted mode is enabled: you may include small inline JavaScript for useful interactions, animations, toggles, table-of-contents behavior, or reveal effects. Keep it self-contained and do not load remote resources." : "Sanitized mode is enabled: do not use JavaScript, iframes, external CSS, external scripts, or remote assets. Use rich CSS-only layout and interactions instead.";
       const affordanceInstruction = getGoalAffordanceInstruction(artifactGoal, Boolean(options.trusted));
+      const interactionStandard = getInteractionStandard(artifactGoal, options.template || "minimal", Boolean(options.trusted));
       return `Convert this Obsidian Markdown note to a complete standalone HTML document.
 Artifact goal: ${artifactGoal}
 Artifact type: ${options.artifactType || "faithful-note"}
@@ -960,7 +961,7 @@ Instruction: ${modeInstruction}
 Design standard: produce a refined, modern, visually designed HTML page rather than plain Markdown-looking output. Use responsive CSS, strong spacing, tasteful color, cards/sections where helpful, and readable Korean typography if the content is Korean.
 Dynamic policy: ${dynamicInstruction}
 Goal-specific affordances: ${affordanceInstruction}
-Interaction standard: when trusted mode is enabled, make the HTML useful as an AI artifact surface, not just a document. Include local-only controls such as generated table of contents, section collapse, copy as prompt/markdown/summary buttons, annotations, editable review state, sliders, scorecards, or lightweight filters when they fit the artifact goal. End with a clear copy-back-to-AI affordance when the artifact supports decisions, review, comparison, or tuning. Keep everything self-contained.
+Interaction standard: ${interactionStandard}
 ${buildAiAssetInstruction(options.assetMappings)}
 ${options.contextPack ? `
 Context pack:
@@ -976,7 +977,7 @@ ${markdown}`;
         "strategy-brief": "Create an executive strategy brief with TL;DR, decision context, options, tradeoffs, risks, recommendation, and next actions.",
         "research-report": "Create a research report with abstract, key findings, evidence sections, source notes, diagrams or tables where useful, and implications.",
         "decision-memo": "Create a decision memo optimized for choosing: question, criteria, options, comparison matrix, recommendation, dissenting view, and decision log.",
-        "interactive-explainer": "Create an interactive explainer with progressive disclosure, visual examples, generated TOC, copy buttons, editable local controls, sliders or filters when useful, and self-contained export/copy state in trusted mode.",
+        "interactive-explainer": "Create an interactive explainer with progressive disclosure, visual examples, generated TOC, copy buttons, and local controls only when their purpose is clear to the reader.",
         "slide-deck": "Create a slide-like artifact with concise sections, strong headings, visual rhythm, and one idea per section while preserving source meaning."
       }[artifactType] || "Render a readable, useful HTML artifact from the note.";
     }
@@ -1013,6 +1014,15 @@ ${markdown}`;
         "explain-code": `Include code or diff navigation, reviewer checklist, risk sections, and next-review prompt. ${policy}`,
         publish: "Include social-friendly title, description, share framing, and polished article structure. In sanitized mode, avoid JavaScript entirely."
       }[artifactGoal] || `Make the artifact's intended next action obvious. ${policy}`;
+    }
+    function getInteractionStandard(artifactGoal, template, trusted) {
+      if (!trusted) {
+        return "Keep interaction affordances static: anchors, tables, checklists, and copy-ready text blocks only. Do not add editable playground controls, state JSON panels, or scripts.";
+      }
+      if (artifactGoal === "tune" || template === "playground") {
+        return "Use local-only editable controls, state JSON, and copy-next-prompt affordances, but label why the controls exist and what the reader should do next. Keep everything self-contained.";
+      }
+      return "Use local-only navigation, section collapse, copy summary/outline/prompt buttons, filters, or annotations only when they directly help the selected artifact goal. Do not add generic tuning playgrounds, state JSON panels, sliders, or editable fields unless the artifact goal is tune or the template is playground. Any control must have a visible purpose label and an obvious next action.";
     }
     function mergePath(existingPath = "", options = {}) {
       const platform = options.platform || process.platform;
@@ -1126,6 +1136,7 @@ ${markdown}`;
       buildPrompt,
       getArtifactInstruction,
       getGoalAffordanceInstruction,
+      getInteractionStandard,
       getProviderPrivacyNote: getProviderPrivacyNote3,
       convertWithAiFallback: convertWithAiFallback2,
       extractHtmlFromAiOutput,
@@ -1514,6 +1525,9 @@ ${section}`;
       if (!config.categoryId) warnings.push("Giscus feedback is missing discussion category ID.");
       return warnings;
     }
+    function shouldAttachReaderFeedback2(options = {}) {
+      return options.readerFeedbackMode === "giscus" && options.shareTarget !== "local-link";
+    }
     function normalizeGiscusConfig(options = {}) {
       const config = {
         repo: String(options.repo || "").trim(),
@@ -1535,6 +1549,7 @@ ${section}`;
     module2.exports = {
       buildGiscusFeedbackSection,
       injectReaderFeedback: injectReaderFeedback2,
+      shouldAttachReaderFeedback: shouldAttachReaderFeedback2,
       validateGiscusConfig: validateGiscusConfig2
     };
   }
@@ -2417,40 +2432,39 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
       cls: "marktl-modal-intro",
       text: this.summary.publicUrl ? "This public URL is ready to share with other people." : this.summary.shareTarget === "static-bundle" ? "This folder is ready for a static host. Public upload is intentionally a separate step." : "This link opens the generated file on this computer. Public share links require a static host."
     });
-    new import_obsidian4.Setting(contentEl).addButton((button) => button.setButtonText(this.summary.publicUrl ? "Copy public link" : "Copy local link").onClick(async () => {
+    const actions = contentEl.createDiv({ cls: "marktl-result-actions" });
+    this.addActionButton(actions, this.summary.publicUrl ? "Copy public link" : "Copy local link", async () => {
       const link = await this.copyLink(this.summary.outputPath, this.summary.publicUrl);
       new import_obsidian4.Notice(`Copied: ${link}`);
-    })).addButton((button) => {
-      button.setButtonText("Copy share text").setDisabled(!this.summary.publicUrl).onClick(async () => {
-        if (!this.summary.publicUrl) {
-          return;
-        }
+    });
+    if (this.summary.publicUrl) {
+      this.addActionButton(actions, "Copy share text", async () => {
         const text = [this.summary.shareTitle, this.summary.publicUrl].filter(Boolean).join("\n");
         await navigator.clipboard.writeText(text);
         new import_obsidian4.Notice("Copied share text.");
       });
-    }).addButton((button) => {
-      button.setButtonText("Open page").setDisabled(!this.summary.publicUrl).onClick(() => {
-        if (this.summary.publicUrl) {
-          window.open(this.summary.publicUrl, "_blank", "noopener,noreferrer");
-        }
+      this.addActionButton(actions, "Open page", () => {
+        window.open(this.summary.publicUrl, "_blank", "noopener,noreferrer");
       });
-    }).addButton((button) => {
-      button.setButtonText("Open archive").setDisabled(!this.summary.shareHomeUrl).onClick(() => {
-        if (this.summary.shareHomeUrl) {
-          window.open(this.summary.shareHomeUrl, "_blank", "noopener,noreferrer");
-        }
+    }
+    if (this.summary.shareHomeUrl) {
+      this.addActionButton(actions, "Open archive", () => {
+        window.open(this.summary.shareHomeUrl, "_blank", "noopener,noreferrer");
       });
-    }).addButton((button) => button.setButtonText("Copy AI handoff").onClick(async () => {
+    }
+    this.addActionButton(actions, "Copy AI handoff", async () => {
       await navigator.clipboard.writeText(this.buildAiHandoffPrompt());
       new import_obsidian4.Notice("Copied AI handoff prompt.");
-    })).addButton((button) => button.setButtonText("Regenerate slides").onClick(() => {
+    });
+    this.addActionButton(actions, "Regenerate slides", () => {
       this.close();
       this.regenerate("presentation");
-    })).addButton((button) => button.setButtonText("Regenerate interactive").onClick(() => {
+    });
+    this.addActionButton(actions, "Regenerate interactive", () => {
       this.close();
       this.regenerate("interactive-report");
-    })).addButton((button) => button.setButtonText("Close").setCta().onClick(() => this.close()));
+    });
+    this.addActionButton(actions, "Close", () => this.close(), true);
   }
   onClose() {
     this.contentEl.empty();
@@ -2459,6 +2473,15 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
     const item = container.createDiv({ cls: "marktl-summary-item" });
     item.createEl("span", { cls: "marktl-summary-label", text: label });
     item.createEl("strong", { text: value });
+  }
+  addActionButton(container, label, onClick, cta = false) {
+    const button = container.createEl("button", {
+      cls: cta ? "mod-cta" : "",
+      text: label
+    });
+    button.addEventListener("click", () => {
+      void onClick();
+    });
   }
   describeShareTarget() {
     if (this.summary.shareTarget === "github-pages") {
@@ -2821,7 +2844,7 @@ function buildAgentSetupPrompt(agent) {
 var { convertWithAiFallback, getProviderPrivacyNote: getProviderPrivacyNote2 } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
-var { injectReaderFeedback, validateGiscusConfig } = require_feedback();
+var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require_github_pages();
 var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
@@ -3199,7 +3222,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     };
   }
   applyReaderFeedback(html, options) {
-    if (options.readerFeedbackMode !== "giscus") {
+    if (!shouldAttachReaderFeedback(options)) {
       return { html, warnings: [], injected: false };
     }
     if (options.previewSecurity !== "trusted") {
@@ -3231,6 +3254,9 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
   describeReaderFeedback(options, feedback) {
     if (options.readerFeedbackMode !== "giscus") {
       return "Reader comments disabled";
+    }
+    if (!shouldAttachReaderFeedback(options)) {
+      return "Reader comments skipped for local file link";
     }
     if (feedback.injected) {
       return "Giscus GitHub comments enabled";

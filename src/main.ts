@@ -10,7 +10,7 @@ import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState } from 
 const { convertWithAiFallback, getProviderPrivacyNote } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
 const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
-const { injectReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
+const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
 const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
 const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { slugify } = require('./core/html.js');
@@ -450,7 +450,7 @@ export default class MarktlPlugin extends Plugin {
   }
 
   private applyReaderFeedback(html: string, options: ExportOptions): { html: string; warnings: string[]; injected: boolean } {
-    if (options.readerFeedbackMode !== 'giscus') {
+    if (!shouldAttachReaderFeedback(options)) {
       return { html, warnings: [], injected: false };
     }
 
@@ -486,6 +486,9 @@ export default class MarktlPlugin extends Plugin {
   private describeReaderFeedback(options: ExportOptions, feedback: { warnings: string[]; injected: boolean }): string {
     if (options.readerFeedbackMode !== 'giscus') {
       return 'Reader comments disabled';
+    }
+    if (!shouldAttachReaderFeedback(options)) {
+      return 'Reader comments skipped for local file link';
     }
     if (feedback.injected) {
       return 'Giscus GitHub comments enabled';

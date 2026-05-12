@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { buildPrompt, cleanProviderError, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, getArtifactInstruction, getGoalAffordanceInstruction, mergePath, runCliProvider } = require('../src/core/ai.js');
+const { buildPrompt, cleanProviderError, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, getArtifactInstruction, getGoalAffordanceInstruction, getInteractionStandard, mergePath, runCliProvider } = require('../src/core/ai.js');
 
 test('local conversion renders frontmatter, callouts, embeds, and Markdown content', () => {
   const markdown = `---
@@ -131,8 +131,8 @@ test('AI prompt asks for designed output and gates dynamic HTML by trusted mode'
   assert.match(sanitizedPrompt, /Goal-specific affordances/);
   assert.match(sanitizedPrompt, /copy-back decision summary/);
   assert.match(trustedPrompt, /you may include small inline JavaScript/);
-  assert.match(trustedPrompt, /AI artifact surface/);
-  assert.match(trustedPrompt, /copy-back-to-AI/);
+  assert.match(trustedPrompt, /Do not add generic tuning playgrounds/);
+  assert.match(trustedPrompt, /visible purpose label/);
   assert.match(trustedPrompt, /do not load remote resources/);
 });
 
@@ -141,6 +141,13 @@ test('goal affordance instructions preserve trusted and sanitized boundaries', (
   assert.match(getGoalAffordanceInstruction('review', true), /inline, local-only controls/);
   assert.match(getGoalAffordanceInstruction('publish', false), /avoid JavaScript entirely/);
   assert.match(getGoalAffordanceInstruction('read', false), /Avoid unnecessary controls/);
+});
+
+test('interaction standard reserves state JSON playgrounds for tuning flows', () => {
+  assert.match(getInteractionStandard('review', 'interactive-report', true), /Do not add generic tuning playgrounds/);
+  assert.match(getInteractionStandard('review', 'interactive-report', true), /unless the artifact goal is tune/);
+  assert.match(getInteractionStandard('tune', 'playground', true), /state JSON/);
+  assert.match(getInteractionStandard('read', 'minimal', false), /Do not add editable playground controls/);
 });
 
 test('AI prompt can include linked-note context packs', () => {
@@ -157,7 +164,7 @@ test('AI prompt can include linked-note context packs', () => {
 
 test('artifact instructions cover work-oriented HTML outputs', () => {
   assert.match(getArtifactInstruction('strategy-brief'), /executive strategy brief/);
-  assert.match(getArtifactInstruction('interactive-explainer'), /editable local controls/);
+  assert.match(getArtifactInstruction('interactive-explainer'), /purpose is clear/);
   assert.match(getArtifactInstruction('slide-deck'), /one idea per section/);
 });
 

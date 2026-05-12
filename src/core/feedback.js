@@ -63,6 +63,10 @@ function validateGiscusConfig(options = {}) {
   return warnings;
 }
 
+function shouldAttachReaderFeedback(options = {}) {
+  return options.readerFeedbackMode === 'giscus' && options.shareTarget !== 'local-link';
+}
+
 function normalizeGiscusConfig(options = {}) {
   const config = {
     repo: String(options.repo || '').trim(),
@@ -86,5 +90,6 @@ function escapeAttr(value) {
 module.exports = {
   buildGiscusFeedbackSection,
   injectReaderFeedback,
+  shouldAttachReaderFeedback,
   validateGiscusConfig,
 };

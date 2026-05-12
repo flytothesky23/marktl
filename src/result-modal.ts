@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Setting } from 'obsidian';
+import { App, Modal, Notice } from 'obsidian';
 import type { ExportSummary } from './types';
 
 export class MarktlResultModal extends Modal {
@@ -68,68 +68,39 @@ export class MarktlResultModal extends Modal {
         : 'This link opens the generated file on this computer. Public share links require a static host.',
     });
 
-    new Setting(contentEl)
-      .addButton((button) => button
-        .setButtonText(this.summary.publicUrl ? 'Copy public link' : 'Copy local link')
-        .onClick(async () => {
-          const link = await this.copyLink(this.summary.outputPath, this.summary.publicUrl);
-          new Notice(`Copied: ${link}`);
-        }))
-      .addButton((button) => {
-        button
-          .setButtonText('Copy share text')
-          .setDisabled(!this.summary.publicUrl)
-          .onClick(async () => {
-            if (!this.summary.publicUrl) {
-              return;
-            }
-            const text = [this.summary.shareTitle, this.summary.publicUrl].filter(Boolean).join('\n');
-            await navigator.clipboard.writeText(text);
-            new Notice('Copied share text.');
-          });
-      })
-      .addButton((button) => {
-        button
-          .setButtonText('Open page')
-          .setDisabled(!this.summary.publicUrl)
-          .onClick(() => {
-            if (this.summary.publicUrl) {
-              window.open(this.summary.publicUrl, '_blank', 'noopener,noreferrer');
-            }
-          });
-      })
-      .addButton((button) => {
-        button
-          .setButtonText('Open archive')
-          .setDisabled(!this.summary.shareHomeUrl)
-          .onClick(() => {
-            if (this.summary.shareHomeUrl) {
-              window.open(this.summary.shareHomeUrl, '_blank', 'noopener,noreferrer');
-            }
-          });
-      })
-      .addButton((button) => button
-        .setButtonText('Copy AI handoff')
-        .onClick(async () => {
-          await navigator.clipboard.writeText(this.buildAiHandoffPrompt());
-          new Notice('Copied AI handoff prompt.');
-        }))
-      .addButton((button) => button
-        .setButtonText('Regenerate slides')
-        .onClick(() => {
-          this.close();
-          this.regenerate('presentation');
-        }))
-      .addButton((button) => button
-        .setButtonText('Regenerate interactive')
-        .onClick(() => {
-          this.close();
-          this.regenerate('interactive-report');
-        }))
-      .addButton((button) => button
-        .setButtonText('Close')
-        .setCta()
-        .onClick(() => this.close()));
+    const actions = contentEl.createDiv({ cls: 'marktl-result-actions' });
+    this.addActionButton(actions, this.summary.publicUrl ? 'Copy public link' : 'Copy local link', async () => {
+      const link = await this.copyLink(this.summary.outputPath, this.summary.publicUrl);
+      new Notice(`Copied: ${link}`);
+    });
+    if (this.summary.publicUrl) {
+      this.addActionButton(actions, 'Copy share text', async () => {
+        const text = [this.summary.shareTitle, this.summary.publicUrl].filter(Boolean).join('\n');
+        await navigator.clipboard.writeText(text);
+        new Notice('Copied share text.');
+      });
+      this.addActionButton(actions, 'Open page', () => {
+        window.open(this.summary.publicUrl, '_blank', 'noopener,noreferrer');
+      });
+    }
+    if (this.summary.shareHomeUrl) {
+      this.addActionButton(actions, 'Open archive', () => {
+        window.open(this.summary.shareHomeUrl, '_blank', 'noopener,noreferrer');
+      });
+    }
+    this.addActionButton(actions, 'Copy AI handoff', async () => {
+      await navigator.clipboard.writeText(this.buildAiHandoffPrompt());
+      new Notice('Copied AI handoff prompt.');
+    });
+    this.addActionButton(actions, 'Regenerate slides', () => {
+      this.close();
+      this.regenerate('presentation');
+    });
+    this.addActionButton(actions, 'Regenerate interactive', () => {
+      this.close();
+      this.regenerate('interactive-report');
+    });
+    this.addActionButton(actions, 'Close', () => this.close(), true);
   }
 
   onClose(): void {
@@ -140,6 +111,16 @@ export class MarktlResultModal extends Modal {
     const item = container.createDiv({ cls: 'marktl-summary-item' });
     item.createEl('span', { cls: 'marktl-summary-label', text: label });
     item.createEl('strong', { text: value });
+  }
+
+  private addActionButton(container: HTMLElement, label: string, onClick: () => void | Promise<void>, cta = false): void {
+    const button = container.createEl('button', {
+      cls: cta ? 'mod-cta' : '',
+      text: label,
+    });
+    button.addEventListener('click', () => {
+      void onClick();
+    });
   }
 
   private describeShareTarget(): string {

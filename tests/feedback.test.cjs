@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const {
   buildGiscusFeedbackSection,
   injectReaderFeedback,
+  shouldAttachReaderFeedback,
   validateGiscusConfig,
 } = require('../src/core/feedback.js');
 
@@ -41,4 +42,19 @@ test('validates required giscus configuration fields', () => {
   assert.match(warnings.join('\n'), /repository ID/);
   assert.match(warnings.join('\n'), /discussion category/);
   assert.match(warnings.join('\n'), /discussion category ID/);
+});
+
+test('skips giscus feedback for local file exports', () => {
+  assert.equal(shouldAttachReaderFeedback({
+    readerFeedbackMode: 'giscus',
+    shareTarget: 'local-link',
+  }), false);
+  assert.equal(shouldAttachReaderFeedback({
+    readerFeedbackMode: 'giscus',
+    shareTarget: 'static-bundle',
+  }), true);
+  assert.equal(shouldAttachReaderFeedback({
+    readerFeedbackMode: 'none',
+    shareTarget: 'github-pages',
+  }), false);
 });
