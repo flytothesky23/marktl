@@ -1367,19 +1367,24 @@ var require_github_pages = __commonJS({
       const list = items.map((item) => {
         const href = item.url || (baseUrl ? `${baseUrl}/${encodeURIComponent(item.slug)}/` : `${encodeURIComponent(item.slug)}/`);
         const tags = normalizeTags(item.tags);
+        const itemTitle = cleanArchiveText(item.title || item.slug || "Untitled HTML artifact", "Untitled HTML artifact");
+        const excerpt = cleanArchiveText(item.excerpt || item.sourcePath || "", "");
+        const sourcePath = cleanArchiveText(item.sourcePath || "", "");
+        const artifactType = cleanArchiveText(item.artifactType || "HTML artifact", "HTML artifact");
         const searchText = [
-          item.title,
+          itemTitle,
           item.slug,
-          item.excerpt,
-          item.sourcePath,
-          item.artifactType,
+          excerpt,
+          sourcePath,
+          artifactType,
           ...tags
         ].filter(Boolean).join(" ").toLowerCase();
         return `<article class="item" data-search="${escapeHtml(searchText)}" data-tags="${escapeHtml(tags.join(" "))}">
-<div class="item-top"><a href="${escapeHtml(href)}">${escapeHtml(item.title || item.slug)}</a><span>${escapeHtml(formatDate(item.updatedAt))}</span></div>
-<p>${escapeHtml(item.excerpt || item.sourcePath || "")}</p>
-<div class="item-meta"><span>${escapeHtml(item.artifactType || "HTML artifact")}</span><span>${escapeHtml(item.sourcePath || "")}</span></div>
+<div class="item-top"><a href="${escapeHtml(href)}">${escapeHtml(itemTitle)}</a><span>${escapeHtml(formatDate(item.updatedAt))}</span></div>
+${excerpt ? `<p>${escapeHtml(excerpt)}</p>` : ""}
+<div class="item-meta"><span>${escapeHtml(artifactType)}</span>${sourcePath ? `<span>${escapeHtml(sourcePath)}</span>` : ""}</div>
 ${tags.length ? `<div class="tags">${tags.map((tag) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")}</div>` : ""}
+<a class="open-link" href="${escapeHtml(href)}">Open artifact</a>
 </article>`;
       }).join("\n");
       return `<!doctype html>
@@ -1389,18 +1394,21 @@ ${tags.length ? `<div class="tags">${tags.map((tag) => `<button type="button" da
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f6f7f4;color:#172033}
-main{max-width:1120px;margin:0 auto;padding:44px 22px 72px}
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f6f7f4;color:#172033;overflow-x:hidden}
+main{max-width:1180px;margin:0 auto;padding:44px 22px 72px}
 .hero{display:grid;gap:14px;margin-bottom:22px}.eyebrow{color:#8a4b64;font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.08em}
-h1{font-size:clamp(34px,6vw,72px);line-height:.98;margin:0}.meta{color:#68737d;margin:0;font-size:18px}
-.toolbar{position:sticky;top:0;z-index:2;display:grid;gap:12px;background:rgba(246,247,244,.94);backdrop-filter:blur(12px);border-bottom:1px solid #dde2e6;padding:14px 0;margin-bottom:18px}
+h1{font-size:clamp(34px,6vw,72px);line-height:.98;margin:0;overflow-wrap:anywhere}.meta{color:#68737d;margin:0;font-size:18px}
+.toolbar{position:sticky;top:0;z-index:2;display:grid;gap:12px;background:rgba(246,247,244,.94);backdrop-filter:blur(12px);border-bottom:1px solid #dde2e6;padding:14px 0;margin-bottom:22px}
 .toolbar input{width:100%;border:1px solid #cfd8e5;border-radius:8px;padding:12px 14px;font-size:16px;background:#fff;color:#172033}
-.tagbar{display:flex;flex-wrap:wrap;gap:8px}.tagbar button,.tags button{border:1px solid #d6dfeb;background:#fff;color:#33506d;border-radius:999px;padding:6px 10px;cursor:pointer}.tagbar button.active,.tags button:hover{background:#174ea6;color:#fff}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.item{display:flex;min-height:210px;flex-direction:column;gap:12px;background:#fff;border:1px solid #dde2e6;border-radius:8px;padding:18px;box-shadow:0 12px 32px rgba(23,32,51,.05)}
-.item-top{display:grid;gap:8px}.item a{color:#174ea6;font-size:20px;font-weight:800;line-height:1.2;text-decoration:none}.item a:hover{text-decoration:underline}
-.item-top span,.item-meta{color:#68737d;font-size:13px}.item p{color:#344054;line-height:1.55;margin:0;flex:1}.item-meta{display:grid;gap:4px}.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tagbar{display:flex;flex-wrap:wrap;gap:8px;max-height:96px;overflow:auto}.tagbar button,.tags button{border:1px solid #d6dfeb;background:#fff;color:#33506d;border-radius:999px;padding:6px 10px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tagbar button.active,.tags button:hover{background:#174ea6;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:16px;align-items:stretch}
+.item{display:flex;min-width:0;min-height:260px;flex-direction:column;gap:12px;background:#fff;border:1px solid #dde2e6;border-radius:8px;padding:18px;box-shadow:0 12px 32px rgba(23,32,51,.05);overflow:hidden}
+.item-top{display:grid;gap:8px}.item a{color:#174ea6;font-size:20px;font-weight:800;line-height:1.25;text-decoration:none;overflow-wrap:anywhere}.item a:hover{text-decoration:underline}
+.item-top span,.item-meta{color:#68737d;font-size:13px}.item p{color:#344054;line-height:1.55;margin:0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.item-meta{display:grid;gap:4px;margin-top:auto;overflow-wrap:anywhere}.tags{display:flex;flex-wrap:wrap;gap:6px;max-height:78px;overflow:hidden}
+.open-link{align-self:flex-start;border:1px solid #d6dfeb;border-radius:999px;padding:7px 11px;background:#f8fbff;font-size:13px!important;font-weight:800!important}
 .empty{background:#fff;border:1px dashed #cfd8e5;border-radius:8px;padding:24px;color:#68737d}
+@media(max-width:640px){main{padding:28px 14px 56px}.toolbar{position:static}.item{min-height:auto}}
 </style>
 </head>
 <body><main>
@@ -1440,7 +1448,22 @@ applyFilters();
     }
     function normalizeTags(tags) {
       const values = Array.isArray(tags) ? tags : String(tags || "").split(",");
-      return values.map((tag) => String(tag || "").replace(/^#/, "").trim()).filter(Boolean).slice(0, 8);
+      return values.map((tag) => cleanArchiveText(String(tag || "").replace(/^-\s*/, "").replace(/^#/, "").trim(), "")).filter(Boolean).filter((tag) => !looksLikeMojibake(tag)).map((tag) => tag.length > 44 ? `${tag.slice(0, 41)}...` : tag).slice(0, 8);
+    }
+    function cleanArchiveText(value, fallback = "") {
+      const cleaned = String(value || "").replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<iframe\b[\s\S]*?<\/iframe>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      if (!cleaned || looksLikeMojibake(cleaned)) {
+        return fallback;
+      }
+      return cleaned.length > 220 ? `${cleaned.slice(0, 217)}...` : cleaned;
+    }
+    function looksLikeMojibake(value) {
+      const text = String(value || "");
+      if (!text) {
+        return false;
+      }
+      const odd = (text.match(/[�ÂÃìíëê¼½¾]/g) || []).length;
+      return odd >= 3 || odd / Math.max(text.length, 1) > 0.08;
     }
     function formatDate(value) {
       if (!value) {
@@ -1722,17 +1745,13 @@ var require_feedback = __commonJS({
       }
       return `<section class="marktl-reader-feedback" aria-label="Reader feedback">
 <style>
-.marktl-reader-feedback { margin: 48px auto 0; padding: 24px; border: 1px solid #d8e2ef; border-radius: 8px; background: #ffffff; }
-.marktl-reader-feedback h2 { margin-top: 0; }
-.marktl-reader-feedback p { color: #526173; }
-.marktl-github-login-note { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 18px; padding: 10px 12px; border-radius: 6px; background: #f2f5f9; color: #243b53; font-weight: 700; }
-.marktl-github-login-button { display: inline-flex; align-items: center; justify-content: center; margin: 4px 0 18px; padding: 10px 14px; border-radius: 6px; background: #24292f; color: #fff; font-weight: 800; text-decoration: none; }
-.marktl-github-login-button:hover { background: #0969da; color: #fff; }
+.marktl-reader-feedback { margin: 40px auto 0; padding: 0; }
+.marktl-reader-feedback h2 { margin: 0 0 8px; font: 800 22px/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.marktl-reader-feedback p { margin: 0 0 14px; color: #526173; font: 500 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.marktl-reader-feedback .giscus, .marktl-reader-feedback .giscus-frame { width: 100%; }
 </style>
 <h2>Reader feedback</h2>
-<p>Sign in with GitHub in the comment box below to leave a public comment or reaction.</p>
-<a class="marktl-github-login-button" href="https://github.com/login" target="_blank" rel="noopener noreferrer">Sign in with GitHub</a>
-<div class="marktl-github-login-note">After sign-in, use the Giscus comment box below.</div>
+<p>Leave a public GitHub comment or reaction below.</p>
 <script src="https://giscus.app/client.js"
         data-repo="${escapeAttr(config.repo)}"
         data-repo-id="${escapeAttr(config.repoId)}"

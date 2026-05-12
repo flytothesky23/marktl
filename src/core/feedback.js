@@ -8,17 +8,13 @@ function buildGiscusFeedbackSection(options = {}) {
 
   return `<section class="marktl-reader-feedback" aria-label="Reader feedback">
 <style>
-.marktl-reader-feedback { margin: 48px auto 0; padding: 24px; border: 1px solid #d8e2ef; border-radius: 8px; background: #ffffff; }
-.marktl-reader-feedback h2 { margin-top: 0; }
-.marktl-reader-feedback p { color: #526173; }
-.marktl-github-login-note { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 18px; padding: 10px 12px; border-radius: 6px; background: #f2f5f9; color: #243b53; font-weight: 700; }
-.marktl-github-login-button { display: inline-flex; align-items: center; justify-content: center; margin: 4px 0 18px; padding: 10px 14px; border-radius: 6px; background: #24292f; color: #fff; font-weight: 800; text-decoration: none; }
-.marktl-github-login-button:hover { background: #0969da; color: #fff; }
+.marktl-reader-feedback { margin: 40px auto 0; padding: 0; }
+.marktl-reader-feedback h2 { margin: 0 0 8px; font: 800 22px/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.marktl-reader-feedback p { margin: 0 0 14px; color: #526173; font: 500 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.marktl-reader-feedback .giscus, .marktl-reader-feedback .giscus-frame { width: 100%; }
 </style>
 <h2>Reader feedback</h2>
-<p>Sign in with GitHub in the comment box below to leave a public comment or reaction.</p>
-<a class="marktl-github-login-button" href="https://github.com/login" target="_blank" rel="noopener noreferrer">Sign in with GitHub</a>
-<div class="marktl-github-login-note">After sign-in, use the Giscus comment box below.</div>
+<p>Leave a public GitHub comment or reaction below.</p>
 <script src="https://giscus.app/client.js"
         data-repo="${escapeAttr(config.repo)}"
         data-repo-id="${escapeAttr(config.repoId)}"

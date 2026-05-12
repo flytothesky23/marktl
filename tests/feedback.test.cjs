@@ -17,13 +17,13 @@ const giscus = {
   theme: 'preferred_color_scheme',
 };
 
-test('builds giscus reader feedback section with GitHub login guidance', () => {
+test('builds compact giscus reader feedback section', () => {
   const html = buildGiscusFeedbackSection(giscus);
 
   assert.match(html, /Reader feedback/);
-  assert.match(html, /Sign in with GitHub/);
-  assert.match(html, /https:\/\/github\.com\/login/);
-  assert.match(html, /After sign-in, use the Giscus comment box below/);
+  assert.match(html, /Leave a public GitHub comment or reaction below/);
+  assert.doesNotMatch(html, /marktl-github-login-button/);
+  assert.doesNotMatch(html, /https:\/\/github\.com\/login/);
   assert.match(html, /https:\/\/giscus\.app\/client\.js/);
   assert.match(html, /data-repo="reallygood83\/moondoc"/);
   assert.match(html, /data-mapping="pathname"/);

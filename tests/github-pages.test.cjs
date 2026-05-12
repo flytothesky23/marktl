@@ -68,6 +68,7 @@ test('renders share home page with published links', () => {
   const html = renderShareIndexHtml({
     items: [
       { slug: 'alpha', title: 'Alpha', url: 'https://example.com/alpha/', sourcePath: 'A.md', updatedAt: '2026-01-01', excerpt: 'First note', artifactType: 'research-report', tags: ['ai', 'strategy'] },
+      { slug: 'broken', title: 'dell-aiìë²', url: 'https://example.com/broken/', sourcePath: 'Bad.md', updatedAt: '2026-01-02', excerpt: '<iframe src="https://example.com"></iframe>', artifactType: 'HTML artifact', tags: ['- newsletter', 'Yozm IT - 바이브 코딩의 진짜 시작은 이제부터다'] },
     ],
   }, {
     title: 'My Shares',
@@ -79,4 +80,9 @@ test('renders share home page with published links', () => {
   assert.match(html, /Search documents/);
   assert.match(html, /#strategy/);
   assert.match(html, /data-search=/);
+  assert.match(html, /Open artifact/);
+  assert.match(html, /Untitled HTML artifact/);
+  assert.doesNotMatch(html, /<iframe/);
+  assert.doesNotMatch(html, /dell-aiì/);
+  assert.doesNotMatch(html, /#- newsletter/);
 });
