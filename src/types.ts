@@ -56,6 +56,7 @@ export interface ExportOptions {
 }
 
 export interface ExportSummary {
+  options: ExportOptions;
   sourcePath?: string;
   sourceTitle?: string;
   presetId?: string;

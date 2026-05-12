@@ -7,7 +7,7 @@ import { MarktlSettingTab } from './settings-tab';
 import { MarktlSetupModal } from './setup-modal';
 import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState } from './types';
 
-const { convertWithAiFallback } = require('./core/ai.js');
+const { convertWithAiFallback, getProviderPrivacyNote } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
 const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
 const { injectReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
@@ -16,7 +16,7 @@ const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { slugify } = require('./core/html.js');
 const { migrateSettings } = require('./core/settings.js');
 const { buildShortId, injectSocialMeta } = require('./core/social.js');
-const { findExportPreset } = require('./core/presets.js');
+const { applyPresetToOptions } = require('./core/presets.js');
 
 const DEFAULT_SETTINGS: MarktlSettings = {
   exportFolder: 'html-exports',
@@ -197,6 +197,10 @@ export default class MarktlPlugin extends Plugin {
     progress.addStep(`Artifact: ${options.artifactType}`);
     progress.addStep(`Template: ${options.template}`);
     progress.addStep(`AI CLI: ${options.aiProvider === 'none' ? 'local fallback' : options.aiProvider}`);
+    const privacyNote = getProviderPrivacyNote(options.aiProvider);
+    if (privacyNote) {
+      progress.addStep(`Privacy note: ${privacyNote}`);
+    }
     progress.addStep(`Mode: ${options.conversionMode}; preview: ${options.previewSecurity}`);
     progress.addStep(`Timeout: ${Math.round(this.settings.timeoutMs / 1000)}s`);
 
@@ -295,6 +299,7 @@ export default class MarktlPlugin extends Plugin {
 
       progress.complete(`Done: ${outputPath}`);
       this.openResultSummary({
+        options,
         sourcePath: file.path,
         sourceTitle: shareMetadata.title,
         presetId: options.presetId,
@@ -756,24 +761,9 @@ export default class MarktlPlugin extends Plugin {
       summary,
       (outputPath, preferredLink) => this.copyShareLink(outputPath, preferredLink),
       (presetId) => {
-        void this.exportActiveNote(this.optionsFromPreset(presetId));
+        void this.exportActiveNote(applyPresetToOptions(summary.options, presetId));
       },
     ).open();
-  }
-
-  private optionsFromPreset(presetId: string): Partial<ExportOptions> {
-    const preset = findExportPreset(presetId);
-    if (!preset) {
-      return {};
-    }
-    return {
-      presetId: preset.id,
-      artifactGoal: preset.artifactGoal,
-      artifactType: preset.artifactType,
-      template: preset.template,
-      conversionMode: preset.mode,
-      previewSecurity: preset.previewSecurity,
-    };
   }
 
   async copyShareLink(outputPath: string, preferredLink = ''): Promise<string> {

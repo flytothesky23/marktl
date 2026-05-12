@@ -56,6 +56,28 @@ test('sanitized preview removes dynamic and external execution risks', () => {
   assert.equal(html.includes('https://remote.test'), false);
 });
 
+test('sanitized preview removes unquoted and secondary dangerous URL attributes', () => {
+  const unsafe = [
+    '<a href=javascript:alert(1)>bad</a>',
+    '<img src=https://tracker.example/pixel.png srcset="https://tracker.example/a.png 1x, local.png 2x">',
+    '<button formaction=javascript:alert(1)>bad</button>',
+    '<meta http-equiv="refresh" content="0;url=https://tracker.example">',
+    '<p style="background:url(https://tracker.example/x.png)">bad</p>',
+    '<svg><animate onbegin="alert(1)"></animate></svg>',
+  ].join('');
+
+  const html = sanitizeHtml(unsafe, { trusted: false });
+
+  assert.equal(/javascript:/i.test(html), false);
+  assert.equal(/https?:\/\//i.test(html), false);
+  assert.equal(/srcset=/i.test(html), false);
+  assert.equal(/formaction=/i.test(html), false);
+  assert.equal(/http-equiv=/i.test(html), false);
+  assert.equal(/style=/i.test(html), false);
+  assert.equal(/<svg/i.test(html), false);
+  assert.equal(/onbegin=/i.test(html), false);
+});
+
 test('AI conversion falls back by default and stops in strict mode', async () => {
   const markdown = '# Fallback Works';
   const failingProvider = async () => {

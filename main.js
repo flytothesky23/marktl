@@ -95,105 +95,6 @@ var require_artifact_goals = __commonJS({
   }
 });
 
-// src/core/presets.js
-var require_presets = __commonJS({
-  "src/core/presets.js"(exports2, module2) {
-    "use strict";
-    var exportPresets = [
-      {
-        id: "readable-note",
-        name: "Readable Note",
-        description: "Faithful, clean reading view with better typography.",
-        artifactGoal: "read",
-        artifactType: "faithful-note",
-        template: "editorial",
-        mode: "preserve",
-        previewSecurity: "sanitized"
-      },
-      {
-        id: "interactive-report",
-        name: "Interactive Report",
-        description: "HTML-native controls: table of contents, collapsible sections, copy buttons.",
-        artifactGoal: "review",
-        artifactType: "interactive-explainer",
-        template: "interactive-report",
-        mode: "presentation",
-        previewSecurity: "trusted"
-      },
-      {
-        id: "presentation",
-        name: "Presentation",
-        description: "Slide-like sections for reviewing or presenting a note.",
-        artifactGoal: "read",
-        artifactType: "slide-deck",
-        template: "deck",
-        mode: "presentation",
-        previewSecurity: "trusted"
-      },
-      {
-        id: "decision-memo",
-        name: "Decision Room",
-        description: "Options, tradeoffs, risks, recommendation, decision log, and copy-back prompts.",
-        artifactGoal: "decide",
-        artifactType: "decision-memo",
-        template: "research-memo",
-        mode: "presentation",
-        previewSecurity: "trusted"
-      },
-      {
-        id: "shareable-article",
-        name: "Shareable Article",
-        description: "Polished article layout with bundled images and static-hosting-ready output.",
-        artifactGoal: "publish",
-        artifactType: "research-report",
-        template: "editorial",
-        mode: "blog",
-        previewSecurity: "sanitized"
-      },
-      {
-        id: "playground",
-        name: "Prompt Playground",
-        description: "Editable working surface with sliders and copyable state.",
-        artifactGoal: "tune",
-        artifactType: "interactive-explainer",
-        template: "playground",
-        mode: "presentation",
-        previewSecurity: "trusted"
-      },
-      {
-        id: "compare-options",
-        name: "Compare Options",
-        description: "Side-by-side options, scorecards, filters, and tradeoff summaries.",
-        artifactGoal: "compare",
-        artifactType: "decision-memo",
-        template: "dashboard",
-        mode: "presentation",
-        previewSecurity: "trusted"
-      },
-      {
-        id: "pr-explainer",
-        name: "PR / Code Explainer",
-        description: "Annotated technical explainer for code, diffs, plans, and review risks.",
-        artifactGoal: "explain-code",
-        artifactType: "research-report",
-        template: "research-memo",
-        mode: "presentation",
-        previewSecurity: "trusted"
-      }
-    ];
-    function listExportPresets2() {
-      return exportPresets.slice();
-    }
-    function findExportPreset3(id) {
-      return exportPresets.find((preset) => preset.id === id) || null;
-    }
-    module2.exports = {
-      findExportPreset: findExportPreset3,
-      listExportPresets: listExportPresets2
-    };
-  }
-});
-
 // src/core/html.js
 var require_html = __commonJS({
   "src/core/html.js"(exports2, module2) {
@@ -207,6 +108,146 @@ var require_html = __commonJS({
     module2.exports = {
       escapeHtml,
       slugify: slugify2
+    };
+  }
+});
+
+// src/core/assets.js
+var require_assets = __commonJS({
+  "src/core/assets.js"(exports2, module2) {
+    "use strict";
+    var path = require("node:path");
+    var { slugify: slugify2 } = require_html();
+    var IMAGE_EXTENSIONS = /* @__PURE__ */ new Set([".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".avif", ".bmp"]);
+    function extractMarkdownImageReferences2(markdown) {
+      const references = [];
+      const seen = /* @__PURE__ */ new Set();
+      const text = String(markdown || "");
+      for (const match of text.matchAll(/!\[\[([^\]]+)]]/g)) {
+        const raw = String(match[1] || "").trim();
+        const target = normalizeImageTarget(raw);
+        addReference(references, seen, target, raw);
+      }
+      for (const match of text.matchAll(/!\[([^\]]*)]\(([^)]+)\)/g)) {
+        const raw = String(match[2] || "").trim();
+        const target = normalizeImageTarget(raw);
+        addReference(references, seen, target, raw);
+      }
+      return references;
+    }
+    function normalizeImageTarget(value) {
+      let target = String(value || "").trim();
+      if (target.startsWith("<") && target.endsWith(">")) {
+        target = target.slice(1, -1).trim();
+      }
+      target = target.split("|")[0].trim();
+      target = target.split("#")[0].trim();
+      return decodeUriSafely(target);
+    }
+    function isLocalImageTarget(target) {
+      const value = String(target || "").trim();
+      if (!value || /^(?:https?:|data:|blob:|mailto:|#)/i.test(value)) {
+        return false;
+      }
+      return IMAGE_EXTENSIONS.has(path.extname(value).toLowerCase());
+    }
+    function buildAssetFileName2(originalPath, index, used = /* @__PURE__ */ new Set()) {
+      const extension = path.extname(originalPath).toLowerCase();
+      const base = slugify2(path.basename(originalPath, path.extname(originalPath))) || `image-${index}`;
+      let candidate = `${base}${extension}`;
+      let suffix = 2;
+      while (used.has(candidate)) {
+        candidate = `${base}-${suffix}${extension}`;
+        suffix += 1;
+      }
+      used.add(candidate);
+      return candidate;
+    }
+    function rewriteHtmlImageSources2(html, mappings) {
+      const replacements = buildReplacementMap(mappings);
+      if (replacements.size === 0) {
+        return String(html || "");
+      }
+      return String(html || "").replace(/(<img\b[^>]*\bsrc\s*=\s*)(["'])(.*?)\2/gi, (match, prefix, quote, src) => {
+        const normalized = normalizeImageTarget(src);
+        const replacement = replacements.get(src) || replacements.get(normalized) || replacements.get(decodeUriSafely(src));
+        if (!replacement) {
+          return match;
+        }
+        return `${prefix}${quote}${replacement}${quote}`;
+      });
+    }
+    function buildAiAssetInstruction(mappings) {
+      if (!Array.isArray(mappings) || mappings.length === 0) {
+        return "";
+      }
+      const lines = mappings.map((mapping) => `- ${mapping.original}: ${mapping.relativeSrc}`).join("\n");
+      return `
+Local image assets are available. Preserve these images and use the mapped src values exactly:
+${lines}`;
+    }
+    function buildReplacementMap(mappings) {
+      const replacements = /* @__PURE__ */ new Map();
+      for (const mapping of mappings || []) {
+        if (!mapping || !mapping.relativeSrc) {
+          continue;
+        }
+        for (const key of mapping.aliases || []) {
+          if (key) {
+            replacements.set(key, mapping.relativeSrc);
+            replacements.set(`./${key}`, mapping.relativeSrc);
+            replacements.set(encodeURI(key), mapping.relativeSrc);
+            replacements.set(`./${encodeURI(key)}`, mapping.relativeSrc);
+          }
+        }
+      }
+      return replacements;
+    }
+    function addReference(references, seen, target, raw) {
+      if (!isLocalImageTarget(target) || seen.has(target)) {
+        return;
+      }
+      seen.add(target);
+      references.push({ target, raw });
+    }
+    function decodeUriSafely(value) {
+      try {
+        return decodeURI(String(value || ""));
+      } catch (e) {
+        return String(value || "");
+      }
+    }
+    module2.exports = {
+      buildAiAssetInstruction,
+      buildAssetFileName: buildAssetFileName2,
+      extractMarkdownImageReferences: extractMarkdownImageReferences2,
+      isLocalImageTarget,
+      normalizeImageTarget,
+      rewriteHtmlImageSources: rewriteHtmlImageSources2
+    };
+  }
+});
+
+// src/core/sanitizer.js
+var require_sanitizer = __commonJS({
+  "src/core/sanitizer.js"(exports2, module2) {
+    "use strict";
+    function sanitizeHtml(html, options = {}) {
+      if (options.trusted) {
+        return html;
+      }
+      return String(html).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "").replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, "").replace(/<embed\b[^>]*>[\s\S]*?<\/embed>/gi, "").replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, "").replace(/<math\b[^>]*>[\s\S]*?<\/math>/gi, "").replace(/<meta\b[^>]*>/gi, "").replace(/<link\b[^>]*>/gi, "").replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "").replace(/\s+style\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "").replace(/\s+srcset\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "").replace(/\s+(href|src|action|formaction|poster|xlink:href)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, (match, _name, value) => {
+        const cleaned = String(value || "").replace(/^['"]|['"]$/g, "").trim().toLowerCase();
+        return /^(javascript:|data:text\/html|https?:\/\/)/i.test(cleaned) ? "" : match;
+      });
+    }
+    function looksLikeHtmlDocument(html) {
+      const value = String(html || "").trim();
+      return /<\/?[a-z][\s\S]*>/i.test(value);
+    }
+    module2.exports = {
+      looksLikeHtmlDocument,
+      sanitizeHtml
     };
   }
 });
@@ -543,143 +584,6 @@ ${script}
   }
 });
 
-// src/core/assets.js
-var require_assets = __commonJS({
-  "src/core/assets.js"(exports2, module2) {
-    "use strict";
-    var path = require("node:path");
-    var { slugify: slugify2 } = require_html();
-    var IMAGE_EXTENSIONS = /* @__PURE__ */ new Set([".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".avif", ".bmp"]);
-    function extractMarkdownImageReferences2(markdown) {
-      const references = [];
-      const seen = /* @__PURE__ */ new Set();
-      const text = String(markdown || "");
-      for (const match of text.matchAll(/!\[\[([^\]]+)]]/g)) {
-        const raw = String(match[1] || "").trim();
-        const target = normalizeImageTarget(raw);
-        addReference(references, seen, target, raw);
-      }
-      for (const match of text.matchAll(/!\[([^\]]*)]\(([^)]+)\)/g)) {
-        const raw = String(match[2] || "").trim();
-        const target = normalizeImageTarget(raw);
-        addReference(references, seen, target, raw);
-      }
-      return references;
-    }
-    function normalizeImageTarget(value) {
-      let target = String(value || "").trim();
-      if (target.startsWith("<") && target.endsWith(">")) {
-        target = target.slice(1, -1).trim();
-      }
-      target = target.split("|")[0].trim();
-      target = target.split("#")[0].trim();
-      return decodeUriSafely(target);
-    }
-    function isLocalImageTarget(target) {
-      const value = String(target || "").trim();
-      if (!value || /^(?:https?:|data:|blob:|mailto:|#)/i.test(value)) {
-        return false;
-      }
-      return IMAGE_EXTENSIONS.has(path.extname(value).toLowerCase());
-    }
-    function buildAssetFileName2(originalPath, index, used = /* @__PURE__ */ new Set()) {
-      const extension = path.extname(originalPath).toLowerCase();
-      const base = slugify2(path.basename(originalPath, path.extname(originalPath))) || `image-${index}`;
-      let candidate = `${base}${extension}`;
-      let suffix = 2;
-      while (used.has(candidate)) {
-        candidate = `${base}-${suffix}${extension}`;
-        suffix += 1;
-      }
-      used.add(candidate);
-      return candidate;
-    }
-    function rewriteHtmlImageSources2(html, mappings) {
-      const replacements = buildReplacementMap(mappings);
-      if (replacements.size === 0) {
-        return String(html || "");
-      }
-      return String(html || "").replace(/(<img\b[^>]*\bsrc\s*=\s*)(["'])(.*?)\2/gi, (match, prefix, quote, src) => {
-        const normalized = normalizeImageTarget(src);
-        const replacement = replacements.get(src) || replacements.get(normalized) || replacements.get(decodeUriSafely(src));
-        if (!replacement) {
-          return match;
-        }
-        return `${prefix}${quote}${replacement}${quote}`;
-      });
-    }
-    function buildAiAssetInstruction(mappings) {
-      if (!Array.isArray(mappings) || mappings.length === 0) {
-        return "";
-      }
-      const lines = mappings.map((mapping) => `- ${mapping.original}: ${mapping.relativeSrc}`).join("\n");
-      return `
-Local image assets are available. Preserve these images and use the mapped src values exactly:
-${lines}`;
-    }
-    function buildReplacementMap(mappings) {
-      const replacements = /* @__PURE__ */ new Map();
-      for (const mapping of mappings || []) {
-        if (!mapping || !mapping.relativeSrc) {
-          continue;
-        }
-        for (const key of mapping.aliases || []) {
-          if (key) {
-            replacements.set(key, mapping.relativeSrc);
-            replacements.set(`./${key}`, mapping.relativeSrc);
-            replacements.set(encodeURI(key), mapping.relativeSrc);
-            replacements.set(`./${encodeURI(key)}`, mapping.relativeSrc);
-          }
-        }
-      }
-      return replacements;
-    }
-    function addReference(references, seen, target, raw) {
-      if (!isLocalImageTarget(target) || seen.has(target)) {
-        return;
-      }
-      seen.add(target);
-      references.push({ target, raw });
-    }
-    function decodeUriSafely(value) {
-      try {
-        return decodeURI(String(value || ""));
-      } catch (e) {
-        return String(value || "");
-      }
-    }
-    module2.exports = {
-      buildAiAssetInstruction,
-      buildAssetFileName: buildAssetFileName2,
-      extractMarkdownImageReferences: extractMarkdownImageReferences2,
-      isLocalImageTarget,
-      normalizeImageTarget,
-      rewriteHtmlImageSources: rewriteHtmlImageSources2
-    };
-  }
-});
-
-// src/core/sanitizer.js
-var require_sanitizer = __commonJS({
-  "src/core/sanitizer.js"(exports2, module2) {
-    "use strict";
-    function sanitizeHtml(html, options = {}) {
-      if (options.trusted) {
-        return html;
-      }
-      return String(html).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "").replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, "").replace(/<embed\b[^>]*>[\s\S]*?<\/embed>/gi, "").replace(/<link\b[^>]*>/gi, "").replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "").replace(/\s+(href|src)\s*=\s*("|')\s*javascript:[\s\S]*?\2/gi, "").replace(/\s+(href|src)\s*=\s*("|')\s*https?:\/\/[^"']*\2/gi, "");
-    }
-    function looksLikeHtmlDocument(html) {
-      const value = String(html || "").trim();
-      return /<\/?[a-z][\s\S]*>/i.test(value);
-    }
-    module2.exports = {
-      looksLikeHtmlDocument,
-      sanitizeHtml
-    };
-  }
-});
-
 // src/core/converter.js
 var require_converter = __commonJS({
   "src/core/converter.js"(exports2, module2) {
@@ -956,6 +860,9 @@ var require_ai = __commonJS({
         throw new Error(details || String(error));
       }
     }
+    function getProviderPrivacyNote3(provider) {
+      return provider === "claude" ? "Claude Code CLI receives the note prompt as a command-line argument; avoid sending private notes if local process inspection is a concern." : "";
+    }
     function buildProviderEnv(provider, baseEnv = process.env) {
       const env = {
         ...baseEnv,
@@ -1219,6 +1126,7 @@ ${markdown}`;
       buildPrompt,
       getArtifactInstruction,
       getGoalAffordanceInstruction,
+      getProviderPrivacyNote: getProviderPrivacyNote3,
       convertWithAiFallback: convertWithAiFallback2,
       extractHtmlFromAiOutput,
       discoverUserCliPaths,
@@ -1226,6 +1134,126 @@ ${markdown}`;
       parseProviderOutput,
       runCliProvider,
       cleanProviderError
+    };
+  }
+});
+
+// src/core/presets.js
+var require_presets = __commonJS({
+  "src/core/presets.js"(exports2, module2) {
+    "use strict";
+    var exportPresets = [
+      {
+        id: "readable-note",
+        name: "Readable Note",
+        description: "Faithful, clean reading view with better typography.",
+        artifactGoal: "read",
+        artifactType: "faithful-note",
+        template: "editorial",
+        mode: "preserve",
+        previewSecurity: "sanitized"
+      },
+      {
+        id: "interactive-report",
+        name: "Interactive Report",
+        description: "HTML-native controls: table of contents, collapsible sections, copy buttons.",
+        artifactGoal: "review",
+        artifactType: "interactive-explainer",
+        template: "interactive-report",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      },
+      {
+        id: "presentation",
+        name: "Presentation",
+        description: "Slide-like sections for reviewing or presenting a note.",
+        artifactGoal: "read",
+        artifactType: "slide-deck",
+        template: "deck",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      },
+      {
+        id: "decision-memo",
+        name: "Decision Room",
+        description: "Options, tradeoffs, risks, recommendation, decision log, and copy-back prompts.",
+        artifactGoal: "decide",
+        artifactType: "decision-memo",
+        template: "research-memo",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      },
+      {
+        id: "shareable-article",
+        name: "Shareable Article",
+        description: "Polished article layout with bundled images and static-hosting-ready output.",
+        artifactGoal: "publish",
+        artifactType: "research-report",
+        template: "editorial",
+        mode: "blog",
+        previewSecurity: "sanitized"
+      },
+      {
+        id: "playground",
+        name: "Prompt Playground",
+        description: "Editable working surface with sliders and copyable state.",
+        artifactGoal: "tune",
+        artifactType: "interactive-explainer",
+        template: "playground",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      },
+      {
+        id: "compare-options",
+        name: "Compare Options",
+        description: "Side-by-side options, scorecards, filters, and tradeoff summaries.",
+        artifactGoal: "compare",
+        artifactType: "decision-memo",
+        template: "dashboard",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      },
+      {
+        id: "pr-explainer",
+        name: "PR / Code Explainer",
+        description: "Annotated technical explainer for code, diffs, plans, and review risks.",
+        artifactGoal: "explain-code",
+        artifactType: "research-report",
+        template: "research-memo",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      }
+    ];
+    function listExportPresets2() {
+      return exportPresets.slice();
+    }
+    function findExportPreset2(id) {
+      return exportPresets.find((preset) => preset.id === id) || null;
+    }
+    function applyPresetToOptions2(baseOptions, presetId) {
+      const preset = findExportPreset2(presetId);
+      if (!preset) {
+        return { ...baseOptions };
+      }
+      return {
+        ...baseOptions,
+        presetId: preset.id,
+        artifactGoal: preset.artifactGoal,
+        artifactType: preset.artifactType,
+        template: preset.template,
+        conversionMode: preset.mode,
+        previewSecurity: preset.previewSecurity
+      };
+    }
+    function findPresetForOptions2(options = {}) {
+      const preset = exportPresets.find((item) => item.artifactGoal === options.artifactGoal && item.artifactType === options.artifactType && item.template === options.template && item.mode === options.conversionMode && item.previewSecurity === options.previewSecurity);
+      return preset ? preset.id : "custom";
+    }
+    module2.exports = {
+      applyPresetToOptions: applyPresetToOptions2,
+      findExportPreset: findExportPreset2,
+      findPresetForOptions: findPresetForOptions2,
+      listExportPresets: listExportPresets2
     };
   }
 });
@@ -1858,6 +1886,7 @@ var import_obsidian7 = require("obsidian");
 // src/export-modal.ts
 var import_obsidian = require("obsidian");
 var import_artifact_goals = __toESM(require_artifact_goals());
+var import_ai = __toESM(require_ai());
 var import_presets = __toESM(require_presets());
 var import_templates = __toESM(require_templates());
 var MarktlExportModal = class extends import_obsidian.Modal {
@@ -1881,6 +1910,8 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport
     };
+    this.selectedPreset = (0, import_presets.findPresetForOptions)(this.options);
+    this.options.presetId = this.selectedPreset;
   }
   onOpen() {
     const { contentEl } = this;
@@ -1933,8 +1964,9 @@ var MarktlExportModal = class extends import_obsidian.Modal {
         this.options.template = value;
       });
     });
-    new import_obsidian.Setting(contentEl).setName("AI CLI").setDesc("Only providers that passed live plugin-style execution are shown.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("claude", "Claude Code CLI").addOption("codex", "Codex CLI").setValue(this.options.aiProvider).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("AI CLI").setDesc((0, import_ai.getProviderPrivacyNote)(this.options.aiProvider) || "Only providers that passed live plugin-style execution are shown.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("claude", "Claude Code CLI").addOption("codex", "Codex CLI").setValue(this.options.aiProvider).onChange((value) => {
       this.options.aiProvider = value;
+      this.onOpen();
     }));
     new import_obsidian.Setting(contentEl).setName("Mode").setDesc("Preserve keeps content faithful; other modes allow AI restructuring.").addDropdown((dropdown) => dropdown.addOption("preserve", "Preserve content").addOption("presentation", "Presentation").addOption("blog", "Blog article").addOption("landing", "Landing page").setValue(this.options.conversionMode).onChange((value) => {
       this.selectedPreset = "custom";
@@ -2786,7 +2818,7 @@ function buildAgentSetupPrompt(agent) {
 }
 
 // src/main.ts
-var { convertWithAiFallback } = require_ai();
+var { convertWithAiFallback, getProviderPrivacyNote: getProviderPrivacyNote2 } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
 var { injectReaderFeedback, validateGiscusConfig } = require_feedback();
@@ -2795,7 +2827,7 @@ var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
 var { migrateSettings } = require_settings();
 var { buildShortId, injectSocialMeta } = require_social();
-var { findExportPreset: findExportPreset2 } = require_presets();
+var { applyPresetToOptions } = require_presets();
 var DEFAULT_SETTINGS = {
   exportFolder: "html-exports",
   setupCompleted: false,
@@ -2944,6 +2976,10 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     progress.addStep(`Artifact: ${options.artifactType}`);
     progress.addStep(`Template: ${options.template}`);
     progress.addStep(`AI CLI: ${options.aiProvider === "none" ? "local fallback" : options.aiProvider}`);
+    const privacyNote = getProviderPrivacyNote2(options.aiProvider);
+    if (privacyNote) {
+      progress.addStep(`Privacy note: ${privacyNote}`);
+    }
     progress.addStep(`Mode: ${options.conversionMode}; preview: ${options.previewSecurity}`);
     progress.addStep(`Timeout: ${Math.round(this.settings.timeoutMs / 1e3)}s`);
     try {
@@ -3032,6 +3068,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       }
       progress.complete(`Done: ${outputPath}`);
       this.openResultSummary({
+        options,
         sourcePath: file.path,
         sourceTitle: shareMetadata.title,
         presetId: options.presetId,
@@ -3430,23 +3467,9 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       summary,
       (outputPath, preferredLink) => this.copyShareLink(outputPath, preferredLink),
       (presetId) => {
-        void this.exportActiveNote(this.optionsFromPreset(presetId));
+        void this.exportActiveNote(applyPresetToOptions(summary.options, presetId));
       }
     ).open();
-  }
-  optionsFromPreset(presetId) {
-    const preset = findExportPreset2(presetId);
-    if (!preset) {
-      return {};
-    }
-    return {
-      presetId: preset.id,
-      artifactGoal: preset.artifactGoal,
-      artifactType: preset.artifactType,
-      template: preset.template,
-      conversionMode: preset.mode,
-      previewSecurity: preset.previewSecurity
-    };
   }
   async copyShareLink(outputPath, preferredLink = "") {
     if (preferredLink) {

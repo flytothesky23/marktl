@@ -1,7 +1,8 @@
 import { App, Modal, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listArtifactGoals } from './core/artifact-goals.js';
-import { listExportPresets, findExportPreset } from './core/presets.js';
+import { getProviderPrivacyNote } from './core/ai.js';
+import { listExportPresets, findExportPreset, findPresetForOptions } from './core/presets.js';
 import { listTemplates } from './core/templates.js';
 import type { AiProvider, ArtifactGoal, ArtifactType, ContextPackMode, ConversionMode, ExportOptions, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareTarget } from './types';
 
@@ -30,6 +31,8 @@ export class MarktlExportModal extends Modal {
       shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport,
     };
+    this.selectedPreset = findPresetForOptions(this.options);
+    this.options.presetId = this.selectedPreset;
   }
 
   onOpen(): void {
@@ -119,7 +122,7 @@ export class MarktlExportModal extends Modal {
 
     new Setting(contentEl)
       .setName('AI CLI')
-      .setDesc('Only providers that passed live plugin-style execution are shown.')
+      .setDesc(getProviderPrivacyNote(this.options.aiProvider) || 'Only providers that passed live plugin-style execution are shown.')
       .addDropdown((dropdown) => dropdown
         .addOption('none', 'None / local fallback')
         .addOption('claude', 'Claude Code CLI')
@@ -127,6 +130,7 @@ export class MarktlExportModal extends Modal {
         .setValue(this.options.aiProvider)
         .onChange((value) => {
           this.options.aiProvider = value as AiProvider;
+          this.onOpen();
         }));
 
     new Setting(contentEl)

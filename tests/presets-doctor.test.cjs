@@ -1,7 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { listExportPresets, findExportPreset } = require('../src/core/presets.js');
+const { applyPresetToOptions, findPresetForOptions, listExportPresets, findExportPreset } = require('../src/core/presets.js');
+const { getProviderPrivacyNote } = require('../src/core/ai.js');
 const { getArtifactGoalInstruction, listArtifactGoals } = require('../src/core/artifact-goals.js');
 const { checkClaudeProvider, checkCodexProvider, cleanDoctorOutput } = require('../src/core/provider-doctor.js');
 
@@ -26,6 +27,48 @@ test('ships beginner-facing HTML value presets', () => {
   assert.equal(findExportPreset('compare-options').artifactGoal, 'compare');
   assert.equal(findExportPreset('pr-explainer').artifactGoal, 'explain-code');
   assert.equal(findExportPreset('missing'), null);
+});
+
+test('regeneration preset keeps previous export side-effect settings', () => {
+  const base = {
+    aiProvider: 'none',
+    contextPackMode: 'none',
+    failurePolicy: 'fallback',
+    readerFeedbackMode: 'none',
+    shareTarget: 'local-link',
+    copyShareLinkAfterExport: false,
+  };
+
+  const options = applyPresetToOptions(base, 'presentation');
+
+  assert.equal(options.presetId, 'presentation');
+  assert.equal(options.artifactType, 'slide-deck');
+  assert.equal(options.shareTarget, 'local-link');
+  assert.equal(options.copyShareLinkAfterExport, false);
+  assert.equal(options.aiProvider, 'none');
+});
+
+test('finds the visible preset that matches current export settings', () => {
+  assert.equal(findPresetForOptions({
+    artifactGoal: 'read',
+    artifactType: 'slide-deck',
+    template: 'deck',
+    conversionMode: 'presentation',
+    previewSecurity: 'trusted',
+  }), 'presentation');
+
+  assert.equal(findPresetForOptions({
+    artifactGoal: 'read',
+    artifactType: 'slide-deck',
+    template: 'minimal',
+    conversionMode: 'presentation',
+    previewSecurity: 'trusted',
+  }), 'custom');
+});
+
+test('documents Claude prompt privacy tradeoff', () => {
+  assert.match(getProviderPrivacyNote('claude'), /command-line argument/);
+  assert.equal(getProviderPrivacyNote('codex'), '');
 });
 
 test('artifact goals describe what the HTML should do', () => {

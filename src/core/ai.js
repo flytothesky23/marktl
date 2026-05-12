@@ -104,6 +104,12 @@ async function runCliProvider(markdown, options = {}) {
   }
 }
 
+function getProviderPrivacyNote(provider) {
+  return provider === 'claude'
+    ? 'Claude Code CLI receives the note prompt as a command-line argument; avoid sending private notes if local process inspection is a concern.'
+    : '';
+}
+
 function buildProviderEnv(provider, baseEnv = process.env) {
   const env = {
     ...baseEnv,
@@ -408,6 +414,7 @@ module.exports = {
   buildPrompt,
   getArtifactInstruction,
   getGoalAffordanceInstruction,
+  getProviderPrivacyNote,
   convertWithAiFallback,
   extractHtmlFromAiOutput,
   discoverUserCliPaths,

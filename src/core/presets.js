@@ -89,7 +89,36 @@ function findExportPreset(id) {
   return exportPresets.find((preset) => preset.id === id) || null;
 }
 
+function applyPresetToOptions(baseOptions, presetId) {
+  const preset = findExportPreset(presetId);
+  if (!preset) {
+    return { ...baseOptions };
+  }
+  return {
+    ...baseOptions,
+    presetId: preset.id,
+    artifactGoal: preset.artifactGoal,
+    artifactType: preset.artifactType,
+    template: preset.template,
+    conversionMode: preset.mode,
+    previewSecurity: preset.previewSecurity,
+  };
+}
+
+function findPresetForOptions(options = {}) {
+  const preset = exportPresets.find((item) => (
+    item.artifactGoal === options.artifactGoal
+    && item.artifactType === options.artifactType
+    && item.template === options.template
+    && item.mode === options.conversionMode
+    && item.previewSecurity === options.previewSecurity
+  ));
+  return preset ? preset.id : 'custom';
+}
+
 module.exports = {
+  applyPresetToOptions,
   findExportPreset,
+  findPresetForOptions,
   listExportPresets,
 };

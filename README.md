@@ -139,8 +139,8 @@ The agent cannot safely create or reveal your GitHub token for you. Create a fin
    - `Use Codex`: checks Codex CLI installation and login.
    - `Prepare sharing`: creates static-hosting-ready bundles.
 3. Click the MarkTL ribbon icon, or run `Export active note to HTML...` from the command palette.
-4. Choose an HTML preset such as `Readable Note`, `Interactive Report`, `Presentation`, `Decision Room`, `Shareable Article`, `Prompt Playground`, `Compare Options`, or `PR / Code Explainer`.
-5. In the export modal, adjust:
+4. Choose what the HTML should do from the purpose cards, such as `Read better`, `Present it`, `Review it`, `Compare options`, `Publish/share`, or `Work with AI again`.
+5. Open `Advanced` only when you need to adjust:
    - Artifact goal
    - Artifact type
    - Template
@@ -150,7 +150,8 @@ The agent cannot safely create or reveal your GitHub token for you. Create a fin
    - Sharing target
 6. Click `Export`.
 7. Watch the progress modal and result summary.
-8. Review the generated HTML inside Obsidian.
+8. Review the generated HTML inside Obsidian. The preview toolbar can copy the artifact as an AI prompt, copy an outline, copy a section-feedback prompt, or open the generated file.
+9. Use the result summary to copy a share link, copy an AI handoff prompt, or regenerate the artifact as slides or an interactive report.
 
 ### Why HTML?
 
@@ -170,6 +171,8 @@ Context packs are supporting material only. The active note remains the source o
 ### Interactive Controls
 
 In `Trusted interactive preview`, the `interactive-report` template can add local-only controls such as generated contents, collapsible sections, reading progress, section filtering, expand all, copy as prompt, copy as markdown, copy summary, and copy outline JSON. The `playground` template adds editable review notes, an emphasis slider, and copyable state JSON for iterative work. Artifact goals push AI-generated HTML toward stronger purpose-built interfaces such as decision rooms, review rooms, comparison boards, prompt playgrounds, and PR explainers.
+
+The Obsidian preview pane also provides plugin-shell controls outside the generated iframe: `Copy as prompt`, `Copy outline`, `Copy section feedback`, and `Open generated file`. These controls work even when the generated HTML itself has no buttons.
 
 ### Reader Feedback With Giscus
 
@@ -196,7 +199,7 @@ Currently verified:
 - Claude Code CLI
 - Codex CLI
 
-Codex runs through `codex exec --json --sandbox read-only --skip-git-repo-check -` and reads the generated prompt from stdin. If Obsidian cannot find the command, set the full Codex CLI path in settings.
+Codex runs through `codex exec --json --sandbox read-only --skip-git-repo-check -` and reads the generated prompt from stdin. Claude Code CLI currently receives the generated prompt as a command-line argument, so avoid sending private notes to Claude if local process inspection is a concern. If Obsidian cannot find a command, set the full CLI path in settings.
 Gemini CLI is hidden for now because the local plugin-style probe did not complete reliably.
 
 On Windows, set CLI paths explicitly if Obsidian cannot find global npm commands. MarkTL supports Windows npm shim locations and uses shell execution for Windows CLI shims.
@@ -435,8 +438,8 @@ AI agent가 GitHub token을 안전하게 대신 발급하거나 공개해줄 수
    - `Use Codex`: Codex CLI 설치와 로그인 상태 확인
    - `Prepare sharing`: 정적 호스팅용 bundle 생성
 3. MarkTL 리본 아이콘을 클릭하거나 명령 팔레트에서 `Export active note to HTML...`을 실행합니다.
-4. `Readable Note`, `Interactive Report`, `Presentation`, `Decision Room`, `Shareable Article`, `Prompt Playground`, `Compare Options`, `PR / Code Explainer` 같은 HTML preset을 선택합니다.
-5. Export 모달에서 다음을 조정합니다.
+4. `Read better`, `Present it`, `Review it`, `Compare options`, `Publish/share`, `Work with AI again` 같은 목적 카드를 선택합니다.
+5. 필요한 경우에만 `Advanced`를 열어 다음을 조정합니다.
    - Artifact goal
    - Artifact type
    - Template
@@ -446,7 +449,8 @@ AI agent가 GitHub token을 안전하게 대신 발급하거나 공개해줄 수
    - Sharing target
 6. `Export`를 누릅니다.
 7. 진행 모달과 결과 요약을 확인합니다.
-8. Obsidian 내부 HTML Preview에서 결과를 확인합니다.
+8. Obsidian 내부 HTML Preview에서 결과를 확인합니다. Preview toolbar에서 artifact를 AI prompt로 복사하거나, outline을 복사하거나, section feedback prompt를 복사하거나, 생성 파일을 열 수 있습니다.
+9. 결과 요약에서 share link를 복사하고, AI handoff prompt를 복사하고, slides 또는 interactive report로 다시 생성할 수 있습니다.
 
 ### 왜 HTML인가?
 
@@ -466,6 +470,8 @@ Context pack은 보조 자료입니다. 현재 열린 노트가 항상 기준이
 ### 인터랙티브 컨트롤
 
 `Trusted interactive preview`에서 `interactive-report` 템플릿은 자동 목차, 접기/펼치기, 읽기 progress, 섹션 필터, 전체 펼치기, copy as prompt, copy as markdown, copy summary, copy outline JSON 같은 로컬 전용 컨트롤을 넣을 수 있습니다. `playground` 템플릿은 편집 가능한 리뷰 메모, 강조도 slider, copyable state JSON을 제공합니다. Artifact goal은 AI가 decision room, review room, comparison board, prompt playground, PR explainer처럼 목적이 분명한 HTML 인터페이스를 만들도록 유도합니다.
+
+Obsidian preview pane 자체도 생성된 iframe 밖에서 `Copy as prompt`, `Copy outline`, `Copy section feedback`, `Open generated file` 컨트롤을 제공합니다. 생성된 HTML에 버튼이 없어도 이 preview toolbar를 사용할 수 있습니다.
 
 ### Giscus 독자 피드백
 
@@ -492,7 +498,7 @@ MarkTL은 HTML을 저장하고 preview하기 전에 기본 QA를 실행합니다
 - Claude Code CLI
 - Codex CLI
 
-Codex는 `codex exec --json --sandbox read-only --skip-git-repo-check -` 형태로 실행되며 생성 prompt를 stdin으로 전달합니다. Obsidian이 명령을 찾지 못하면 설정에 Codex CLI 전체 경로를 입력하세요.
+Codex는 `codex exec --json --sandbox read-only --skip-git-repo-check -` 형태로 실행되며 생성 prompt를 stdin으로 전달합니다. Claude Code CLI는 현재 생성 prompt를 command-line argument로 받으므로, 로컬 process inspection이 걱정되는 private note는 Claude로 보내지 않는 편이 좋습니다. Obsidian이 명령을 찾지 못하면 설정에 CLI 전체 경로를 입력하세요.
 Gemini CLI는 현재 로컬 plugin-style probe가 안정적으로 완료되지 않아 UI에서 제외했습니다.
 
 Windows에서는 Obsidian이 전역 npm 명령을 찾지 못하면 CLI 전체 경로를 직접 입력하세요. MarkTL은 Windows npm shim 경로와 Windows CLI shim 실행 방식을 지원합니다.
