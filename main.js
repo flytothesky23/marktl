@@ -1269,6 +1269,254 @@ var require_presets = __commonJS({
   }
 });
 
+// src/core/github-pages.js
+var require_github_pages = __commonJS({
+  "src/core/github-pages.js"(exports2, module2) {
+    "use strict";
+    var path = require("node:path");
+    function parseRepo2(value) {
+      const cleaned = String(value || "").trim().replace(/^https:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "");
+      const [owner, repo] = cleaned.split("/");
+      if (!owner || !repo) {
+        return null;
+      }
+      return { owner, repo };
+    }
+    function normalizePublishPath(value) {
+      return String(value || "").trim().replace(/^\/+|\/+$/g, "").replace(/\\/g, "/").replace(/\/+/g, "/");
+    }
+    function buildPublishPath2(basePath, slug, filePath) {
+      return [normalizePublishPath(basePath), slug, filePath].filter(Boolean).join("/").replace(/\/+/g, "/");
+    }
+    function buildPagesUrl2(baseUrl, basePath, slug) {
+      const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
+      if (!root) {
+        return "";
+      }
+      const suffix = [normalizePublishPath(basePath), slug].filter(Boolean).map((part) => encodePathPart(part)).join("/");
+      return `${root}/${suffix ? `${suffix}/` : ""}`;
+    }
+    function buildShortPagesUrl2(baseUrl, basePath, shortId) {
+      return buildPagesUrl2(baseUrl, basePath, `s/${shortId}`);
+    }
+    function buildShareHomeUrl2(baseUrl, basePath) {
+      const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
+      if (!root) {
+        return "";
+      }
+      const suffix = normalizePublishPath(basePath);
+      return `${root}/${suffix ? `${encodePathPart(suffix)}/` : ""}`;
+    }
+    function encodePathPart(value) {
+      return String(value || "").split("/").map((part) => encodeURIComponent(part)).join("/");
+    }
+    function inferPagesBaseUrl3(repoValue) {
+      const repo = parseRepo2(repoValue);
+      if (!repo) {
+        return "";
+      }
+      if (repo.repo.toLowerCase() === `${repo.owner.toLowerCase()}.github.io`) {
+        return `https://${repo.repo}`;
+      }
+      return `https://${repo.owner}.github.io/${repo.repo}`;
+    }
+    function mimeTypeForPath(filePath) {
+      const extension = path.extname(filePath).toLowerCase();
+      return {
+        ".html": "text/html; charset=utf-8",
+        ".md": "text/markdown; charset=utf-8",
+        ".css": "text/css; charset=utf-8",
+        ".js": "application/javascript",
+        ".json": "application/json",
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+        ".avif": "image/avif"
+      }[extension] || "application/octet-stream";
+    }
+    function updateShareIndex2(existingIndex, entry) {
+      const now = entry.updatedAt || (/* @__PURE__ */ new Date()).toISOString();
+      const current = Array.isArray(existingIndex == null ? void 0 : existingIndex.items) ? existingIndex.items : [];
+      const items = [
+        {
+          ...entry,
+          updatedAt: now
+        },
+        ...current.filter((item) => item && item.slug !== entry.slug)
+      ].sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
+      return {
+        version: 1,
+        updatedAt: now,
+        items
+      };
+    }
+    function renderShareIndexHtml2(index, options = {}) {
+      const title = options.title || "MarkTL Shared HTML";
+      const baseUrl = String(options.baseUrl || "").replace(/\/+$/g, "");
+      const items = Array.isArray(index == null ? void 0 : index.items) ? index.items : [];
+      const tagCounts = /* @__PURE__ */ new Map();
+      for (const item of items) {
+        for (const tag of normalizeTags(item.tags)) {
+          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        }
+      }
+      const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} <span>${count}</span></button>`).join("");
+      const list = items.map((item) => {
+        const href = item.url || (baseUrl ? `${baseUrl}/${encodeURIComponent(item.slug)}/` : `${encodeURIComponent(item.slug)}/`);
+        const tags = normalizeTags(item.tags);
+        const searchText = [
+          item.title,
+          item.slug,
+          item.excerpt,
+          item.sourcePath,
+          item.artifactType,
+          ...tags
+        ].filter(Boolean).join(" ").toLowerCase();
+        return `<article class="item" data-search="${escapeHtml(searchText)}" data-tags="${escapeHtml(tags.join(" "))}">
+<div class="item-top"><a href="${escapeHtml(href)}">${escapeHtml(item.title || item.slug)}</a><span>${escapeHtml(formatDate(item.updatedAt))}</span></div>
+<p>${escapeHtml(item.excerpt || item.sourcePath || "")}</p>
+<div class="item-meta"><span>${escapeHtml(item.artifactType || "HTML artifact")}</span><span>${escapeHtml(item.sourcePath || "")}</span></div>
+${tags.length ? `<div class="tags">${tags.map((tag) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")}</div>` : ""}
+</article>`;
+      }).join("\n");
+      return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f6f7f4;color:#172033}
+main{max-width:1120px;margin:0 auto;padding:44px 22px 72px}
+.hero{display:grid;gap:14px;margin-bottom:22px}.eyebrow{color:#8a4b64;font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.08em}
+h1{font-size:clamp(34px,6vw,72px);line-height:.98;margin:0}.meta{color:#68737d;margin:0;font-size:18px}
+.toolbar{position:sticky;top:0;z-index:2;display:grid;gap:12px;background:rgba(246,247,244,.94);backdrop-filter:blur(12px);border-bottom:1px solid #dde2e6;padding:14px 0;margin-bottom:18px}
+.toolbar input{width:100%;border:1px solid #cfd8e5;border-radius:8px;padding:12px 14px;font-size:16px;background:#fff;color:#172033}
+.tagbar{display:flex;flex-wrap:wrap;gap:8px}.tagbar button,.tags button{border:1px solid #d6dfeb;background:#fff;color:#33506d;border-radius:999px;padding:6px 10px;cursor:pointer}.tagbar button.active,.tags button:hover{background:#174ea6;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.item{display:flex;min-height:210px;flex-direction:column;gap:12px;background:#fff;border:1px solid #dde2e6;border-radius:8px;padding:18px;box-shadow:0 12px 32px rgba(23,32,51,.05)}
+.item-top{display:grid;gap:8px}.item a{color:#174ea6;font-size:20px;font-weight:800;line-height:1.2;text-decoration:none}.item a:hover{text-decoration:underline}
+.item-top span,.item-meta{color:#68737d;font-size:13px}.item p{color:#344054;line-height:1.55;margin:0;flex:1}.item-meta{display:grid;gap:4px}.tags{display:flex;flex-wrap:wrap;gap:6px}
+.empty{background:#fff;border:1px dashed #cfd8e5;border-radius:8px;padding:24px;color:#68737d}
+</style>
+</head>
+<body><main>
+<section class="hero"><div class="eyebrow">MarkTL Archive</div><h1>${escapeHtml(title)}</h1><p class="meta"><span id="count">${items.length}</span> published document(s). Search, filter, and open any shared HTML artifact.</p></section>
+<section class="toolbar" aria-label="Archive controls"><input id="search" type="search" placeholder="Search documents, tags, sources..." aria-label="Search documents"><div class="tagbar"><button type="button" data-tag="">All</button>${tagButtons}</div></section>
+<section class="grid" id="items">${list || '<p class="empty">No published documents yet.</p>'}</section>
+</main>
+<script>
+const search = document.getElementById('search');
+const count = document.getElementById('count');
+const cards = [...document.querySelectorAll('.item')];
+let activeTag = '';
+function applyFilters(){
+  const query = (search.value || '').trim().toLowerCase();
+  let visible = 0;
+  for (const card of cards) {
+    const matchesQuery = !query || card.dataset.search.includes(query);
+    const matchesTag = !activeTag || (' ' + card.dataset.tags + ' ').includes(' ' + activeTag + ' ');
+    const show = matchesQuery && matchesTag;
+    card.hidden = !show;
+    if (show) visible++;
+  }
+  count.textContent = String(visible);
+}
+document.querySelectorAll('[data-tag]').forEach((button) => {
+  button.addEventListener('click', () => {
+    activeTag = button.dataset.tag || '';
+    document.querySelectorAll('.tagbar [data-tag]').forEach((node) => node.classList.toggle('active', node.dataset.tag === activeTag));
+    applyFilters();
+  });
+});
+search.addEventListener('input', applyFilters);
+applyFilters();
+</script>
+</body>
+</html>`;
+    }
+    function normalizeTags(tags) {
+      const values = Array.isArray(tags) ? tags : String(tags || "").split(",");
+      return values.map((tag) => String(tag || "").replace(/^#/, "").trim()).filter(Boolean).slice(0, 8);
+    }
+    function formatDate(value) {
+      if (!value) {
+        return "";
+      }
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
+      return date.toISOString().slice(0, 10);
+    }
+    function escapeHtml(value) {
+      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+    module2.exports = {
+      buildPagesUrl: buildPagesUrl2,
+      buildPublishPath: buildPublishPath2,
+      buildShareHomeUrl: buildShareHomeUrl2,
+      buildShortPagesUrl: buildShortPagesUrl2,
+      inferPagesBaseUrl: inferPagesBaseUrl3,
+      mimeTypeForPath,
+      normalizePublishPath,
+      parseRepo: parseRepo2,
+      renderShareIndexHtml: renderShareIndexHtml2,
+      updateShareIndex: updateShareIndex2
+    };
+  }
+});
+
+// src/core/setup-guidance.js
+var require_setup_guidance = __commonJS({
+  "src/core/setup-guidance.js"(exports2, module2) {
+    "use strict";
+    function buildPagesSetupChecklist2(settings = {}) {
+      const repo = String(settings.githubRepo || "owner/repo").trim() || "owner/repo";
+      const branch = String(settings.githubBranch || "main").trim() || "main";
+      const baseUrl = String(settings.githubPagesBaseUrl || "").trim() || "https://owner.github.io/repo";
+      const publishPath = String(settings.githubPublishPath || "marktl").trim() || "marktl";
+      return [
+        "MarkTL GitHub Pages setup checklist",
+        "",
+        `1. GitHub repository: ${repo}`,
+        `2. Enable GitHub Pages for branch "${branch}" in GitHub repository Settings > Pages.`,
+        "3. Pages source should publish from the same branch/folder that receives MarkTL files.",
+        `4. GitHub Pages base URL: ${baseUrl}`,
+        `5. Publish path: ${publishPath}`,
+        `6. Expected export URL: ${baseUrl.replace(/\/+$/g, "")}/${publishPath.replace(/^\/+|\/+$/g, "")}/<slug>/`,
+        "7. Create a fine-grained GitHub token limited to this repository with Contents read/write permission.",
+        "8. Paste the token into MarkTL settings, then export one test note with Share target = GitHub Pages link."
+      ].join("\n");
+    }
+    function buildGiscusSetupChecklist2(settings = {}) {
+      const repo = String(settings.giscusRepo || settings.githubRepo || "owner/repo").trim() || "owner/repo";
+      const category = String(settings.giscusCategory || "Announcements").trim() || "Announcements";
+      return [
+        "MarkTL Giscus setup checklist",
+        "",
+        `1. Use repository: ${repo}`,
+        "2. In GitHub repository Settings, enable Discussions.",
+        "3. Create or choose a discussion category, for example Announcements or General.",
+        "4. Open https://giscus.app and enter the repository.",
+        `5. Choose category: ${category}`,
+        "6. Choose mapping: pathname",
+        "7. Choose theme: preferred_color_scheme",
+        "8. Copy data-repo-id and data-category-id from the generated Giscus script.",
+        "9. Paste those IDs into MarkTL settings.",
+        "10. Export with Preview/export = Trusted interactive preview and Reader feedback = Giscus GitHub comments."
+      ].join("\n");
+    }
+    module2.exports = {
+      buildGiscusSetupChecklist: buildGiscusSetupChecklist2,
+      buildPagesSetupChecklist: buildPagesSetupChecklist2
+    };
+  }
+});
+
 // src/core/provider-doctor.js
 var require_provider_doctor = __commonJS({
   "src/core/provider-doctor.js"(exports2, module2) {
@@ -1551,207 +1799,6 @@ ${section}`;
       injectReaderFeedback: injectReaderFeedback2,
       shouldAttachReaderFeedback: shouldAttachReaderFeedback2,
       validateGiscusConfig: validateGiscusConfig2
-    };
-  }
-});
-
-// src/core/github-pages.js
-var require_github_pages = __commonJS({
-  "src/core/github-pages.js"(exports2, module2) {
-    "use strict";
-    var path = require("node:path");
-    function parseRepo2(value) {
-      const cleaned = String(value || "").trim().replace(/^https:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "");
-      const [owner, repo] = cleaned.split("/");
-      if (!owner || !repo) {
-        return null;
-      }
-      return { owner, repo };
-    }
-    function normalizePublishPath(value) {
-      return String(value || "").trim().replace(/^\/+|\/+$/g, "").replace(/\\/g, "/").replace(/\/+/g, "/");
-    }
-    function buildPublishPath2(basePath, slug, filePath) {
-      return [normalizePublishPath(basePath), slug, filePath].filter(Boolean).join("/").replace(/\/+/g, "/");
-    }
-    function buildPagesUrl2(baseUrl, basePath, slug) {
-      const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
-      if (!root) {
-        return "";
-      }
-      const suffix = [normalizePublishPath(basePath), slug].filter(Boolean).map((part) => encodePathPart(part)).join("/");
-      return `${root}/${suffix ? `${suffix}/` : ""}`;
-    }
-    function buildShortPagesUrl2(baseUrl, basePath, shortId) {
-      return buildPagesUrl2(baseUrl, basePath, `s/${shortId}`);
-    }
-    function buildShareHomeUrl2(baseUrl, basePath) {
-      const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
-      if (!root) {
-        return "";
-      }
-      const suffix = normalizePublishPath(basePath);
-      return `${root}/${suffix ? `${encodePathPart(suffix)}/` : ""}`;
-    }
-    function encodePathPart(value) {
-      return String(value || "").split("/").map((part) => encodeURIComponent(part)).join("/");
-    }
-    function inferPagesBaseUrl2(repoValue) {
-      const repo = parseRepo2(repoValue);
-      if (!repo) {
-        return "";
-      }
-      if (repo.repo.toLowerCase() === `${repo.owner.toLowerCase()}.github.io`) {
-        return `https://${repo.repo}`;
-      }
-      return `https://${repo.owner}.github.io/${repo.repo}`;
-    }
-    function mimeTypeForPath(filePath) {
-      const extension = path.extname(filePath).toLowerCase();
-      return {
-        ".html": "text/html; charset=utf-8",
-        ".md": "text/markdown; charset=utf-8",
-        ".css": "text/css; charset=utf-8",
-        ".js": "application/javascript",
-        ".json": "application/json",
-        ".svg": "image/svg+xml",
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".gif": "image/gif",
-        ".webp": "image/webp",
-        ".avif": "image/avif"
-      }[extension] || "application/octet-stream";
-    }
-    function updateShareIndex2(existingIndex, entry) {
-      const now = entry.updatedAt || (/* @__PURE__ */ new Date()).toISOString();
-      const current = Array.isArray(existingIndex == null ? void 0 : existingIndex.items) ? existingIndex.items : [];
-      const items = [
-        {
-          ...entry,
-          updatedAt: now
-        },
-        ...current.filter((item) => item && item.slug !== entry.slug)
-      ].sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
-      return {
-        version: 1,
-        updatedAt: now,
-        items
-      };
-    }
-    function renderShareIndexHtml2(index, options = {}) {
-      const title = options.title || "MarkTL Shared HTML";
-      const baseUrl = String(options.baseUrl || "").replace(/\/+$/g, "");
-      const items = Array.isArray(index == null ? void 0 : index.items) ? index.items : [];
-      const tagCounts = /* @__PURE__ */ new Map();
-      for (const item of items) {
-        for (const tag of normalizeTags(item.tags)) {
-          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-        }
-      }
-      const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} <span>${count}</span></button>`).join("");
-      const list = items.map((item) => {
-        const href = item.url || (baseUrl ? `${baseUrl}/${encodeURIComponent(item.slug)}/` : `${encodeURIComponent(item.slug)}/`);
-        const tags = normalizeTags(item.tags);
-        const searchText = [
-          item.title,
-          item.slug,
-          item.excerpt,
-          item.sourcePath,
-          item.artifactType,
-          ...tags
-        ].filter(Boolean).join(" ").toLowerCase();
-        return `<article class="item" data-search="${escapeHtml(searchText)}" data-tags="${escapeHtml(tags.join(" "))}">
-<div class="item-top"><a href="${escapeHtml(href)}">${escapeHtml(item.title || item.slug)}</a><span>${escapeHtml(formatDate(item.updatedAt))}</span></div>
-<p>${escapeHtml(item.excerpt || item.sourcePath || "")}</p>
-<div class="item-meta"><span>${escapeHtml(item.artifactType || "HTML artifact")}</span><span>${escapeHtml(item.sourcePath || "")}</span></div>
-${tags.length ? `<div class="tags">${tags.map((tag) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")}</div>` : ""}
-</article>`;
-      }).join("\n");
-      return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)}</title>
-<style>
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f6f7f4;color:#172033}
-main{max-width:1120px;margin:0 auto;padding:44px 22px 72px}
-.hero{display:grid;gap:14px;margin-bottom:22px}.eyebrow{color:#8a4b64;font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.08em}
-h1{font-size:clamp(34px,6vw,72px);line-height:.98;margin:0}.meta{color:#68737d;margin:0;font-size:18px}
-.toolbar{position:sticky;top:0;z-index:2;display:grid;gap:12px;background:rgba(246,247,244,.94);backdrop-filter:blur(12px);border-bottom:1px solid #dde2e6;padding:14px 0;margin-bottom:18px}
-.toolbar input{width:100%;border:1px solid #cfd8e5;border-radius:8px;padding:12px 14px;font-size:16px;background:#fff;color:#172033}
-.tagbar{display:flex;flex-wrap:wrap;gap:8px}.tagbar button,.tags button{border:1px solid #d6dfeb;background:#fff;color:#33506d;border-radius:999px;padding:6px 10px;cursor:pointer}.tagbar button.active,.tags button:hover{background:#174ea6;color:#fff}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.item{display:flex;min-height:210px;flex-direction:column;gap:12px;background:#fff;border:1px solid #dde2e6;border-radius:8px;padding:18px;box-shadow:0 12px 32px rgba(23,32,51,.05)}
-.item-top{display:grid;gap:8px}.item a{color:#174ea6;font-size:20px;font-weight:800;line-height:1.2;text-decoration:none}.item a:hover{text-decoration:underline}
-.item-top span,.item-meta{color:#68737d;font-size:13px}.item p{color:#344054;line-height:1.55;margin:0;flex:1}.item-meta{display:grid;gap:4px}.tags{display:flex;flex-wrap:wrap;gap:6px}
-.empty{background:#fff;border:1px dashed #cfd8e5;border-radius:8px;padding:24px;color:#68737d}
-</style>
-</head>
-<body><main>
-<section class="hero"><div class="eyebrow">MarkTL Archive</div><h1>${escapeHtml(title)}</h1><p class="meta"><span id="count">${items.length}</span> published document(s). Search, filter, and open any shared HTML artifact.</p></section>
-<section class="toolbar" aria-label="Archive controls"><input id="search" type="search" placeholder="Search documents, tags, sources..." aria-label="Search documents"><div class="tagbar"><button type="button" data-tag="">All</button>${tagButtons}</div></section>
-<section class="grid" id="items">${list || '<p class="empty">No published documents yet.</p>'}</section>
-</main>
-<script>
-const search = document.getElementById('search');
-const count = document.getElementById('count');
-const cards = [...document.querySelectorAll('.item')];
-let activeTag = '';
-function applyFilters(){
-  const query = (search.value || '').trim().toLowerCase();
-  let visible = 0;
-  for (const card of cards) {
-    const matchesQuery = !query || card.dataset.search.includes(query);
-    const matchesTag = !activeTag || (' ' + card.dataset.tags + ' ').includes(' ' + activeTag + ' ');
-    const show = matchesQuery && matchesTag;
-    card.hidden = !show;
-    if (show) visible++;
-  }
-  count.textContent = String(visible);
-}
-document.querySelectorAll('[data-tag]').forEach((button) => {
-  button.addEventListener('click', () => {
-    activeTag = button.dataset.tag || '';
-    document.querySelectorAll('.tagbar [data-tag]').forEach((node) => node.classList.toggle('active', node.dataset.tag === activeTag));
-    applyFilters();
-  });
-});
-search.addEventListener('input', applyFilters);
-applyFilters();
-</script>
-</body>
-</html>`;
-    }
-    function normalizeTags(tags) {
-      const values = Array.isArray(tags) ? tags : String(tags || "").split(",");
-      return values.map((tag) => String(tag || "").replace(/^#/, "").trim()).filter(Boolean).slice(0, 8);
-    }
-    function formatDate(value) {
-      if (!value) {
-        return "";
-      }
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) {
-        return String(value);
-      }
-      return date.toISOString().slice(0, 10);
-    }
-    function escapeHtml(value) {
-      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    }
-    module2.exports = {
-      buildPagesUrl: buildPagesUrl2,
-      buildPublishPath: buildPublishPath2,
-      buildShareHomeUrl: buildShareHomeUrl2,
-      buildShortPagesUrl: buildShortPagesUrl2,
-      inferPagesBaseUrl: inferPagesBaseUrl2,
-      mimeTypeForPath,
-      normalizePublishPath,
-      parseRepo: parseRepo2,
-      renderShareIndexHtml: renderShareIndexHtml2,
-      updateShareIndex: updateShareIndex2
     };
   }
 });
@@ -2511,6 +2558,8 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
 var import_obsidian5 = require("obsidian");
 var import_artifact_goals2 = __toESM(require_artifact_goals());
 var import_templates2 = __toESM(require_templates());
+var { inferPagesBaseUrl } = require_github_pages();
+var { buildGiscusSetupChecklist, buildPagesSetupChecklist } = require_setup_guidance();
 var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
@@ -2585,6 +2634,12 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       cls: "marktl-modal-intro",
       text: "Giscus uses GitHub Discussions for public comments. It requires trusted exports because it loads the Giscus script."
     });
+    new import_obsidian5.Setting(containerEl).setName("Giscus setup helper").setDesc("Use giscus.app to get repository ID and category ID. MarkTL cannot guess these IDs.").addButton((button) => button.setButtonText("Open giscus.app").onClick(() => {
+      window.open("https://giscus.app", "_blank", "noopener,noreferrer");
+    })).addButton((button) => button.setButtonText("Copy checklist").onClick(async () => {
+      await navigator.clipboard.writeText(buildGiscusSetupChecklist(this.plugin.settings));
+      new import_obsidian5.Notice("Giscus setup checklist copied.");
+    }));
     new import_obsidian5.Setting(containerEl).setName("Reader feedback mode").setDesc("Adds a GitHub login/comment box to exported HTML when configured.").addDropdown((dropdown) => dropdown.addOption("none", "None").addOption("giscus", "Giscus GitHub comments").setValue(this.plugin.settings.readerFeedbackMode).onChange(async (value) => {
       this.plugin.settings.readerFeedbackMode = value;
       await this.plugin.saveSettings();
@@ -2600,6 +2655,20 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       cls: "marktl-modal-intro",
       text: "Used only when Share target is GitHub Pages link. Tokens are stored in this plugin data file, so use a fine-grained token limited to the share repository."
     });
+    new import_obsidian5.Setting(containerEl).setName("GitHub Pages setup helper").setDesc("For owner/repo, the usual Pages URL is https://owner.github.io/repo. The final page becomes <base>/<publish path>/<slug>/.").addButton((button) => button.setButtonText("Fill base URL").onClick(async () => {
+      const inferred = inferPagesBaseUrl(this.plugin.settings.githubRepo);
+      if (!inferred) {
+        new import_obsidian5.Notice("Enter GitHub repository as owner/repo first.");
+        return;
+      }
+      this.plugin.settings.githubPagesBaseUrl = inferred;
+      await this.plugin.saveSettings();
+      this.display();
+      new import_obsidian5.Notice(`GitHub Pages base URL set to ${inferred}`);
+    })).addButton((button) => button.setButtonText("Copy checklist").onClick(async () => {
+      await navigator.clipboard.writeText(buildPagesSetupChecklist(this.plugin.settings));
+      new import_obsidian5.Notice("GitHub Pages setup checklist copied.");
+    }));
     this.addTextSetting(containerEl, "GitHub repository", "owner/repo for the Pages repository.", "githubRepo", "reallygood83/marktl-shares");
     this.addTextSetting(containerEl, "GitHub branch", "Branch to write files to.", "githubBranch", "main");
     this.addTextSetting(containerEl, "GitHub Pages base URL", "Public Pages root URL. Leave blank to infer https://owner.github.io/repo.", "githubPagesBaseUrl", "https://reallygood83.github.io/marktl-shares");
@@ -2845,7 +2914,7 @@ var { convertWithAiFallback, getProviderPrivacyNote: getProviderPrivacyNote2 } =
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
-var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require_github_pages();
+var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, renderShareIndexHtml, updateShareIndex } = require_github_pages();
 var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
 var { migrateSettings } = require_settings();
@@ -3038,7 +3107,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
       const shareMetadata = this.extractShareMetadata(markdown, outputPlan.basename);
       const shortId = buildShortId(outputPlan.basename);
-      const socialUrl = options.shareTarget === "github-pages" ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo), this.settings.githubPublishPath, shortId) : "";
+      const socialUrl = options.shareTarget === "github-pages" ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo), this.settings.githubPublishPath, shortId) : "";
       const socialImage = options.shareTarget === "github-pages" && assetResult.mappings[0] ? `${socialUrl}assets/${assetResult.mappings[0].destinationPath.split("/").pop() || ""}` : "";
       const socialHtml = injectSocialMeta(result.html, {
         title: shareMetadata.title,
@@ -3354,7 +3423,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     }
     const branch = this.settings.githubBranch.trim() || "main";
     const basePath = this.settings.githubPublishPath;
-    const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
+    const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
     const canonicalUrl = buildPagesUrl(pagesBaseUrl, basePath, plan.basename);
     const publicUrl = buildShortPagesUrl(pagesBaseUrl, basePath, shortId);
     const shareHomeUrl = buildShareHomeUrl(pagesBaseUrl, basePath);

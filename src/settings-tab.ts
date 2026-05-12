@@ -1,8 +1,11 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listArtifactGoals } from './core/artifact-goals.js';
 import { listTemplates } from './core/templates.js';
 import type { AiProvider, ArtifactGoal, ArtifactType, ContextPackMode, ConversionMode, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareTarget } from './types';
+
+const { inferPagesBaseUrl } = require('./core/github-pages.js');
+const { buildGiscusSetupChecklist, buildPagesSetupChecklist } = require('./core/setup-guidance.js');
 
 export class MarktlSettingTab extends PluginSettingTab {
   plugin: MarktlPlugin;
@@ -183,6 +186,21 @@ export class MarktlSettingTab extends PluginSettingTab {
     });
 
     new Setting(containerEl)
+      .setName('Giscus setup helper')
+      .setDesc('Use giscus.app to get repository ID and category ID. MarkTL cannot guess these IDs.')
+      .addButton((button) => button
+        .setButtonText('Open giscus.app')
+        .onClick(() => {
+          window.open('https://giscus.app', '_blank', 'noopener,noreferrer');
+        }))
+      .addButton((button) => button
+        .setButtonText('Copy checklist')
+        .onClick(async () => {
+          await navigator.clipboard.writeText(buildGiscusSetupChecklist(this.plugin.settings));
+          new Notice('Giscus setup checklist copied.');
+        }));
+
+    new Setting(containerEl)
       .setName('Reader feedback mode')
       .setDesc('Adds a GitHub login/comment box to exported HTML when configured.')
       .addDropdown((dropdown) => dropdown
@@ -206,6 +224,29 @@ export class MarktlSettingTab extends PluginSettingTab {
       cls: 'marktl-modal-intro',
       text: 'Used only when Share target is GitHub Pages link. Tokens are stored in this plugin data file, so use a fine-grained token limited to the share repository.',
     });
+
+    new Setting(containerEl)
+      .setName('GitHub Pages setup helper')
+      .setDesc('For owner/repo, the usual Pages URL is https://owner.github.io/repo. The final page becomes <base>/<publish path>/<slug>/.')
+      .addButton((button) => button
+        .setButtonText('Fill base URL')
+        .onClick(async () => {
+          const inferred = inferPagesBaseUrl(this.plugin.settings.githubRepo);
+          if (!inferred) {
+            new Notice('Enter GitHub repository as owner/repo first.');
+            return;
+          }
+          this.plugin.settings.githubPagesBaseUrl = inferred;
+          await this.plugin.saveSettings();
+          this.display();
+          new Notice(`GitHub Pages base URL set to ${inferred}`);
+        }))
+      .addButton((button) => button
+        .setButtonText('Copy checklist')
+        .onClick(async () => {
+          await navigator.clipboard.writeText(buildPagesSetupChecklist(this.plugin.settings));
+          new Notice('GitHub Pages setup checklist copied.');
+        }));
 
     this.addTextSetting(containerEl, 'GitHub repository', 'owner/repo for the Pages repository.', 'githubRepo', 'reallygood83/marktl-shares');
     this.addTextSetting(containerEl, 'GitHub branch', 'Branch to write files to.', 'githubBranch', 'main');
