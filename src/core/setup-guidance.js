@@ -12,8 +12,10 @@ function buildPagesSetupChecklist(settings = {}) {
     `4. GitHub Pages base URL: ${baseUrl}`,
     `5. Publish path: ${publishPath}`,
     `6. Expected export URL: ${baseUrl.replace(/\/+$/g, '')}/${publishPath.replace(/^\/+|\/+$/g, '')}/<slug>/`,
-    '7. Create a fine-grained GitHub token limited to this repository with Contents read/write permission.',
-    '8. Paste the token into MarkTL settings, then export one test note with Share target = GitHub Pages link.',
+    '7. Open https://github.com/settings/personal-access-tokens/new and create a fine-grained token.',
+    `8. Limit repository access to ${repo}.`,
+    '9. Grant Contents read/write permission. No broader permissions are required for publishing files.',
+    '10. Paste the token into MarkTL settings, then export one test note with Share target = GitHub Pages link.',
   ].join('\n');
 }
 
@@ -24,15 +26,16 @@ function buildGiscusSetupChecklist(settings = {}) {
     'MarkTL Giscus setup checklist',
     '',
     `1. Use repository: ${repo}`,
-    '2. In GitHub repository Settings, enable Discussions.',
-    '3. Create or choose a discussion category, for example Announcements or General.',
-    '4. Open https://giscus.app and enter the repository.',
-    `5. Choose category: ${category}`,
-    '6. Choose mapping: pathname',
-    '7. Choose theme: preferred_color_scheme',
-    '8. Copy data-repo-id and data-category-id from the generated Giscus script.',
-    '9. Paste those IDs into MarkTL settings.',
-    '10. Export with Preview/export = Trusted interactive preview and Reader feedback = Giscus GitHub comments.',
+    '2. Install the Giscus GitHub App from https://github.com/apps/giscus for this repository.',
+    '3. In GitHub repository Settings, enable Discussions.',
+    '4. Create or choose a discussion category, for example General or Announcements.',
+    '5. Open https://giscus.app and enter the repository.',
+    `6. Choose category: ${category}`,
+    '7. Choose mapping: pathname',
+    '8. Choose theme: preferred_color_scheme',
+    '9. Copy data-repo-id and data-category-id from the generated Giscus script.',
+    '10. Paste those IDs into MarkTL settings.',
+    '11. Export with Preview/export = Trusted interactive preview and Reader feedback = Giscus GitHub comments.',
   ].join('\n');
 }
 

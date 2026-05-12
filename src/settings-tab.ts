@@ -187,7 +187,12 @@ export class MarktlSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Giscus setup helper')
-      .setDesc('Use giscus.app to get repository ID and category ID. MarkTL cannot guess these IDs.')
+      .setDesc('Install the Giscus GitHub App first, then use giscus.app to get repository ID and category ID.')
+      .addButton((button) => button
+        .setButtonText('Install Giscus app')
+        .onClick(() => {
+          window.open('https://github.com/apps/giscus', '_blank', 'noopener,noreferrer');
+        }))
       .addButton((button) => button
         .setButtonText('Open giscus.app')
         .onClick(() => {
@@ -228,6 +233,11 @@ export class MarktlSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('GitHub Pages setup helper')
       .setDesc('For owner/repo, the usual Pages URL is https://owner.github.io/repo. The final page becomes <base>/<publish path>/<slug>/.')
+      .addButton((button) => button
+        .setButtonText('Create token')
+        .onClick(() => {
+          window.open('https://github.com/settings/personal-access-tokens/new', '_blank', 'noopener,noreferrer');
+        }))
       .addButton((button) => button
         .setButtonText('Fill base URL')
         .onClick(async () => {

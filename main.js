@@ -1488,8 +1488,10 @@ var require_setup_guidance = __commonJS({
         `4. GitHub Pages base URL: ${baseUrl}`,
         `5. Publish path: ${publishPath}`,
         `6. Expected export URL: ${baseUrl.replace(/\/+$/g, "")}/${publishPath.replace(/^\/+|\/+$/g, "")}/<slug>/`,
-        "7. Create a fine-grained GitHub token limited to this repository with Contents read/write permission.",
-        "8. Paste the token into MarkTL settings, then export one test note with Share target = GitHub Pages link."
+        "7. Open https://github.com/settings/personal-access-tokens/new and create a fine-grained token.",
+        `8. Limit repository access to ${repo}.`,
+        "9. Grant Contents read/write permission. No broader permissions are required for publishing files.",
+        "10. Paste the token into MarkTL settings, then export one test note with Share target = GitHub Pages link."
       ].join("\n");
     }
     function buildGiscusSetupChecklist2(settings = {}) {
@@ -1499,15 +1501,16 @@ var require_setup_guidance = __commonJS({
         "MarkTL Giscus setup checklist",
         "",
         `1. Use repository: ${repo}`,
-        "2. In GitHub repository Settings, enable Discussions.",
-        "3. Create or choose a discussion category, for example Announcements or General.",
-        "4. Open https://giscus.app and enter the repository.",
-        `5. Choose category: ${category}`,
-        "6. Choose mapping: pathname",
-        "7. Choose theme: preferred_color_scheme",
-        "8. Copy data-repo-id and data-category-id from the generated Giscus script.",
-        "9. Paste those IDs into MarkTL settings.",
-        "10. Export with Preview/export = Trusted interactive preview and Reader feedback = Giscus GitHub comments."
+        "2. Install the Giscus GitHub App from https://github.com/apps/giscus for this repository.",
+        "3. In GitHub repository Settings, enable Discussions.",
+        "4. Create or choose a discussion category, for example General or Announcements.",
+        "5. Open https://giscus.app and enter the repository.",
+        `6. Choose category: ${category}`,
+        "7. Choose mapping: pathname",
+        "8. Choose theme: preferred_color_scheme",
+        "9. Copy data-repo-id and data-category-id from the generated Giscus script.",
+        "10. Paste those IDs into MarkTL settings.",
+        "11. Export with Preview/export = Trusted interactive preview and Reader feedback = Giscus GitHub comments."
       ].join("\n");
     }
     module2.exports = {
@@ -2634,7 +2637,9 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       cls: "marktl-modal-intro",
       text: "Giscus uses GitHub Discussions for public comments. It requires trusted exports because it loads the Giscus script."
     });
-    new import_obsidian5.Setting(containerEl).setName("Giscus setup helper").setDesc("Use giscus.app to get repository ID and category ID. MarkTL cannot guess these IDs.").addButton((button) => button.setButtonText("Open giscus.app").onClick(() => {
+    new import_obsidian5.Setting(containerEl).setName("Giscus setup helper").setDesc("Install the Giscus GitHub App first, then use giscus.app to get repository ID and category ID.").addButton((button) => button.setButtonText("Install Giscus app").onClick(() => {
+      window.open("https://github.com/apps/giscus", "_blank", "noopener,noreferrer");
+    })).addButton((button) => button.setButtonText("Open giscus.app").onClick(() => {
       window.open("https://giscus.app", "_blank", "noopener,noreferrer");
     })).addButton((button) => button.setButtonText("Copy checklist").onClick(async () => {
       await navigator.clipboard.writeText(buildGiscusSetupChecklist(this.plugin.settings));
@@ -2655,7 +2660,9 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       cls: "marktl-modal-intro",
       text: "Used only when Share target is GitHub Pages link. Tokens are stored in this plugin data file, so use a fine-grained token limited to the share repository."
     });
-    new import_obsidian5.Setting(containerEl).setName("GitHub Pages setup helper").setDesc("For owner/repo, the usual Pages URL is https://owner.github.io/repo. The final page becomes <base>/<publish path>/<slug>/.").addButton((button) => button.setButtonText("Fill base URL").onClick(async () => {
+    new import_obsidian5.Setting(containerEl).setName("GitHub Pages setup helper").setDesc("For owner/repo, the usual Pages URL is https://owner.github.io/repo. The final page becomes <base>/<publish path>/<slug>/.").addButton((button) => button.setButtonText("Create token").onClick(() => {
+      window.open("https://github.com/settings/personal-access-tokens/new", "_blank", "noopener,noreferrer");
+    })).addButton((button) => button.setButtonText("Fill base URL").onClick(async () => {
       const inferred = inferPagesBaseUrl(this.plugin.settings.githubRepo);
       if (!inferred) {
         new import_obsidian5.Notice("Enter GitHub repository as owner/repo first.");
