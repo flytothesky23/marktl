@@ -60,6 +60,24 @@
   padding: 6px 8px;
 }
 
+.marktl-preview-warning-info {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.marktl-preview-warning-warning {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  color: var(--text-normal);
+}
+
+.marktl-preview-warning-fatal {
+  background: var(--background-modifier-error);
+  border: 1px solid var(--text-error);
+  color: var(--text-on-accent);
+}
+
 .marktl-preview-render-qa {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
@@ -72,6 +90,31 @@
 .marktl-preview-render-qa-warning {
   border-color: var(--background-modifier-error);
   color: var(--text-error);
+}
+
+.marktl-mermaid-rendered {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  margin: 16px 0;
+  overflow-x: auto;
+  padding: 12px;
+}
+
+.marktl-mermaid-rendered svg {
+  display: block;
+  height: auto;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.marktl-mermaid-source {
+  background: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  margin: 12px 0;
+  overflow-x: auto;
+  padding: 10px;
 }
 
 .marktl-preview-frame {

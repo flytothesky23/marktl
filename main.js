@@ -417,18 +417,18 @@ var require_templates = __commonJS({
       const copyText = async (label, text) => {
         try {
           await navigator.clipboard.writeText(text);
-          label.textContent = 'Copied';
+          label.textContent = '복사됨';
           setTimeout(() => { label.textContent = label.dataset.label; }, 1200);
         } catch {
-          label.textContent = 'Copy failed';
+          label.textContent = '복사 실패';
         }
       };
       const toolbox = document.createElement('div');
       toolbox.className = 'toolbox';
       const filter = document.createElement('input');
       filter.type = 'search';
-      filter.placeholder = 'Filter sections';
-      filter.setAttribute('aria-label', 'Filter sections');
+      filter.placeholder = '섹션 필터';
+      filter.setAttribute('aria-label', '섹션 필터');
       toolbox.append(filter);
       const makeButton = (label, getText) => {
         const button = document.createElement('button');
@@ -438,13 +438,13 @@ var require_templates = __commonJS({
         button.addEventListener('click', () => copyText(button, getText()));
         toolbox.append(button);
       };
-      makeButton('Copy as prompt', () => 'Use this HTML artifact as context and continue from its decisions and structure:\\n\\n' + document.body.innerText);
-      makeButton('Copy as markdown', () => document.querySelector('article').innerText);
-      makeButton('Copy summary', () => [...document.querySelectorAll('h1,h2,h3')].map((h) => '- ' + h.textContent).join('\\n'));
-      makeButton('Copy outline JSON', () => JSON.stringify([...document.querySelectorAll('h1,h2,h3')].map((h) => ({ level: h.tagName, text: h.textContent.trim(), id: h.id || '' })), null, 2));
+      makeButton('프롬프트로 복사', () => '이 HTML 산출물을 맥락으로 삼아 결정과 구조를 이어서 개선해 주세요:\\n\\n' + document.body.innerText);
+      makeButton('Markdown 복사', () => document.querySelector('article').innerText);
+      makeButton('요약 복사', () => [...document.querySelectorAll('h1,h2,h3')].map((h) => '- ' + h.textContent).join('\\n'));
+      makeButton('목차 JSON 복사', () => JSON.stringify([...document.querySelectorAll('h1,h2,h3')].map((h) => ({ level: h.tagName, text: h.textContent.trim(), id: h.id || '' })), null, 2));
       const expandButton = document.createElement('button');
       expandButton.type = 'button';
-      expandButton.textContent = 'Expand all';
+      expandButton.textContent = '모두 펼치기';
       expandButton.addEventListener('click', () => {
         document.querySelectorAll('article [hidden]').forEach((node) => { node.hidden = false; });
       });
@@ -467,7 +467,7 @@ var require_templates = __commonJS({
       if (headings.length) {
         const toc = document.createElement('nav');
         toc.className = 'toc';
-        toc.innerHTML = '<strong>Contents</strong> ';
+        toc.innerHTML = '<strong>목차</strong> ';
         headings.forEach((heading, index) => {
           heading.id = heading.id || 'section-' + (index + 1);
           const link = document.createElement('a');
@@ -517,10 +517,10 @@ var require_templates = __commonJS({
       const article = document.querySelector('article');
       const panel = document.createElement('div');
       panel.className = 'playground-panel';
-      panel.innerHTML = '<label><span class="playground-muted">Emphasis</span><input type="range" min="1" max="3" value="2" aria-label="Emphasis"></label><button type="button" data-action="copy-prompt">Copy prompt</button><button type="button" data-action="copy-state">Copy state JSON</button>';
+      panel.innerHTML = '<label><span class="playground-muted">강조도</span><input type="range" min="1" max="3" value="2" aria-label="강조도"></label><button type="button" data-action="copy-prompt">프롬프트 복사</button><button type="button" data-action="copy-state">상태 JSON 복사</button>';
       document.querySelector('main').prepend(panel);
       const note = document.createElement('section');
-      note.innerHTML = '<h2>Working notes</h2><div class="playground-note" contenteditable="true" role="textbox" aria-label="Working notes">Edit this area while reviewing the artifact. Use Copy prompt or Copy state JSON to bring the result back to your AI session.</div>';
+      note.innerHTML = '<h2>작업 메모</h2><div class="playground-note" contenteditable="true" role="textbox" aria-label="작업 메모">산출물을 검토하며 이 영역을 편집하세요. 프롬프트 복사 또는 상태 JSON 복사로 AI 세션에 다시 전달할 수 있습니다.</div>';
       article.prepend(note);
       const applyEmphasis = () => {
         article.classList.remove('playground-emphasis-low', 'playground-emphasis-medium', 'playground-emphasis-high');
@@ -537,14 +537,14 @@ var require_templates = __commonJS({
         const original = button.textContent;
         try {
           await navigator.clipboard.writeText(text);
-          button.textContent = 'Copied';
+          button.textContent = '복사됨';
         } catch {
-          button.textContent = 'Copy failed';
+          button.textContent = '복사 실패';
         }
         setTimeout(() => { button.textContent = original; }, 1200);
       };
       panel.querySelector('[data-action="copy-state"]').addEventListener('click', (event) => copy(event.currentTarget, JSON.stringify(state(), null, 2)));
-      panel.querySelector('[data-action="copy-prompt"]').addEventListener('click', (event) => copy(event.currentTarget, 'Use this reviewed HTML artifact state as feedback for the next iteration:\\n\\n' + JSON.stringify(state(), null, 2)));
+      panel.querySelector('[data-action="copy-prompt"]').addEventListener('click', (event) => copy(event.currentTarget, '검토한 HTML 산출물 상태를 다음 개선 작업의 피드백으로 사용해 주세요:\\n\\n' + JSON.stringify(state(), null, 2)));
     `
       }
     ];
@@ -554,17 +554,26 @@ var require_templates = __commonJS({
     function getTemplate(id) {
       return templates.find((template) => template.id === id) || templates[0];
     }
+    function getCommonExportCss() {
+      return `
+      .marktl-mermaid-rendered { margin: 24px 0; padding: 12px; border: 1px solid rgba(37, 99, 235, 0.18); border-radius: 16px; background: rgba(255,255,255,0.72); overflow-x: auto; }
+      .marktl-mermaid-rendered svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+      .marktl-mermaid-source { margin: 20px 0; border-radius: 14px; overflow: hidden; }
+      .marktl-skipped-links { margin: 18px 0; padding: 12px 14px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 12px; color: #64748b; background: rgba(248,250,252,0.82); font-size: 0.92rem; }
+      `;
+    }
     function wrapWithTemplate(bodyHtml, options = {}) {
       const template = getTemplate(options.template);
       const title = options.title || "Exported note";
       const script = options.trusted && template.script ? `<script>${template.script}</script>` : "";
       return `<!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
-<style>${template.css}</style>
+<style>${template.css}
+${getCommonExportCss()}</style>
 </head>
 <body>
 <main data-template="${escapeHtml(template.id)}">
@@ -649,7 +658,10 @@ var require_converter = __commonJS({
             index += 1;
           }
           index += 1;
-          blocks.push(`<pre><code${language ? ` class="language-${escapeHtml(language)}"` : ""}>${escapeHtml(code.join("\n"))}</code></pre>`);
+          const normalizedLanguage = language.toLowerCase().trim().split(/\s+/)[0];
+          const languageClass = language ? ` class="language-${escapeHtml(language)}"` : "";
+          const mermaidAttr = normalizedLanguage === "mermaid" ? ` class="marktl-mermaid-source"><code class="language-mermaid" data-marktl-mermaid="true"` : `><code${languageClass}`;
+          blocks.push(`<pre${mermaidAttr}>${escapeHtml(code.join("\n"))}</code></pre>`);
           continue;
         }
         const callout = readCallout(lines, index);
@@ -831,7 +843,7 @@ var require_ai = __commonJS({
       }
       const prompt = buildPrompt(markdown, options);
       const timeout = Number(options.timeoutMs || 9e5);
-      const command = options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command;
+      const command = resolveCliCommandPath(options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command);
       const args = provider.promptAsArgument ? [...provider.args, prompt] : provider.args;
       const execOptions = {
         timeout,
@@ -859,6 +871,16 @@ var require_ai = __commonJS({
         ].filter(Boolean).join("\n");
         throw new Error(details || String(error));
       }
+    }
+    function resolveCliCommandPath(command) {
+      const value = String(command || "").trim();
+      if (value === "~") {
+        return os.homedir();
+      }
+      if (value.startsWith("~/")) {
+        return path.join(os.homedir(), value.slice(2));
+      }
+      return value;
     }
     function getProviderPrivacyNote3(provider) {
       return provider === "claude" ? "Claude Code CLI receives the note prompt as a command-line argument; avoid sending private notes if local process inspection is a concern." : "";
@@ -1338,25 +1360,34 @@ var require_github_pages = __commonJS({
       }[extension] || "application/octet-stream";
     }
     function updateShareIndex2(existingIndex, entry) {
-      const now = entry.updatedAt || (/* @__PURE__ */ new Date()).toISOString();
+      const now = (entry == null ? void 0 : entry.updatedAt) || (/* @__PURE__ */ new Date()).toISOString();
       const current = Array.isArray(existingIndex == null ? void 0 : existingIndex.items) ? existingIndex.items : [];
-      const items = [
-        {
-          ...entry,
-          updatedAt: now
-        },
-        ...current.filter((item) => item && item.slug !== entry.slug)
-      ].sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
+      const nextEntry = normalizeShareEntry(entry, now);
+      const merged = nextEntry ? [
+        nextEntry,
+        ...repairShareItems(current).filter((item) => !shareItemsMatch(item, nextEntry))
+      ] : repairShareItems(current);
+      const items = dedupeShareItems(merged).sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
       return {
-        version: 1,
+        version: 2,
         updatedAt: now,
+        items
+      };
+    }
+    function repairShareIndex2(existingIndex) {
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const current = Array.isArray(existingIndex == null ? void 0 : existingIndex.items) ? existingIndex.items : [];
+      const items = dedupeShareItems(repairShareItems(current)).sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
+      return {
+        version: 2,
+        updatedAt: (existingIndex == null ? void 0 : existingIndex.updatedAt) || now,
         items
       };
     }
     function renderShareIndexHtml2(index, options = {}) {
       const title = options.title || "MarkTL Shared HTML";
       const baseUrl = String(options.baseUrl || "").replace(/\/+$/g, "");
-      const items = Array.isArray(index == null ? void 0 : index.items) ? index.items : [];
+      const items = repairShareItems(Array.isArray(index == null ? void 0 : index.items) ? index.items : []);
       const tagCounts = /* @__PURE__ */ new Map();
       for (const item of items) {
         for (const tag of normalizeTags(item.tags)) {
@@ -1365,9 +1396,9 @@ var require_github_pages = __commonJS({
       }
       const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} <span>${count}</span></button>`).join("");
       const list = items.map((item) => {
-        const href = item.url || (baseUrl ? `${baseUrl}/${encodeURIComponent(item.slug)}/` : `${encodeURIComponent(item.slug)}/`);
+        const href = item.url || item.canonicalUrl || (baseUrl ? `${baseUrl}/${encodeURIComponent(item.slug)}/` : `${encodeURIComponent(item.slug)}/`);
         const tags = normalizeTags(item.tags);
-        const itemTitle = cleanArchiveText(item.title || item.slug || "Untitled HTML artifact", "Untitled HTML artifact");
+        const itemTitle = recoverShareTitle(item);
         const excerpt = cleanArchiveText(item.excerpt || item.sourcePath || "", "");
         const sourcePath = cleanArchiveText(item.sourcePath || "", "");
         const artifactType = cleanArchiveText(item.artifactType || "HTML artifact", "HTML artifact");
@@ -1446,9 +1477,138 @@ applyFilters();
 </body>
 </html>`;
     }
+    function normalizeShareEntry(entry, now) {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+      const normalized = {
+        ...entry,
+        schemaVersion: 2,
+        updatedAt: entry.updatedAt || now || (/* @__PURE__ */ new Date()).toISOString()
+      };
+      normalized.sourcePathKey = normalized.sourcePathKey || buildSourcePathKey(normalized.sourcePath || "");
+      normalized.title = recoverShareTitle(normalized);
+      normalized.excerpt = cleanArchiveText(normalized.excerpt || "", "");
+      normalized.tags = normalizeTags(normalized.tags);
+      return normalized;
+    }
+    function repairShareItems(items) {
+      return items.map((item) => normalizeShareEntry(item, item == null ? void 0 : item.updatedAt)).filter(Boolean);
+    }
+    function dedupeShareItems(items) {
+      const deduped = [];
+      for (const item of items) {
+        if (!deduped.some((existing) => shareItemsMatch(existing, item))) {
+          deduped.push(item);
+        }
+      }
+      return deduped;
+    }
+    function shareItemsMatch(left, right) {
+      const rightKeys = new Set(shareItemKeys(right));
+      return shareItemKeys(left).some((key) => rightKeys.has(key));
+    }
+    function shareItemKeys(item) {
+      const keys = [];
+      const shortId = cleanArchiveText(item == null ? void 0 : item.shortId, "");
+      if (shortId) {
+        keys.push(`short:${shortId}`);
+      }
+      const url = normalizeUrlKey(item == null ? void 0 : item.url);
+      if (url) {
+        keys.push(`url:${url}`);
+      }
+      const canonicalUrl = normalizeUrlKey(item == null ? void 0 : item.canonicalUrl);
+      if (canonicalUrl) {
+        keys.push(`canonical:${canonicalUrl}`);
+      }
+      const sourcePath = buildSourcePathKey((item == null ? void 0 : item.sourcePathKey) || (item == null ? void 0 : item.sourcePath) || "");
+      if (sourcePath) {
+        keys.push(`source:${sourcePath}`);
+      }
+      const slug = normalizeIndexKey(item == null ? void 0 : item.slug);
+      if (slug) {
+        keys.push(`slug:${slug}`);
+      }
+      return keys;
+    }
+    function normalizeUrlKey(value) {
+      return normalizeIndexKey(value).replace(/\/+$/g, "");
+    }
+    function buildSourcePathKey(value) {
+      return normalizeIndexKey(value);
+    }
+    function normalizeIndexKey(value) {
+      return repairMojibake(decodeArchiveComponent(value)).normalize("NFC").replace(/\\/g, "/").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+    function recoverShareTitle(item) {
+      const candidates = [
+        item == null ? void 0 : item.title,
+        titleFromUrl(item == null ? void 0 : item.canonicalUrl),
+        titleFromSourcePath(item == null ? void 0 : item.sourcePath),
+        item == null ? void 0 : item.slug
+      ];
+      for (const candidate of candidates) {
+        const title = normalizeTitleCandidate(candidate);
+        if (title) {
+          return title;
+        }
+      }
+      return "제목 없는 HTML 산출물";
+    }
+    function titleFromUrl(value) {
+      try {
+        const url = new URL(String(value || ""));
+        const segments = url.pathname.split("/").filter(Boolean);
+        const last = segments[segments.length - 1] || "";
+        const previous = segments[segments.length - 2] || "";
+        if (previous === "s") {
+          return "";
+        }
+        return last;
+      } catch (error) {
+        return "";
+      }
+    }
+    function titleFromSourcePath(value) {
+      const text = decodeArchiveComponent(value).split(/[\\/]/).filter(Boolean).pop() || "";
+      return text.replace(/\.(md|html?)$/i, "");
+    }
+    function normalizeTitleCandidate(value) {
+      const basename = decodeArchiveComponent(value).split(/[\\/]/).filter(Boolean).pop() || value;
+      const cleaned = cleanArchiveText(prettifySlugTitle(String(basename || "").replace(/\.(md|html?)$/i, "")), "");
+      return cleanArchiveText(cleaned, "");
+    }
+    function prettifySlugTitle(value) {
+      const text = String(value || "").trim();
+      const match = /^(\d{4}-\d{2}-\d{2})-(\S.+)$/.exec(text);
+      if (!match || text.includes(" ")) {
+        return text;
+      }
+      const parts = match[2].split("-").filter(Boolean);
+      if (parts.length >= 4) {
+        return `${match[1]} - ${parts.slice(0, 2).join(" ")} - ${parts.slice(2).join(" ")}`;
+      }
+      return `${match[1]} - ${parts.join(" ")}`;
+    }
+    function decodeArchiveComponent(value) {
+      let text = String(value || "");
+      for (let index = 0; index < 2; index++) {
+        try {
+          const decoded = decodeURIComponent(text);
+          if (decoded === text) {
+            break;
+          }
+          text = decoded;
+        } catch (error) {
+          break;
+        }
+      }
+      return text;
+    }
     function normalizeTags(tags) {
       const values = Array.isArray(tags) ? tags : String(tags || "").split(",");
-      return [...new Set(values.map((tag) => cleanArchiveText(String(tag || "").replace(/^-\s*/, "").replace(/^#/, "").trim(), "")).filter(Boolean).filter((tag) => !looksLikeMojibake(tag)).map((tag) => tag.length > 44 ? `${tag.slice(0, 41)}...` : tag))].slice(0, 8);
+      return [...new Set(values.map((tag) => cleanArchiveText(String(tag || "").replace(/^\s*-\s*/, "").replace(/^#/, "").replace(/^["']|["']$/g, "").trim(), "")).filter(Boolean).filter((tag) => !looksLikeMojibake(tag)).map((tag) => tag.length > 44 ? `${tag.slice(0, 41)}...` : tag))].slice(0, 8);
     }
     function cleanArchiveText(value, fallback = "") {
       const cleaned = repairMojibake(String(value || "")).replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<iframe\b[\s\S]*?<\/iframe>/gi, " ").replace(/<[^>]+>/g, " ").replace(/<[^>]*$/g, " ").replace(/\s+/g, " ").trim();
@@ -1475,6 +1635,9 @@ applyFilters();
       const text = String(value || "");
       if (!text) {
         return false;
+      }
+      if (text.includes("�")) {
+        return true;
       }
       return mojibakeScore(text) / Math.max(text.length, 1) > 0.08;
     }
@@ -1507,6 +1670,7 @@ applyFilters();
       mimeTypeForPath,
       normalizePublishPath,
       parseRepo: parseRepo2,
+      repairShareIndex: repairShareIndex2,
       renderShareIndexHtml: renderShareIndexHtml2,
       updateShareIndex: updateShareIndex2
     };
@@ -1809,10 +1973,10 @@ ${section}`;
     function validateGiscusConfig2(options = {}) {
       const config = normalizeGiscusConfig(options);
       const warnings = [];
-      if (!config.repo) warnings.push("Giscus feedback is missing repository.");
-      if (!config.repoId) warnings.push("Giscus feedback is missing repository ID.");
-      if (!config.category) warnings.push("Giscus feedback is missing discussion category.");
-      if (!config.categoryId) warnings.push("Giscus feedback is missing discussion category ID.");
+      if (!config.repo) warnings.push("Giscus 댓글 저장소가 설정되지 않았습니다.");
+      if (!config.repoId) warnings.push("Giscus 저장소 ID가 설정되지 않았습니다.");
+      if (!config.category) warnings.push("Giscus discussion category가 설정되지 않았습니다.");
+      if (!config.categoryId) warnings.push("Giscus category ID가 설정되지 않았습니다.");
       return warnings;
     }
     function shouldAttachReaderFeedback2(options = {}) {
@@ -1853,36 +2017,36 @@ var require_html_qa = __commonJS({
       const warnings = [];
       const value = String(html || "");
       if (!/<!doctype\s+html/i.test(value)) {
-        warnings.push("HTML QA: missing <!doctype html>.");
+        warnings.push("참고: HTML doctype이 없습니다.");
       }
       if (!/<meta\s+name=["']viewport["']/i.test(value)) {
-        warnings.push("HTML QA: missing responsive viewport meta tag.");
+        warnings.push("참고: responsive viewport meta가 없습니다.");
       }
       if (!/<style\b/i.test(value)) {
-        warnings.push("HTML QA: no inline CSS found; output may be too plain.");
+        warnings.push("참고: 내장 CSS가 없어 산출물이 단조로울 수 있습니다.");
       }
       if (!/<h1\b/i.test(value)) {
-        warnings.push("HTML QA: no H1 heading found.");
+        warnings.push("참고: H1 제목을 찾지 못했습니다.");
       }
       const trusted = Boolean(options.trusted);
       const artifactGoal = String(options.artifactGoal || "");
       if (trusted && !/<script\b/i.test(value)) {
-        warnings.push("HTML QA: trusted interactive mode produced no script; artifact may be static.");
+        warnings.push("참고: 신뢰 인터랙티브 모드이지만 스크립트가 없어 정적 산출물일 수 있습니다.");
       }
       if (!trusted && /<script\b|<iframe\b|\son[a-z]+\s*=/i.test(value)) {
-        warnings.push("HTML QA: sanitized mode output still contains dynamic markup.");
+        warnings.push("배포 차단: 정적 안전 모드 산출물에 동적 마크업이 남아 있습니다.");
       }
       if (trusted && ["review", "compare", "tune"].includes(artifactGoal) && !/<button\b|<input\b|<select\b|<textarea\b|contenteditable=/i.test(value)) {
-        warnings.push(`HTML QA: ${artifactGoal} artifact has no obvious copy-back or interactive controls.`);
+        warnings.push(`주의: ${artifactGoal} 산출물에 명확한 복사/인터랙션 컨트롤이 없습니다.`);
       }
       const expectedAssets = Array.isArray(options.assetMappings) ? options.assetMappings.map((mapping) => mapping.relativeSrc).filter(Boolean) : [];
       for (const src of expectedAssets) {
         if (!value.includes(src)) {
-          warnings.push(`HTML QA: bundled image is not referenced in final HTML: ${src}`);
+          warnings.push(`주의: 포함한 이미지가 최종 HTML에서 참조되지 않습니다: ${src}`);
         }
       }
       if (/<img\b/i.test(value) && !/<img\b[^>]*\balt\s*=/i.test(value)) {
-        warnings.push("HTML QA: at least one image is missing alt text.");
+        warnings.push("주의: alt 텍스트가 없는 이미지가 있습니다.");
       }
       return warnings;
     }
@@ -1986,6 +2150,8 @@ __export(main_exports, {
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian7 = require("obsidian");
+var import_node_fs = require("node:fs");
+var import_node_child_process = require("node:child_process");
 
 // src/export-modal.ts
 var import_obsidian = require("obsidian");
@@ -2020,13 +2186,13 @@ var MarktlExportModal = class extends import_obsidian.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle("Export note to HTML");
+    this.setTitle("노트를 HTML로 내보내기");
     contentEl.createEl("p", {
       cls: "marktl-modal-intro",
-      text: "Choose what the HTML should do, then choose the visual style. MarkTL works best when the artifact has a job."
+      text: "HTML 문서의 목적과 시각 스타일을 선택하세요. MarkTL은 업무노트를 공유 가능한 HTML 문서로 변환합니다."
     });
     this.renderPresetCards(contentEl);
-    new import_obsidian.Setting(contentEl).setName("Advanced").setDesc("Adjust provider, security, sharing, and exact artifact settings.").addButton((button) => button.setButtonText(this.showAdvanced ? "Hide advanced" : "Show advanced").onClick(() => {
+    new import_obsidian.Setting(contentEl).setName("고급 설정").setDesc("AI CLI, 보안, 공유, 산출물 세부 설정을 조정합니다.").addButton((button) => button.setButtonText(this.showAdvanced ? "고급 설정 숨기기" : "고급 설정 보기").onClick(() => {
       this.showAdvanced = !this.showAdvanced;
       this.onOpen();
     }));
@@ -2034,8 +2200,8 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       this.renderActions(contentEl);
       return;
     }
-    new import_obsidian.Setting(contentEl).setName("HTML preset").setDesc("Applies sensible defaults. You can still adjust individual fields below.").addDropdown((dropdown) => {
-      dropdown.addOption("custom", "Custom");
+    new import_obsidian.Setting(contentEl).setName("HTML 프리셋").setDesc("목적에 맞는 기본값을 적용합니다. 아래에서 개별 설정을 계속 조정할 수 있습니다.").addDropdown((dropdown) => {
+      dropdown.addOption("custom", "직접 설정");
       for (const preset of (0, import_presets.listExportPresets)()) {
         dropdown.addOption(preset.id, preset.name);
       }
@@ -2043,7 +2209,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
         this.applyPreset(value);
       });
     });
-    new import_obsidian.Setting(contentEl).setName("Artifact goal").setDesc("The job of the HTML artifact: read, decide, review, compare, tune, explain code, or publish.").addDropdown((dropdown) => {
+    new import_obsidian.Setting(contentEl).setName("HTML 목적").setDesc("읽기, 발표, 검토, 비교, 공유 등 HTML 문서의 역할을 정합니다.").addDropdown((dropdown) => {
       for (const goal of (0, import_artifact_goals.listArtifactGoals)()) {
         dropdown.addOption(goal.id, goal.name);
       }
@@ -2053,12 +2219,12 @@ var MarktlExportModal = class extends import_obsidian.Modal {
         this.options.artifactGoal = value;
       });
     });
-    new import_obsidian.Setting(contentEl).setName("Artifact type").setDesc("Defines the information architecture, not just the visual skin.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "Faithful Note").addOption("strategy-brief", "Strategy Brief").addOption("research-report", "Research Report").addOption("decision-memo", "Decision Memo").addOption("interactive-explainer", "Interactive Explainer").addOption("slide-deck", "Slide Deck").setValue(this.options.artifactType).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("문서 유형").setDesc("단순 스타일이 아니라 정보 구조를 정합니다.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "원문 충실 노트").addOption("strategy-brief", "전략 브리프").addOption("research-report", "리서치 보고서").addOption("decision-memo", "의사결정 메모").addOption("interactive-explainer", "인터랙티브 설명서").addOption("slide-deck", "슬라이드형 문서").setValue(this.options.artifactType).onChange((value) => {
       this.selectedPreset = "custom";
       this.options.presetId = "custom";
       this.options.artifactType = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("Template").setDesc("Controls the visual direction and local fallback style.").addDropdown((dropdown) => {
+    new import_obsidian.Setting(contentEl).setName("템플릿").setDesc("시각 방향과 로컬 fallback 스타일을 정합니다.").addDropdown((dropdown) => {
       for (const template of (0, import_templates.listTemplates)()) {
         dropdown.addOption(template.id, template.name);
       }
@@ -2068,30 +2234,30 @@ var MarktlExportModal = class extends import_obsidian.Modal {
         this.options.template = value;
       });
     });
-    new import_obsidian.Setting(contentEl).setName("AI CLI").setDesc((0, import_ai.getProviderPrivacyNote)(this.options.aiProvider) || "Only providers that passed live plugin-style execution are shown.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("claude", "Claude Code CLI").addOption("codex", "Codex CLI").setValue(this.options.aiProvider).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("AI CLI").setDesc((0, import_ai.getProviderPrivacyNote)(this.options.aiProvider) || "실행 검증을 통과한 provider만 표시합니다.").addDropdown((dropdown) => dropdown.addOption("none", "사용 안 함 / 로컬 변환").addOption("claude", "Claude Code CLI").addOption("codex", "Codex CLI").setValue(this.options.aiProvider).onChange((value) => {
       this.options.aiProvider = value;
       this.onOpen();
     }));
-    new import_obsidian.Setting(contentEl).setName("Mode").setDesc("Preserve keeps content faithful; other modes allow AI restructuring.").addDropdown((dropdown) => dropdown.addOption("preserve", "Preserve content").addOption("presentation", "Presentation").addOption("blog", "Blog article").addOption("landing", "Landing page").setValue(this.options.conversionMode).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("변환 모드").setDesc("보존 모드는 원문에 충실하고, 다른 모드는 AI가 구조를 재배치할 수 있습니다.").addDropdown((dropdown) => dropdown.addOption("preserve", "내용 보존").addOption("presentation", "발표형").addOption("blog", "블로그 글").addOption("landing", "랜딩 페이지").setValue(this.options.conversionMode).onChange((value) => {
       this.selectedPreset = "custom";
       this.options.presetId = "custom";
       this.options.conversionMode = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("Preview security").setDesc("Trusted mode allows inline JavaScript for interactive HTML.").addDropdown((dropdown) => dropdown.addOption("sanitized", "Sanitized static preview").addOption("trusted", "Trusted interactive preview").setValue(this.options.previewSecurity).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("미리보기 보안").setDesc("신뢰 모드는 인터랙티브 HTML용 inline JavaScript를 허용합니다.").addDropdown((dropdown) => dropdown.addOption("sanitized", "정적 안전 미리보기").addOption("trusted", "신뢰 인터랙티브 미리보기").setValue(this.options.previewSecurity).onChange((value) => {
       this.selectedPreset = "custom";
       this.options.presetId = "custom";
       this.options.previewSecurity = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("Context pack").setDesc("Optionally lets AI read linked Markdown notes as supporting context.").addDropdown((dropdown) => dropdown.addOption("none", "Active note only").addOption("linked-notes", "Include linked notes").setValue(this.options.contextPackMode).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("컨텍스트 묶음").setDesc("필요하면 AI가 연결된 Markdown 노트를 참고 자료로 읽습니다.").addDropdown((dropdown) => dropdown.addOption("none", "현재 노트만").addOption("linked-notes", "연결 노트 포함").setValue(this.options.contextPackMode).onChange((value) => {
       this.options.contextPackMode = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("Reader feedback").setDesc("Giscus adds GitHub login, reactions, and public comments to trusted exports.").addDropdown((dropdown) => dropdown.addOption("none", "No reader comments").addOption("giscus", "Giscus GitHub comments").setValue(this.options.readerFeedbackMode).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("독자 피드백").setDesc("Giscus는 신뢰 모드 export에 GitHub 댓글/반응을 붙입니다.").addDropdown((dropdown) => dropdown.addOption("none", "댓글 없음").addOption("giscus", "Giscus GitHub 댓글").setValue(this.options.readerFeedbackMode).onChange((value) => {
       this.options.readerFeedbackMode = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("AI failure").setDesc("Fallback keeps exporting; strict stops when the CLI fails.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.options.failurePolicy).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("AI 실패 처리").setDesc("Fallback은 계속 내보내고, strict는 CLI 실패 시 중단합니다.").addDropdown((dropdown) => dropdown.addOption("fallback", "경고 후 fallback").addOption("strict", "AI 실패 시 중단").setValue(this.options.failurePolicy).onChange((value) => {
       this.options.failurePolicy = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("Share target").setDesc("GitHub Pages publishes share/<slug>/index.html and copies a public URL.").addDropdown((dropdown) => dropdown.addOption("local-link", "Local file link").addOption("static-bundle", "Static hosting bundle").addOption("github-pages", "GitHub Pages link").setValue(this.options.shareTarget).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("공유 대상").setDesc("GitHub Pages는 share/<slug>/index.html로 배포하고 공개 URL을 복사합니다.").addDropdown((dropdown) => dropdown.addOption("local-link", "로컬 파일 링크").addOption("static-bundle", "정적 호스팅 번들").addOption("github-pages", "GitHub Pages 링크").setValue(this.options.shareTarget).onChange((value) => {
       this.options.shareTarget = value;
       if (value === "github-pages") {
         this.options.previewSecurity = "trusted";
@@ -2099,7 +2265,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
         this.options.copyShareLinkAfterExport = true;
       }
     }));
-    new import_obsidian.Setting(contentEl).setName("Copy share link").setDesc("Copies the public Pages URL after publish, or a local file:// link for local exports.").addToggle((toggle) => toggle.setValue(this.options.copyShareLinkAfterExport).onChange((value) => {
+    new import_obsidian.Setting(contentEl).setName("공유 링크 복사").setDesc("배포 후 공개 Pages URL 또는 로컬 file:// 링크를 복사합니다.").addToggle((toggle) => toggle.setValue(this.options.copyShareLinkAfterExport).onChange((value) => {
       this.options.copyShareLinkAfterExport = value;
     }));
     this.renderActions(contentEl);
@@ -2110,12 +2276,20 @@ var MarktlExportModal = class extends import_obsidian.Modal {
   renderPresetCards(container) {
     const cards = container.createDiv({ cls: "marktl-purpose-cards" });
     const labels = {
-      "readable-note": "Read better",
-      presentation: "Present it",
-      "interactive-report": "Review it",
-      "compare-options": "Compare options",
-      "shareable-article": "Publish/share",
-      playground: "Work with AI again"
+      "readable-note": "읽기 좋게",
+      presentation: "발표하기",
+      "interactive-report": "검토하기",
+      "compare-options": "옵션 비교",
+      "shareable-article": "게시/공유",
+      playground: "AI로 다시 작업"
+    };
+    const descriptions = {
+      "readable-note": "더 나은 타이포그래피로 원문을 충실하고 깔끔하게 보여줍니다.",
+      presentation: "노트를 발표나 리뷰에 맞는 섹션형 HTML로 구성합니다.",
+      "interactive-report": "목차, 접힘 섹션, 복사 버튼을 포함한 HTML 검토 화면입니다.",
+      "compare-options": "선택지, 점수표, 필터, 비교 요약에 적합합니다.",
+      "shareable-article": "이미지를 묶어 정적 호스팅에 바로 올릴 수 있는 기사형 레이아웃입니다.",
+      playground: "슬라이더와 복사 가능한 상태를 가진 재작업용 인터랙티브 화면입니다."
     };
     const order = ["readable-note", "presentation", "interactive-report", "compare-options", "shareable-article", "playground"];
     for (const id of order) {
@@ -2127,10 +2301,10 @@ var MarktlExportModal = class extends import_obsidian.Modal {
         cls: `marktl-purpose-card${this.selectedPreset === id ? " is-selected" : ""}`
       });
       card.createEl("h3", { text: labels[id] || preset.name });
-      card.createEl("p", { text: preset.description });
+      card.createEl("p", { text: descriptions[id] || preset.description });
       card.createEl("span", {
         cls: "marktl-purpose-meta",
-        text: preset.previewSecurity === "trusted" ? "Interactive HTML" : "Safe static HTML"
+        text: preset.previewSecurity === "trusted" ? "인터랙티브 HTML" : "안전한 정적 HTML"
       });
       card.addEventListener("click", () => this.applyPreset(id));
     }
@@ -2153,10 +2327,10 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     this.onOpen();
   }
   renderActions(container) {
-    new import_obsidian.Setting(container).addButton((button) => button.setButtonText("Export").setCta().onClick(() => {
+    new import_obsidian.Setting(container).addButton((button) => button.setButtonText("내보내기").setCta().onClick(() => {
       this.close();
       this.onSubmit(this.options);
-    })).addButton((button) => button.setButtonText("Save as defaults").onClick(async () => {
+    })).addButton((button) => button.setButtonText("기본값으로 저장").onClick(async () => {
       const { presetId: _presetId, ...settings } = this.options;
       Object.assign(this.plugin.settings, settings);
       await this.plugin.saveSettings();
@@ -2178,15 +2352,15 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
   }
   onOpen() {
     this.contentEl.empty();
-    this.setTitle("Export progress");
+    this.setTitle("내보내기 진행 상황");
     this.contentEl.createEl("p", {
       cls: "marktl-modal-intro",
-      text: "MarkTL is converting this note to HTML."
+      text: "MarkTL이 현재 노트를 HTML로 변환하고 있습니다."
     });
     const visualEl = this.contentEl.createDiv({ cls: "marktl-progress-visual" });
     this.statusEl = visualEl.createDiv({
       cls: "marktl-progress-status",
-      text: "Preparing export..."
+      text: "내보내기 준비 중..."
     });
     const trackEl = visualEl.createDiv({ cls: "marktl-progress-track" });
     this.barEl = trackEl.createDiv({ cls: "marktl-progress-bar" });
@@ -2217,7 +2391,7 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
       current.addClass("marktl-progress-step-done");
     }
     if (this.statusEl) {
-      this.statusEl.setText("Export complete.");
+      this.statusEl.setText("내보내기 완료.");
       this.statusEl.removeClass("marktl-progress-status-error");
       this.statusEl.addClass("marktl-progress-status-done");
     }
@@ -2226,7 +2400,7 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
     }
     this.contentEl.createEl("p", {
       cls: "marktl-progress-done",
-      text: "You can close this window."
+      text: "이 창을 닫아도 됩니다."
     });
   }
   fail(text) {
@@ -2237,7 +2411,7 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
       current.addClass("marktl-progress-step-error");
     }
     if (this.statusEl) {
-      this.statusEl.setText(`Export stopped: ${text}`);
+      this.statusEl.setText(`내보내기 중단: ${text}`);
       this.statusEl.removeClass("marktl-progress-status-done");
       this.statusEl.addClass("marktl-progress-status-error");
     }
@@ -2288,7 +2462,7 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
     return VIEW_TYPE_MARKTL_PREVIEW;
   }
   getDisplayText() {
-    return "HTML Preview";
+    return "HTML 미리보기";
   }
   getIcon() {
     return "file-code-2";
@@ -2308,21 +2482,22 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
     container.empty();
     container.addClass("marktl-preview-container");
     const header = container.createDiv({ cls: "marktl-preview-header" });
-    header.createEl("strong", { text: this.state.filePath || "HTML Preview" });
+    header.createEl("strong", { text: this.state.filePath || "HTML 미리보기" });
     header.createSpan({
       cls: this.state.trusted ? "marktl-preview-trusted" : "marktl-preview-sanitized",
-      text: this.state.trusted ? "Trusted interactive" : "Sanitized static"
+      text: this.state.trusted ? "신뢰 인터랙티브" : "정적 안전"
     });
     let frame;
     const tools = container.createDiv({ cls: "marktl-preview-tools" });
-    this.addToolButton(tools, "Copy as prompt", () => this.copyPrompt(frame));
-    this.addToolButton(tools, "Copy outline", () => this.copyOutline(frame));
-    this.addToolButton(tools, "Copy section feedback", () => this.copySectionFeedback(frame));
-    this.addToolButton(tools, "Open generated file", () => this.openGeneratedFile());
+    this.addToolButton(tools, "프롬프트로 복사", () => this.copyPrompt(frame));
+    this.addToolButton(tools, "목차 복사", () => this.copyOutline(frame));
+    this.addToolButton(tools, "섹션 피드백 복사", () => this.copySectionFeedback(frame));
+    this.addToolButton(tools, "생성 파일 열기", () => this.openGeneratedFile());
     for (const warning of this.state.warnings) {
-      container.createDiv({ cls: "marktl-preview-warning", text: warning });
+      const severity = this.classifyPreviewWarning(warning);
+      container.createDiv({ cls: `marktl-preview-warning marktl-preview-warning-${severity}`, text: this.formatPreviewWarning(warning) });
     }
-    const renderQa = container.createDiv({ cls: "marktl-preview-render-qa", text: "Render QA: waiting for preview..." });
+    const renderQa = container.createDiv({ cls: "marktl-preview-render-qa", text: "렌더 QA: 미리보기 대기 중..." });
     frame = container.createEl("iframe", {
       cls: "marktl-preview-frame",
       attr: {
@@ -2334,6 +2509,20 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
     });
     frame.srcdoc = this.state.html;
   }
+  classifyPreviewWarning(warning) {
+    const value = String(warning || "");
+    if (/배포 차단|failed|blocked|sanitized mode output still contains|AI conversion failed/i.test(value)) {
+      return "fatal";
+    }
+    if (/참고|건너뜀|skipped|Context note not found|Reader comments disabled|Giscus feedback requires|trusted interactive mode produced no script|no H1 heading|missing responsive viewport|no inline CSS/i.test(value)) {
+      return "info";
+    }
+    return "warning";
+  }
+  formatPreviewWarning(warning) {
+    const value = String(warning || "");
+    return value.replace(/^Context note not found:\s*/i, "참고 링크 건너뜀: ").replace(/^Context note unreadable:\s*/i, "참고 링크를 읽지 못함: ").replace(/^HTML QA: missing <!doctype html>\.$/i, "참고: HTML doctype이 자동 보정되었습니다.").replace(/^HTML QA: missing responsive viewport meta tag\.$/i, "참고: viewport meta가 자동 보정되었습니다.").replace(/^HTML QA: no H1 heading found\.$/i, "참고: H1 제목을 찾지 못했습니다.").replace(/^HTML QA: no inline CSS found; output may be too plain\.$/i, "참고: 내장 CSS를 찾지 못했습니다.").replace(/^Giscus feedback requires Trusted preview\/export because it loads an external comments script\.$/i, "참고: 정적 안전 모드에서는 Giscus 댓글을 제외했습니다.");
+  }
   addToolButton(container, label, onClick) {
     const button = container.createEl("button", { text: label });
     button.type = "button";
@@ -2344,43 +2533,43 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
   async copyPrompt(frame) {
     const text = this.getFrameText(frame) || this.stripHtml(this.state.html);
     await navigator.clipboard.writeText([
-      "Use this MarkTL HTML artifact as context for the next iteration.",
+      "다음 MarkTL HTML 개선 작업의 참고자료로 이 산출물을 사용하세요.",
       "",
-      `Artifact: ${this.state.title || this.state.filePath || "HTML Preview"}`,
+      `Artifact: ${this.state.title || this.state.filePath || "HTML 미리보기"}`,
       `Preview security: ${this.state.previewSecurity}`,
       "",
       text
     ].join("\n"));
-    new import_obsidian3.Notice("Copied preview prompt.");
+    new import_obsidian3.Notice("미리보기 프롬프트를 복사했습니다.");
   }
   async copyOutline(frame) {
     const outline = this.getOutline(frame);
     if (!outline) {
-      await navigator.clipboard.writeText(this.state.title || this.state.filePath || "HTML Preview");
-      new import_obsidian3.Notice("No headings found; copied artifact title.");
+      await navigator.clipboard.writeText(this.state.title || this.state.filePath || "HTML 미리보기");
+      new import_obsidian3.Notice("제목 구조를 찾지 못해 문서 제목을 복사했습니다.");
       return;
     }
     await navigator.clipboard.writeText(outline);
-    new import_obsidian3.Notice("Copied preview outline.");
+    new import_obsidian3.Notice("미리보기 목차를 복사했습니다.");
   }
   async copySectionFeedback(frame) {
     const section = this.getFirstSection(frame);
     const fallback = this.getFrameText(frame) || this.stripHtml(this.state.html);
     await navigator.clipboard.writeText([
-      "Give feedback on this MarkTL HTML artifact section.",
+      "이 MarkTL HTML 산출물의 섹션 개선 피드백을 작성하세요.",
       "",
-      `Artifact: ${this.state.title || this.state.filePath || "HTML Preview"}`,
-      `Section: ${section.heading || "Whole document fallback"}`,
+      `Artifact: ${this.state.title || this.state.filePath || "HTML 미리보기"}`,
+      `Section: ${section.heading || "전체 문서"}`,
       "",
       section.text || fallback,
       "",
-      "Focus on what should be clearer, more visual, or more interactive."
+      "더 명확하게, 더 시각적으로, 더 공유하기 좋게 만들 부분에 집중하세요."
     ].join("\n"));
-    new import_obsidian3.Notice(section.heading ? "Copied section feedback prompt." : "Copied whole-document feedback prompt.");
+    new import_obsidian3.Notice(section.heading ? "섹션 피드백 프롬프트를 복사했습니다." : "전체 문서 피드백 프롬프트를 복사했습니다.");
   }
   openGeneratedFile() {
     if (!this.state.filePath) {
-      new import_obsidian3.Notice("No generated file path is available.");
+      new import_obsidian3.Notice("생성된 파일 경로가 없습니다.");
       return;
     }
     const adapter = this.app.vault.adapter;
@@ -2393,33 +2582,33 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
     try {
       const doc = frame.contentDocument;
       if (!doc) {
-        statusEl.setText("Render QA: unable to inspect preview document.");
+        statusEl.setText("렌더 QA: 미리보기 문서를 검사할 수 없습니다.");
         statusEl.addClass("marktl-preview-render-qa-warning");
         return;
       }
       const warnings = [];
       const bodyText = ((_b = (_a = doc.body) == null ? void 0 : _a.innerText) == null ? void 0 : _b.trim()) || "";
       if (bodyText.length < 20) {
-        warnings.push("preview appears nearly empty");
+        warnings.push("미리보기 내용이 거의 비어 있음");
       }
       if (!doc.querySelector("h1")) {
-        warnings.push("no visible H1");
+        warnings.push("보이는 H1 제목 없음");
       }
       const brokenImages = Array.from(doc.images).filter((image) => image.complete && image.naturalWidth === 0);
       if (brokenImages.length > 0) {
-        warnings.push(`${brokenImages.length} broken image(s)`);
+        warnings.push(`깨진 이미지 ${brokenImages.length}개`);
       }
       if (this.state.trusted && !doc.querySelector('button,input,select,textarea,[contenteditable="true"]') && !doc.querySelector('script[src*="giscus.app/client.js"]')) {
-        warnings.push("trusted preview has no interactive controls");
+        warnings.push("신뢰 미리보기에 인터랙티브 컨트롤 없음");
       }
       const scrollHeight = ((_c = doc.scrollingElement) == null ? void 0 : _c.scrollHeight) || ((_d = doc.body) == null ? void 0 : _d.scrollHeight) || 0;
       if (scrollHeight > 0 && scrollHeight < 120) {
-        warnings.push("rendered content is unusually short");
+        warnings.push("렌더링된 내용이 비정상적으로 짧음");
       }
-      statusEl.setText(warnings.length > 0 ? `Render QA: ${warnings.join("; ")}.` : "Render QA: preview loaded, content and assets look reachable.");
+      statusEl.setText(warnings.length > 0 ? `렌더 QA: ${warnings.join("; ")}.` : "렌더 QA: 미리보기, 본문, 에셋이 정상적으로 로드되었습니다.");
       statusEl.toggleClass("marktl-preview-render-qa-warning", warnings.length > 0);
     } catch (error) {
-      statusEl.setText("Render QA: preview inspection was blocked by iframe security.");
+      statusEl.setText("렌더 QA: iframe 보안으로 미리보기 검사가 차단되었습니다.");
       statusEl.addClass("marktl-preview-render-qa-warning");
     }
   }
@@ -2482,10 +2671,10 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle("HTML export ready");
+    this.setTitle("HTML 내보내기 완료");
     if (this.summary.publicUrl) {
       const shareCard = contentEl.createDiv({ cls: "marktl-share-card" });
-      shareCard.createEl("span", { cls: "marktl-share-eyebrow", text: "Share this page" });
+      shareCard.createEl("span", { cls: "marktl-share-eyebrow", text: "이 페이지 공유" });
       const link = shareCard.createEl("a", {
         cls: "marktl-share-link",
         href: this.summary.publicUrl,
@@ -2494,24 +2683,24 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
       link.setAttr("target", "_blank");
       link.setAttr("rel", "noopener noreferrer");
       shareCard.createEl("p", {
-        text: this.summary.commentsEnabled ? "Readers can open this link and comment with GitHub through Giscus." : "Readers can open this link. Comments need Giscus settings before they appear."
+        text: this.summary.commentsEnabled ? "독자는 이 링크를 열고 Giscus GitHub 댓글을 남길 수 있습니다." : "독자는 이 링크를 열 수 있습니다. 댓글은 Giscus 설정이 완료된 뒤 표시됩니다."
       });
     }
     const facts = contentEl.createDiv({ cls: "marktl-summary-grid" });
-    this.addFact(facts, "Output", this.summary.outputPath);
-    this.addFact(facts, "Preview", this.summary.previewSecurity === "trusted" ? "Trusted interactive" : "Sanitized static");
-    this.addFact(facts, "AI", this.summary.aiProvider === "none" ? "Local converter" : this.summary.usedFallback ? `${this.summary.aiProvider} failed; local fallback used` : `${this.summary.aiProvider} generated HTML`);
-    this.addFact(facts, "Images", `${this.summary.assetCount} bundled local image(s)`);
-    this.addFact(facts, "Share target", this.describeShareTarget());
-    this.addFact(facts, "Comments", this.summary.commentsStatus);
+    this.addFact(facts, "출력", this.summary.outputPath);
+    this.addFact(facts, "미리보기", this.summary.previewSecurity === "trusted" ? "신뢰 인터랙티브" : "정적 안전");
+    this.addFact(facts, "AI", this.summary.aiProvider === "none" ? "로컬 변환" : this.summary.usedFallback ? `${this.summary.aiProvider} 실패, 로컬 변환 사용` : `${this.summary.aiProvider} HTML 생성`);
+    this.addFact(facts, "이미지", `로컬 이미지 ${this.summary.assetCount}개 포함`);
+    this.addFact(facts, "공유 대상", this.describeShareTarget());
+    this.addFact(facts, "댓글", this.summary.commentsStatus);
     if (this.summary.publicUrl) {
-      this.addFact(facts, "Public URL", this.summary.publicUrl);
+      this.addFact(facts, "공개 URL", this.summary.publicUrl);
     }
     if (this.summary.shareHomeUrl) {
-      this.addFact(facts, "Share home", this.summary.shareHomeUrl);
+      this.addFact(facts, "공유 홈", this.summary.shareHomeUrl);
     }
     if (this.summary.warnings.length > 0) {
-      contentEl.createEl("h3", { text: "Warnings" });
+      contentEl.createEl("h3", { text: "주의 및 참고" });
       const list = contentEl.createEl("ul", { cls: "marktl-summary-warnings" });
       for (const warning of this.summary.warnings) {
         list.createEl("li", { text: warning });
@@ -2519,41 +2708,41 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
     }
     contentEl.createEl("p", {
       cls: "marktl-modal-intro",
-      text: this.summary.publicUrl ? "This public URL is ready to share with other people." : this.summary.shareTarget === "static-bundle" ? "This folder is ready for a static host. Public upload is intentionally a separate step." : "This link opens the generated file on this computer. Public share links require a static host."
+      text: this.summary.publicUrl ? "이 공개 URL은 바로 공유할 수 있습니다." : this.summary.shareTarget === "static-bundle" ? "이 폴더는 정적 호스팅에 올릴 준비가 되어 있습니다. 공개 업로드는 별도 단계로 남겨둡니다." : "이 링크는 현재 컴퓨터의 생성 파일을 엽니다. 공개 공유 링크는 정적 호스팅이 필요합니다."
     });
     const actions = contentEl.createDiv({ cls: "marktl-result-actions" });
-    this.addActionButton(actions, this.summary.publicUrl ? "Copy public link" : "Copy local link", async () => {
+    this.addActionButton(actions, this.summary.publicUrl ? "공개 링크 복사" : "로컬 링크 복사", async () => {
       const link = await this.copyLink(this.summary.outputPath, this.summary.publicUrl);
-      new import_obsidian4.Notice(`Copied: ${link}`);
+      new import_obsidian4.Notice(`복사됨: ${link}`);
     });
     if (this.summary.publicUrl) {
-      this.addActionButton(actions, "Copy share text", async () => {
+      this.addActionButton(actions, "공유 문구 복사", async () => {
         const text = [this.summary.shareTitle, this.summary.publicUrl].filter(Boolean).join("\n");
         await navigator.clipboard.writeText(text);
-        new import_obsidian4.Notice("Copied share text.");
+        new import_obsidian4.Notice("공유 문구를 복사했습니다.");
       });
-      this.addActionButton(actions, "Open page", () => {
+      this.addActionButton(actions, "페이지 열기", () => {
         window.open(this.summary.publicUrl, "_blank", "noopener,noreferrer");
       });
     }
     if (this.summary.shareHomeUrl) {
-      this.addActionButton(actions, "Open archive", () => {
+      this.addActionButton(actions, "아카이브 열기", () => {
         window.open(this.summary.shareHomeUrl, "_blank", "noopener,noreferrer");
       });
     }
-    this.addActionButton(actions, "Copy AI handoff", async () => {
+    this.addActionButton(actions, "AI 전달문 복사", async () => {
       await navigator.clipboard.writeText(this.buildAiHandoffPrompt());
-      new import_obsidian4.Notice("Copied AI handoff prompt.");
+      new import_obsidian4.Notice("AI 전달 프롬프트를 복사했습니다.");
     });
-    this.addActionButton(actions, "Regenerate slides", () => {
+    this.addActionButton(actions, "발표형으로 다시 생성", () => {
       this.close();
       this.regenerate("presentation");
     });
-    this.addActionButton(actions, "Regenerate interactive", () => {
+    this.addActionButton(actions, "검토형으로 다시 생성", () => {
       this.close();
       this.regenerate("interactive-report");
     });
-    this.addActionButton(actions, "Close", () => this.close(), true);
+    this.addActionButton(actions, "닫기", () => this.close(), true);
   }
   onClose() {
     this.contentEl.empty();
@@ -2574,24 +2763,24 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
   }
   describeShareTarget() {
     if (this.summary.shareTarget === "github-pages") {
-      return "GitHub Pages link";
+      return "GitHub Pages 링크";
     }
-    return this.summary.shareTarget === "static-bundle" ? "Static hosting bundle" : "Local file link";
+    return this.summary.shareTarget === "static-bundle" ? "정적 호스팅 번들" : "로컬 파일 링크";
   }
   buildAiHandoffPrompt() {
     return [
-      "Use this MarkTL HTML artifact as context for the next iteration.",
+      "이 MarkTL HTML 산출물을 다음 개선 작업의 맥락으로 사용해 주세요.",
       "",
-      `Source note: ${this.summary.sourcePath || this.summary.sourceTitle || "Unknown source note"}`,
-      `HTML output: ${this.summary.publicUrl || this.summary.localPath || this.summary.outputPath}`,
-      `Preview security: ${this.summary.previewSecurity}`,
-      `Share target: ${this.describeShareTarget()}`,
-      this.summary.publicUrl ? `Public URL: ${this.summary.publicUrl}` : "",
+      `원본 노트: ${this.summary.sourcePath || this.summary.sourceTitle || "알 수 없는 원본 노트"}`,
+      `HTML 출력: ${this.summary.publicUrl || this.summary.localPath || this.summary.outputPath}`,
+      `미리보기 보안: ${this.summary.previewSecurity}`,
+      `공유 대상: ${this.describeShareTarget()}`,
+      this.summary.publicUrl ? `공개 URL: ${this.summary.publicUrl}` : "",
       "",
-      "Task:",
-      "- Review the artifact as a visual HTML output, not just as Markdown text.",
-      "- Identify what should be clearer, more visual, or more interactive.",
-      "- Suggest the next concrete revision."
+      "작업:",
+      "- Markdown 텍스트가 아니라 시각 HTML 산출물로 검토해 주세요.",
+      "- 더 명확하거나 시각적이거나 인터랙티브해야 할 부분을 찾아 주세요.",
+      "- 다음에 적용할 구체적인 수정안을 제안해 주세요."
     ].filter(Boolean).join("\n");
   }
 };
@@ -2656,9 +2845,13 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       this.plugin.settings.contextPackMode = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian5.Setting(containerEl).setName("AI failure policy").setDesc("Fallback creates local HTML with a warning. Strict stops generation.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.plugin.settings.failurePolicy).onChange(async (value) => {
-      this.plugin.settings.failurePolicy = value;
+    new import_obsidian5.Setting(containerEl).setName("AI failure policy").setDesc("Fallback creates local HTML with a warning. Strict stops generation. GitHub Pages always requires strict AI success.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.plugin.settings.failurePolicy).onChange(async (value) => {
+      this.plugin.settings.failurePolicy = this.plugin.settings.shareTarget === "github-pages" && value === "fallback" ? "strict" : value;
       await this.plugin.saveSettings();
+      if (this.plugin.settings.shareTarget === "github-pages" && value === "fallback") {
+        new import_obsidian5.Notice("GitHub Pages export requires strict AI success. Fallback was not enabled.");
+        this.display();
+      }
     }));
     new import_obsidian5.Setting(containerEl).setName("CLI timeout").setDesc("Maximum AI CLI runtime in milliseconds. Rich HTML artifacts can take 5-15 minutes on long notes.").addText((text) => text.setPlaceholder("900000").setValue(String(this.plugin.settings.timeoutMs)).onChange(async (value) => {
       const parsed = Number(value);
@@ -2667,9 +2860,16 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
     }));
     this.addCliPathSetting(containerEl, "Claude Code CLI path", "claudePath", "claude");
     this.addCliPathSetting(containerEl, "Codex CLI path", "codexPath", "codex");
-    new import_obsidian5.Setting(containerEl).setName("Share target").setDesc("GitHub Pages publishes the generated bundle and copies a public URL.").addDropdown((dropdown) => dropdown.addOption("local-link", "Local file link").addOption("static-bundle", "Static hosting bundle").addOption("github-pages", "GitHub Pages link").setValue(this.plugin.settings.shareTarget).onChange(async (value) => {
+    new import_obsidian5.Setting(containerEl).setName("Share target").setDesc("GitHub Pages publishes only after successful AI conversion. Fallback HTML is never published.").addDropdown((dropdown) => dropdown.addOption("local-link", "Local file link").addOption("static-bundle", "Static hosting bundle").addOption("github-pages", "GitHub Pages link").setValue(this.plugin.settings.shareTarget).onChange(async (value) => {
       this.plugin.settings.shareTarget = value;
+      if (value === "github-pages" && this.plugin.settings.failurePolicy !== "strict") {
+        this.plugin.settings.failurePolicy = "strict";
+        new import_obsidian5.Notice("GitHub Pages export now uses strict AI failure policy.");
+      }
       await this.plugin.saveSettings();
+      if (value === "github-pages") {
+        this.display();
+      }
     }));
     containerEl.createEl("h3", { text: "Reader feedback" });
     containerEl.createEl("p", {
@@ -2727,10 +2927,23 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
     }));
   }
   addCliPathSetting(containerEl, name, key, placeholder) {
-    new import_obsidian5.Setting(containerEl).setName(name).setDesc("Leave blank to use the command from PATH.").addText((text) => text.setPlaceholder(placeholder).setValue(this.plugin.settings[key]).onChange(async (value) => {
+    const setting = new import_obsidian5.Setting(containerEl).setName(name).setDesc("Leave blank to use the command from PATH.").addText((text) => text.setPlaceholder(placeholder).setValue(this.plugin.settings[key]).onChange(async (value) => {
       this.plugin.settings[key] = value.trim();
       await this.plugin.saveSettings();
     }));
+    if (key === "codexPath") {
+      setting.addButton((button) => button.setButtonText("Detect MarkTL Codex").onClick(async () => {
+        const detected = detectCodexCliPath(this.plugin.settings.codexPath);
+        if (!detected) {
+          new import_obsidian5.Notice("MarkTL Codex wrapper was not found. Create ~/.local/bin/marktl-codex on this Mac.");
+          return;
+        }
+        this.plugin.settings.codexPath = detected;
+        await this.plugin.saveSettings();
+        this.display();
+        new import_obsidian5.Notice(`Codex CLI path set to ${detected}`);
+      }));
+    }
   }
   addTextSetting(containerEl, name, description, key, placeholder, password = false) {
     new import_obsidian5.Setting(containerEl).setName(name).setDesc(description).addText((text) => {
@@ -2868,6 +3081,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
       artifactType: "research-report",
       template: "editorial",
       conversionMode: "blog",
+      failurePolicy: "strict",
       previewSecurity: "trusted",
       readerFeedbackMode: "giscus",
       shareTarget: "github-pages",
@@ -2897,13 +3111,35 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
     const label = provider === "codex" ? "Codex CLI" : "Claude CLI";
     this.doctorEl.empty();
     this.doctorEl.createEl("strong", { text: `Checking ${label}...` });
-    const result = provider === "codex" ? await checkCodexProvider({
-      command: this.plugin.settings.codexPath || "codex",
-      timeoutMs: 15e3
-    }) : await checkClaudeProvider({
+    let result;
+    if (provider === "codex") {
+      const currentPath = String(this.plugin.settings.codexPath || "").trim();
+      const detectedPath = detectCodexCliPath(currentPath);
+      const shouldRepairPath = !currentPath || currentPath === "codex" || isStaleCliPath(currentPath) || currentPath.startsWith("/") && !isManagedMarktlCodexPath(currentPath);
+      if (shouldRepairPath && detectedPath) {
+        this.plugin.settings.codexPath = detectedPath;
+        await this.plugin.saveSettings();
+      }
+      const command = this.plugin.settings.codexPath || "codex";
+      if (isStaleCliPath(command) || isManagedMarktlCodexPath(command) && !isExecutableFile(command) || command.startsWith("/") && !isManagedMarktlCodexPath(command)) {
+        result = {
+          ok: false,
+          status: "missing",
+          message: `MarkTL Codex wrapper is missing or invalid: ${command}. Create ~/.local/bin/marktl-codex on this Mac instead of saving /opt/homebrew/bin/codex in shared settings.`,
+          version: ""
+        };
+      } else {
+        result = await checkCodexProvider({
+          command: resolveHomePath(command),
+          timeoutMs: 15e3
+        });
+      }
+    } else {
+      result = await checkClaudeProvider({
       command: this.plugin.settings.claudePath || "claude",
       timeoutMs: 15e3
-    });
+      });
+    }
     this.doctorEl.empty();
     this.doctorEl.toggleClass("marktl-doctor-ok", result.ok);
     this.doctorEl.toggleClass("marktl-doctor-error", !result.ok);
@@ -2960,12 +3196,112 @@ var { convertWithAiFallback, getProviderPrivacyNote: getProviderPrivacyNote2 } =
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
-var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, renderShareIndexHtml, updateShareIndex } = require_github_pages();
+var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
 var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
 var { migrateSettings } = require_settings();
 var { buildShortId, injectSocialMeta } = require_social();
 var { applyPresetToOptions } = require_presets();
+function resolveHomePath(command) {
+  const value = String(command || "").trim();
+  if (!value) {
+    return "";
+  }
+  if (value === "~") {
+    return String(process.env.HOME || value);
+  }
+  if (value.startsWith("~/")) {
+    const home = String(process.env.HOME || "");
+    return home ? `${home}${value.slice(1)}` : value;
+  }
+  return value;
+}
+function isExecutableFile(filePath) {
+  const resolvedPath = resolveHomePath(filePath);
+  try {
+    const stat = import_node_fs.statSync(resolvedPath);
+    return stat.isFile() && Boolean(stat.mode & 73);
+  } catch (error) {
+    return false;
+  }
+}
+function isStaleCliPath(command) {
+  const value = resolveHomePath(command);
+  if (!value) {
+    return false;
+  }
+  if (value.startsWith("/Volumes/")) {
+    return true;
+  }
+  const home = String(process.env.HOME || "");
+  const match = value.match(/^\/Users\/[^/]+\//);
+  return Boolean(match && home && !value.startsWith(`${home}/`));
+}
+function isManagedMarktlCodexPath(command) {
+  return /\/\.local\/bin\/marktl-codex$/.test(resolveHomePath(command));
+}
+function detectCodexCliPath(preferred = "") {
+  const candidates = [
+    preferred,
+    "~/.local/bin/marktl-codex"
+  ].map((value) => String(value || "").trim()).filter(Boolean);
+  for (const candidate of candidates) {
+    if (isManagedMarktlCodexPath(candidate) && !isStaleCliPath(candidate) && isExecutableFile(candidate)) {
+      return candidate;
+    }
+  }
+  return "";
+}
+function cleanPreflightOutput(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+function runCliPreflight(command, args, timeoutMs = 15e3) {
+  return new Promise((resolve) => {
+    const child = (0, import_node_child_process.spawn)(resolveHomePath(command), args, {
+      env: {
+        ...process.env,
+        PATH: [
+          process.env.PATH || "",
+          "/opt/homebrew/bin",
+          "/usr/local/bin"
+        ].filter(Boolean).join(":")
+      },
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    let output = "";
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      child.kill("SIGTERM");
+      resolve({ code: -1, output: `Timed out after ${timeoutMs}ms.` });
+    }, timeoutMs);
+    child.stdout.on("data", (chunk) => {
+      output += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      output += chunk;
+    });
+    child.on("error", (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve({ code: -1, output: error.message });
+    });
+    child.on("close", (code) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve({ code: code != null ? code : -1, output });
+    });
+  });
+}
 var DEFAULT_SETTINGS = {
   exportFolder: "html-exports",
   setupCompleted: false,
@@ -2974,7 +3310,7 @@ var DEFAULT_SETTINGS = {
   template: "minimal",
   aiProvider: "none",
   conversionMode: "preserve",
-  failurePolicy: "fallback",
+  failurePolicy: "strict",
   previewSecurity: "sanitized",
   contextPackMode: "none",
   readerFeedbackMode: "none",
@@ -2996,6 +3332,83 @@ var DEFAULT_SETTINGS = {
   codexPath: "",
   geminiPath: "",
   copyShareLinkAfterExport: false
+};
+var MarktlPublishedHtmlModal = class extends import_obsidian7.Modal {
+  constructor(app, plugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+  onOpen() {
+    void this.render();
+  }
+  async render() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h2", { text: "게시된 MarkTL HTML" });
+    const description = contentEl.createEl("p", {
+      text: "GitHub Pages 인덱스 메타데이터를 여기서 복구합니다. 중복 카드는 공개 아카이브와 내보낸 폴더에서 함께 제거할 수 있습니다."
+    });
+    description.addClass("setting-item-description");
+    const statusEl = contentEl.createEl("div");
+    const controls = contentEl.createDiv();
+    new import_obsidian7.Setting(controls).addButton((button) => button.setButtonText("새로고침").onClick(() => void this.render())).addButton((button) => button.setButtonText("인덱스 메타데이터 복구").setCta().onClick(async () => {
+      statusEl.setText("공개 인덱스를 복구하는 중...");
+      try {
+        const index = await this.plugin.repairPublishedShareIndex();
+        new import_obsidian7.Notice(`MarkTL 인덱스를 복구했습니다: ${index.items.length}개 항목.`);
+        await this.render();
+      } catch (error) {
+        statusEl.setText(error instanceof Error ? error.message : String(error));
+      }
+    }));
+    const listEl = contentEl.createDiv();
+    statusEl.setText("게시 인덱스를 불러오는 중...");
+    try {
+      const { index } = await this.plugin.loadPublishedShareIndex();
+      statusEl.setText(`게시 항목 ${index.items.length}개.`);
+      if (!index.items.length) {
+        listEl.createEl("p", { text: "게시된 문서가 없습니다." });
+        return;
+      }
+      for (const item of index.items) {
+        this.renderItem(listEl, item);
+      }
+    } catch (error) {
+      statusEl.setText(error instanceof Error ? error.message : String(error));
+    }
+  }
+  renderItem(container, item) {
+    const card = container.createDiv({ cls: "marktl-published-item" });
+    const title = String(item.title || item.slug || "제목 없는 HTML 산출물");
+    const url = String(item.url || item.canonicalUrl || "");
+    new import_obsidian7.Setting(card).setName(title).setDesc([
+      item.updatedAt ? `갱신일: ${String(item.updatedAt).slice(0, 10)}` : "",
+      item.sourcePath || "",
+      item.shortId ? `shortId: ${item.shortId}` : "",
+      url
+    ].filter(Boolean).join("\n")).addButton((button) => button.setButtonText("열기").onClick(() => {
+      if (url) {
+        window.open(url);
+      }
+    })).addButton((button) => button.setButtonText("URL 복사").onClick(async () => {
+      if (url) {
+        await navigator.clipboard.writeText(url);
+        new import_obsidian7.Notice("MarkTL URL을 복사했습니다.");
+      }
+    })).addButton((button) => button.setButtonText("완전 삭제").setWarning().onClick(async () => {
+      const confirmed = window.confirm(`게시된 MarkTL 산출물을 삭제하고 아카이브에서도 제거할까요?\n\n${title}`);
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const result = await this.plugin.deletePublishedShareItem(item);
+        new import_obsidian7.Notice(`아카이브 항목 ${result.removedCount}개를 삭제했습니다.`);
+        await this.render();
+      } catch (error) {
+        new import_obsidian7.Notice(error instanceof Error ? error.message : String(error));
+      }
+    }));
+  }
 };
 var MarktlPlugin = class extends import_obsidian7.Plugin {
   constructor() {
@@ -3033,6 +3446,13 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
           void this.exportActiveNote();
         }
         return canRun;
+      }
+    });
+    this.addCommand({
+      id: "manage-published-html",
+      name: "Manage published MarkTL HTML",
+      callback: () => {
+        new MarktlPublishedHtmlModal(this.app, this).open();
       }
     });
     this.addCommand({
@@ -3081,6 +3501,22 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       this.settings.readerFeedbackMode = DEFAULT_SETTINGS.readerFeedbackMode;
       shouldSave = true;
     }
+    if (!["fallback", "strict"].includes(this.settings.failurePolicy)) {
+      this.settings.failurePolicy = DEFAULT_SETTINGS.failurePolicy;
+      shouldSave = true;
+    }
+    if (this.settings.shareTarget === "github-pages" && this.settings.failurePolicy !== "strict") {
+      this.settings.failurePolicy = "strict";
+      shouldSave = true;
+    }
+    if (this.settings.aiProvider === "codex") {
+      const detectedCodex = detectCodexCliPath(this.settings.codexPath);
+      const currentCodex = String(this.settings.codexPath || "").trim();
+      if (detectedCodex && (!currentCodex || currentCodex === "codex" || isStaleCliPath(currentCodex) || currentCodex.startsWith("/") && !isManagedMarktlCodexPath(currentCodex) || isManagedMarktlCodexPath(currentCodex) && !isExecutableFile(currentCodex))) {
+        this.settings.codexPath = detectedCodex;
+        shouldSave = true;
+      }
+    }
     if (shouldSave) {
       await this.saveSettings();
     }
@@ -3094,45 +3530,239 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
   openExportModal() {
     const file = this.app.workspace.getActiveFile();
     if (!(file instanceof import_obsidian7.TFile) || file.extension !== "md") {
-      new import_obsidian7.Notice("Open a Markdown note before exporting HTML.");
+      new import_obsidian7.Notice("HTML로 내보낼 Markdown 노트를 먼저 여세요.");
       return;
     }
     new MarktlExportModal(this.app, this, (options) => {
       void this.exportActiveNote(options);
     }).open();
   }
+  repairHtmlHead(html) {
+    let value = String(html || "").trim();
+    if (!value) {
+      return "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>MarkTL Export</title>\n</head>\n<body></body>\n</html>";
+    }
+    if (!/<html\b/i.test(value)) {
+      value = `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+${value}
+</body>
+</html>`;
+    }
+    if (!/<!doctype\s+html/i.test(value)) {
+      value = `<!doctype html>\n${value}`;
+    }
+    value = value.replace(/<html\b([^>]*)>/i, (match, attrs) => {
+      const cleanAttrs = String(attrs || "").replace(/\s+lang=(["']).*?\1/i, "").trim();
+      return `<html${cleanAttrs ? ` ${cleanAttrs}` : ""} lang="ko">`;
+    });
+    if (!/<head\b/i.test(value)) {
+      value = value.replace(/<html\b[^>]*>/i, (match) => `${match}\n<head></head>`);
+    }
+    if (!/<meta\s+charset=/i.test(value)) {
+      value = value.replace(/<head\b[^>]*>/i, (match) => `${match}\n<meta charset="utf-8">`);
+    }
+    if (!/<meta\s+name=(["'])viewport\1/i.test(value)) {
+      value = value.replace(/<head\b[^>]*>/i, (match) => `${match}\n<meta name="viewport" content="width=device-width, initial-scale=1">`);
+    }
+    return value;
+  }
+  async renderMermaidBlocksToStaticHtml(html, sourcePath, options = {}) {
+    let value = String(html || "");
+    value = value.replace(/```mermaid\s*\n([\s\S]*?)```/gi, (_match, code) => `<pre class="marktl-mermaid-source"><code class="language-mermaid" data-marktl-mermaid="true">${this.escapeHtmlValue(code)}</code></pre>`);
+    value = this.normalizeMermaidSourceBlocks(value);
+    const pattern = /<pre\b([^>]*)>\s*<code\b([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi;
+    let output = "";
+    let lastIndex = 0;
+    let rendered = 0;
+    const warnings = [];
+    for (const match of value.matchAll(pattern)) {
+      const full = match[0];
+      const attrs = `${match[1] || ""} ${match[2] || ""}`;
+      if (!/language-mermaid|data-marktl-mermaid/i.test(attrs)) {
+        continue;
+      }
+      output += value.slice(lastIndex, match.index);
+      lastIndex = (match.index || 0) + full.length;
+      const source = this.decodeHtmlEntities(match[3]).trim();
+      if (!source) {
+        output += full;
+        continue;
+      }
+      try {
+        output += await this.renderMermaidSvgFromMarkdown(source, sourcePath || "");
+        rendered += 1;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        warnings.push(`참고: Mermaid 다이어그램 렌더링 실패, 원문 코드로 대체했습니다. ${message}`);
+        output += `<details class="marktl-mermaid-source"><summary>다이어그램 원문</summary><pre><code class="language-mermaid">${this.escapeHtmlValue(source)}</code></pre></details>`;
+      }
+    }
+    if (lastIndex === 0) {
+      return { html: value, rendered: 0, warnings };
+    }
+    output += value.slice(lastIndex);
+    return { html: output, rendered, warnings };
+  }
+  normalizeMermaidSourceBlocks(html) {
+    let value = String(html || "");
+    const toMermaidPre = (code) => {
+      const normalized = this.decodeHtmlEntities(String(code || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/?[^>]+>/g, "")).trim();
+      if (!/^(gantt|graph|flowchart|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gitGraph|pie|mindmap|timeline|quadrantChart|requirementDiagram|C4Context|sankey-beta|xychart-beta|block-beta|packet-beta)\b/i.test(normalized)) {
+        return null;
+      }
+      return `<pre class="marktl-mermaid-source"><code class="language-mermaid" data-marktl-mermaid="true">${this.escapeHtmlValue(normalized)}</code></pre>`;
+    };
+    value = value.replace(/<details\b[^>]*>\s*<summary\b[^>]*>[\s\S]*?mermaid[\s\S]*?<\/summary>([\s\S]*?)<\/details>/gi, (match, body) => {
+      const pre = String(body || "").match(/<pre\b[^>]*>([\s\S]*?)<\/pre>/i);
+      if (!pre) {
+        return match;
+      }
+      return toMermaidPre(pre[1]) || match;
+    });
+    value = value.replace(/<pre\b(?![^>]*marktl-mermaid-source)([^>]*)>([\s\S]*?)<\/pre>/gi, (match, attrs, code) => {
+      if (/<code\b/i.test(code)) {
+        return match;
+      }
+      return toMermaidPre(code) || match;
+    });
+    return value;
+  }
+  async renderMermaidSvgFromMarkdown(source, sourcePath) {
+    const renderer = import_obsidian7.MarkdownRenderer;
+    if (!renderer) {
+      throw new Error("Obsidian MarkdownRenderer를 찾을 수 없습니다.");
+    }
+    const container = document.createElement("div");
+    container.classList.add("marktl-mermaid-render-host");
+    container.setAttribute("style", "position:fixed;left:-10000px;top:0;width:1200px;max-width:1200px;opacity:0;pointer-events:none;");
+    document.body.appendChild(container);
+    try {
+      const markdown = `\`\`\`mermaid\n${source}\n\`\`\``;
+      if (typeof renderer.render === "function") {
+        await renderer.render(this.app, markdown, container, sourcePath, this);
+      } else if (typeof renderer.renderMarkdown === "function") {
+        await renderer.renderMarkdown(markdown, container, sourcePath, this);
+      } else {
+        throw new Error("지원되는 MarkdownRenderer API가 없습니다.");
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 700));
+      const svg = container.querySelector("svg");
+      if (!svg) {
+        throw new Error("렌더링된 SVG를 찾지 못했습니다.");
+      }
+      this.sanitizeRenderedSvg(svg);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("style", "display:block;max-width:100%;height:auto;margin:0 auto;");
+      return `<figure class="marktl-mermaid-rendered">${svg.outerHTML}</figure>`;
+    } finally {
+      container.remove();
+    }
+  }
+  sanitizeRenderedSvg(svg) {
+    svg.querySelectorAll("script,foreignObject").forEach((node) => node.remove());
+    svg.querySelectorAll("*").forEach((node) => {
+      for (const attr of Array.from(node.attributes || [])) {
+        if (/^on/i.test(attr.name)) {
+          node.removeAttribute(attr.name);
+        }
+        if (/^(href|xlink:href)$/i.test(attr.name) && /^javascript:/i.test(attr.value || "")) {
+          node.removeAttribute(attr.name);
+        }
+      }
+    });
+  }
+  decodeHtmlEntities(value) {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = String(value || "");
+    return textarea.value;
+  }
+  escapeHtmlValue(value) {
+    return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  async ensureAiExportReady(options, progress) {
+    if (options.shareTarget === "github-pages" && options.aiProvider === "none") {
+      throw new Error("GitHub Pages 게시에는 작동 중인 AI provider가 필요합니다. Codex CLI를 선택하거나 공유 대상을 로컬 파일 링크로 바꾸세요.");
+    }
+    if (options.shareTarget === "github-pages" && options.failurePolicy !== "strict") {
+      options.failurePolicy = "strict";
+      this.settings.failurePolicy = "strict";
+      await this.saveSettings();
+      progress.addStep("GitHub Pages 게시를 위해 AI 실패 정책을 strict로 고정했습니다.");
+    }
+    if (options.aiProvider !== "codex") {
+      return;
+    }
+    const currentPath = String(this.settings.codexPath || "").trim();
+    if (isManagedMarktlCodexPath(currentPath) && !isExecutableFile(currentPath)) {
+      throw new Error(`MarkTL Codex wrapper가 없습니다: ${currentPath}. 공유 설정을 /opt/homebrew/bin/codex로 바꾸지 말고 이 Mac에 wrapper를 생성하세요.`);
+    }
+    const detectedPath = detectCodexCliPath(currentPath);
+    const shouldRepairPath = !currentPath || currentPath === "codex" || isStaleCliPath(currentPath) || currentPath.startsWith("/") && !isManagedMarktlCodexPath(currentPath);
+    if (shouldRepairPath) {
+      if (!detectedPath) {
+        throw new Error(`Codex CLI 경로가 유효하지 않습니다: ${currentPath || "(empty)"}. 공유 설정에 /opt/homebrew/bin/codex를 저장하지 말고 이 Mac에 ~/.local/bin/marktl-codex wrapper를 생성하세요.`);
+      }
+      this.settings.codexPath = detectedPath;
+      await this.saveSettings();
+      progress.addStep(`Codex 경로 자동 복구: ${detectedPath}`);
+    }
+    const command = String(this.settings.codexPath || "codex").trim();
+    let version = await runCliPreflight(command, ["--version"], 15e3);
+    if (version.code !== 0) {
+      const fallbackPath = isManagedMarktlCodexPath(command) ? "" : detectCodexCliPath();
+      if (fallbackPath && fallbackPath !== command) {
+        this.settings.codexPath = fallbackPath;
+        await this.saveSettings();
+        version = await runCliPreflight(fallbackPath, ["--version"], 15e3);
+        if (version.code === 0) {
+          progress.addStep(`Codex 경로 자동 복구: ${fallbackPath}`);
+          progress.addStep(`Codex 사전 점검 통과: ${cleanPreflightOutput(version.output) || fallbackPath}`);
+          return;
+        }
+      }
+      throw new Error(`Codex CLI 사전 점검 실패: ${command}: ${cleanPreflightOutput(version.output) || "실행할 수 없음"}`);
+    }
+    progress.addStep(`Codex 사전 점검 통과: ${cleanPreflightOutput(version.output) || command}`);
+  }
   async exportActiveNote(overrides = {}) {
     const file = this.app.workspace.getActiveFile();
     if (!(file instanceof import_obsidian7.TFile) || file.extension !== "md") {
-      new import_obsidian7.Notice("Open a Markdown note before exporting HTML.");
+      new import_obsidian7.Notice("HTML로 내보낼 Markdown 노트를 먼저 여세요.");
       return;
     }
     const options = this.resolveExportOptions(overrides);
     const progress = new MarktlProgressModal(this.app);
     progress.open();
-    progress.addStep(`Goal: ${options.artifactGoal}`);
-    progress.addStep(`Artifact: ${options.artifactType}`);
-    progress.addStep(`Template: ${options.template}`);
-    progress.addStep(`AI CLI: ${options.aiProvider === "none" ? "local fallback" : options.aiProvider}`);
+    progress.addStep(`목적: ${options.artifactGoal}`);
+    progress.addStep(`산출물: ${options.artifactType}`);
+    progress.addStep(`템플릿: ${options.template}`);
+    progress.addStep(`AI CLI: ${options.aiProvider === "none" ? "로컬 변환" : options.aiProvider}`);
     const privacyNote = getProviderPrivacyNote2(options.aiProvider);
     if (privacyNote) {
-      progress.addStep(`Privacy note: ${privacyNote}`);
+      progress.addStep(`개인정보 안내: ${privacyNote}`);
     }
-    progress.addStep(`Mode: ${options.conversionMode}; preview: ${options.previewSecurity}`);
-    progress.addStep(`Timeout: ${Math.round(this.settings.timeoutMs / 1e3)}s`);
+    progress.addStep(`모드: ${options.conversionMode}; 미리보기: ${options.previewSecurity}`);
+    progress.addStep(`제한시간: ${Math.round(this.settings.timeoutMs / 1e3)}초`);
     try {
-      progress.addStep("Reading active Markdown note...");
+      await this.ensureAiExportReady(options, progress);
+      progress.addStep("현재 Markdown 노트를 읽는 중...");
       const markdown = await this.app.vault.read(file);
       const outputPlan = await this.prepareOutputPlan(file, options);
       const assetResult = await this.resolveImageAssets(markdown, file, outputPlan);
-      progress.addStep(assetResult.mappings.length > 0 ? `Resolved ${assetResult.mappings.length} local image asset(s).` : "No local image assets found.");
+      progress.addStep(assetResult.mappings.length > 0 ? `로컬 이미지 ${assetResult.mappings.length}개를 연결했습니다.` : "연결할 로컬 이미지가 없습니다.");
       const contextResult = await this.resolveContextPack(markdown, file, options);
       if (contextResult.count > 0) {
-        progress.addStep(`Loaded ${contextResult.count} linked context note(s).`);
+        progress.addStep(`연결 컨텍스트 노트 ${contextResult.count}개를 읽었습니다.`);
       } else if (options.contextPackMode !== "none") {
-        progress.addStep("No linked context notes found.");
+        progress.addStep("읽을 수 있는 연결 컨텍스트 노트가 없습니다.");
       }
-      progress.addStep(options.aiProvider === "none" ? "Running local converter..." : `Running ${options.aiProvider} CLI...`);
+      progress.addStep(options.aiProvider === "none" ? "로컬 변환기를 실행하는 중..." : `${options.aiProvider} CLI를 실행하는 중...`);
       const result = await convertWithAiFallback(markdown, {
         provider: options.aiProvider,
         artifactGoal: options.artifactGoal,
@@ -3140,7 +3770,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         mode: options.conversionMode,
         template: options.template,
         trusted: options.previewSecurity === "trusted",
-        strictAiFailures: options.failurePolicy === "strict",
+        strictAiFailures: options.failurePolicy === "strict" || options.shareTarget === "github-pages",
         timeoutMs: this.settings.timeoutMs,
         sourcePath: file.path,
         assetMappings: assetResult.mappings,
@@ -3150,7 +3780,10 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
           codex: this.settings.codexPath
         }
       });
-      progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
+      if (options.shareTarget === "github-pages" && result.usedFallback) {
+        throw new Error("GitHub Pages publishing blocked because AI conversion used local fallback.");
+      }
+      progress.addStep(result.usedFallback ? "로컬 fallback HTML을 생성했습니다." : "AI HTML을 생성했습니다.");
       const shareMetadata = this.extractShareMetadata(markdown, outputPlan.basename);
       const shortId = buildShortId(outputPlan.basename);
       const socialUrl = options.shareTarget === "github-pages" ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo), this.settings.githubPublishPath, shortId) : "";
@@ -3163,9 +3796,14 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       });
       const imageRewrittenHtml = rewriteHtmlImageSources(socialHtml, assetResult.mappings);
       const feedbackResult = this.applyReaderFeedback(imageRewrittenHtml, options);
-      const html = feedbackResult.html;
+      let html = this.repairHtmlHead(feedbackResult.html);
       if (feedbackResult.injected) {
-        progress.addStep("Added Giscus reader feedback.");
+        progress.addStep("Giscus 독자 피드백을 추가했습니다.");
+      }
+      const mermaidResult = await this.renderMermaidBlocksToStaticHtml(html, file.path, options);
+      html = this.repairHtmlHead(mermaidResult.html);
+      if (mermaidResult.rendered > 0) {
+        progress.addStep(`Mermaid 다이어그램 ${mermaidResult.rendered}개를 정적 HTML/SVG로 렌더링했습니다.`);
       }
       const qaWarnings = validateHtmlArtifact(html, {
         trusted: options.previewSecurity === "trusted",
@@ -3173,24 +3811,24 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         assetMappings: assetResult.mappings
       });
       if (qaWarnings.length > 0) {
-        progress.addStep(`HTML QA produced ${qaWarnings.length} warning(s).`);
+        progress.addStep(`HTML QA 참고사항 ${qaWarnings.length}개를 확인했습니다.`);
       } else {
-        progress.addStep("HTML QA passed basic checks.");
+        progress.addStep("HTML QA 기본 검사를 통과했습니다.");
       }
-      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...feedbackResult.warnings, ...qaWarnings];
+      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...feedbackResult.warnings, ...mermaidResult.warnings, ...qaWarnings];
       let publicUrl = "";
       let shareHomeUrl = "";
-      progress.addStep("Writing HTML file to vault...");
+      progress.addStep("HTML 파일을 vault에 저장하는 중...");
       await this.copyImageAssets(assetResult.mappings);
       const outputPath = await this.writeHtmlFile(outputPlan, html, options, file.path);
       if (options.shareTarget === "github-pages") {
-        progress.addStep("Publishing GitHub Pages bundle...");
+        progress.addStep("GitHub Pages 번들을 게시하는 중...");
         const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path, markdown, options, shortId, shareMetadata);
         publicUrl = publishResult.publicUrl;
         shareHomeUrl = publishResult.shareHomeUrl;
-        progress.addStep(`Published: ${publicUrl}`);
+        progress.addStep(`게시 완료: ${publicUrl}`);
       }
-      progress.addStep("Opening internal preview pane...");
+      progress.addStep("내부 미리보기 패널을 여는 중...");
       await this.openPreview({
         html,
         filePath: outputPath,
@@ -3201,10 +3839,10 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         previewSecurity: options.previewSecurity
       });
       if (options.copyShareLinkAfterExport) {
-        progress.addStep(publicUrl ? "Copying public share link..." : "Copying local share link...");
+        progress.addStep(publicUrl ? "공개 공유 링크를 복사하는 중..." : "로컬 공유 링크를 복사하는 중...");
         await this.copyShareLink(outputPath, publicUrl);
       }
-      progress.complete(`Done: ${outputPath}`);
+      progress.complete(`완료: ${outputPath}`);
       this.openResultSummary({
         options,
         sourcePath: file.path,
@@ -3226,14 +3864,14 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
         shareHomeUrl
       });
       if (result.usedFallback && options.aiProvider !== "none") {
-        new import_obsidian7.Notice("AI conversion failed; local fallback HTML was generated.");
+        new import_obsidian7.Notice("AI 변환에 실패해 로컬 fallback HTML을 생성했습니다.");
       } else {
-        new import_obsidian7.Notice(`HTML exported to ${outputPath}`);
+        new import_obsidian7.Notice(`HTML 내보내기 완료: ${outputPath}`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       progress.fail(message);
-      new import_obsidian7.Notice(`HTML export failed: ${message}`);
+      new import_obsidian7.Notice(`HTML 내보내기 실패: ${message}`);
     }
   }
   async prepareOutputPlan(source, options) {
@@ -3343,7 +3981,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     if (options.previewSecurity !== "trusted") {
       return {
         html,
-        warnings: ["Giscus feedback requires Trusted preview/export because it loads an external comments script."],
+        warnings: ["참고: 정적 안전 모드에서는 외부 댓글 스크립트를 포함하지 않아 Giscus 댓글을 제외했습니다."],
         injected: false
       };
     }
@@ -3368,15 +4006,15 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
   }
   describeReaderFeedback(options, feedback) {
     if (options.readerFeedbackMode !== "giscus") {
-      return "Reader comments disabled";
+      return "독자 댓글 비활성화";
     }
     if (!shouldAttachReaderFeedback(options)) {
-      return "Reader comments skipped for local file link";
+      return "로컬 파일 링크에서는 독자 댓글을 건너뜀";
     }
     if (feedback.injected) {
-      return "Giscus GitHub comments enabled";
+      return "Giscus GitHub 댓글 활성화";
     }
-    return feedback.warnings.length > 0 ? `Giscus setup needed: ${feedback.warnings[0]}` : "Giscus comments were not added";
+    return feedback.warnings.length > 0 ? `Giscus 설정 확인 필요: ${feedback.warnings[0]}` : "Giscus 댓글이 추가되지 않음";
   }
   async resolveContextPack(markdown, source, options) {
     if (options.contextPackMode !== "linked-notes") {
@@ -3387,7 +4025,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     for (const target of extractMarkdownContextTargets(markdown)) {
       const linked = this.resolveMarkdownContextFile(target, source);
       if (!linked) {
-        warnings.push(`Context note not found: ${target}`);
+        warnings.push(`참고 링크 건너뜀: ${target}`);
         continue;
       }
       if (linked.path === source.path) {
@@ -3400,7 +4038,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
           content: await this.app.vault.read(linked)
         });
       } catch (error) {
-        warnings.push(`Context note unreadable: ${target}`);
+        warnings.push(`참고 링크를 읽지 못함: ${target}`);
       }
     }
     return {
@@ -3411,23 +4049,80 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
   }
   resolveMarkdownContextFile(target, source) {
     var _a;
-    const linked = this.app.metadataCache.getFirstLinkpathDest(target, source.path);
-    if (linked instanceof import_obsidian7.TFile && linked.extension === "md") {
-      return linked;
-    }
-    const normalized = (0, import_obsidian7.normalizePath)(target.endsWith(".md") ? target : `${target}.md`);
-    const direct = this.app.vault.getAbstractFileByPath(normalized);
-    if (direct instanceof import_obsidian7.TFile && direct.extension === "md") {
-      return direct;
-    }
-    if ((_a = source.parent) == null ? void 0 : _a.path) {
-      const relative = this.app.vault.getAbstractFileByPath((0, import_obsidian7.normalizePath)(`${source.parent.path}/${normalized}`));
-      if (relative instanceof import_obsidian7.TFile && relative.extension === "md") {
-        return relative;
+    const candidates = this.buildMarkdownContextTargetVariants(target);
+    for (const candidate of candidates) {
+      const linked = this.app.metadataCache.getFirstLinkpathDest(candidate, source.path);
+      if (linked instanceof import_obsidian7.TFile && linked.extension === "md") {
+        return linked;
       }
     }
-    const byName = this.app.vault.getFiles().find((file) => file.extension === "md" && (file.basename === target || file.name === target || file.path.endsWith(`/${normalized}`)));
+    for (const candidate of candidates) {
+      const normalized = (0, import_obsidian7.normalizePath)(candidate.endsWith(".md") ? candidate : `${candidate}.md`);
+      const direct = this.app.vault.getAbstractFileByPath(normalized);
+      if (direct instanceof import_obsidian7.TFile && direct.extension === "md") {
+        return direct;
+      }
+      if ((_a = source.parent) == null ? void 0 : _a.path) {
+        const relative = this.app.vault.getAbstractFileByPath((0, import_obsidian7.normalizePath)(`${source.parent.path}/${normalized}`));
+        if (relative instanceof import_obsidian7.TFile && relative.extension === "md") {
+          return relative;
+        }
+      }
+    }
+    const candidateKeys = new Set(candidates.flatMap((candidate) => {
+      const noExt = candidate.replace(/\.md$/i, "");
+      const withExt = candidate.endsWith(".md") ? candidate : `${candidate}.md`;
+      return [
+        noExt,
+        noExt.normalize("NFC"),
+        noExt.normalize("NFD"),
+        withExt,
+        withExt.normalize("NFC"),
+        withExt.normalize("NFD")
+      ].map((value) => (0, import_obsidian7.normalizePath)(value));
+    }));
+    const byName = this.app.vault.getFiles().find((file) => {
+      if (file.extension !== "md") {
+        return false;
+      }
+      const fileKeys = [
+        file.basename,
+        file.basename.normalize("NFC"),
+        file.basename.normalize("NFD"),
+        file.name,
+        file.name.normalize("NFC"),
+        file.name.normalize("NFD"),
+        file.path,
+        file.path.normalize("NFC"),
+        file.path.normalize("NFD")
+      ].map((value) => (0, import_obsidian7.normalizePath)(value));
+      return fileKeys.some((key) => candidateKeys.has(key) || [...candidateKeys].some((candidate) => key.endsWith(`/${candidate}`)));
+    });
     return byName instanceof import_obsidian7.TFile ? byName : null;
+  }
+  buildMarkdownContextTargetVariants(target) {
+    const raw = String(target || "").replace(/\\/g, "/").replace(/^\.\//, "").trim();
+    if (!raw) {
+      return [];
+    }
+    const withoutHash = raw.split("#")[0].trim();
+    const withoutAlias = withoutHash.split("|")[0].trim();
+    const values = [
+      raw,
+      withoutHash,
+      withoutAlias,
+      withoutAlias.replace(/\.md$/i, "")
+    ].filter(Boolean);
+    const expanded = [];
+    for (const value of values) {
+      expanded.push(value, value.normalize("NFC"), value.normalize("NFD"));
+      try {
+        const decoded = decodeURI(value);
+        expanded.push(decoded, decoded.normalize("NFC"), decoded.normalize("NFD"));
+      } catch (error) {
+      }
+    }
+    return [...new Set(expanded.map((value) => (0, import_obsidian7.normalizePath)(value)).filter(Boolean))];
   }
   async ensureParentFolder(filePath) {
     const parts = filePath.split("/");
@@ -3458,6 +4153,146 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       ""
     ].join("\n");
     await this.app.vault.adapter.write(readmePath, content);
+  }
+  getGithubPagesContext() {
+    const repo = parseRepo(this.settings.githubRepo);
+    if (!repo) {
+      throw new Error("GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.");
+    }
+    if (!this.settings.githubToken.trim()) {
+      throw new Error("GitHub token is not configured. Add a token with Contents write permission in MarkTL settings.");
+    }
+    const branch = this.settings.githubBranch.trim() || "main";
+    const basePath = this.settings.githubPublishPath;
+    const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
+    return {
+      ...repo,
+      branch,
+      basePath,
+      pagesBaseUrl,
+      indexPath: buildPublishPath(basePath, "", "index.json"),
+      indexHtmlPath: buildPublishPath(basePath, "", "index.html")
+    };
+  }
+  async loadPublishedShareIndex() {
+    const context = this.getGithubPagesContext();
+    const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
+    return {
+      context,
+      index: repairShareIndex(existing || { items: [] })
+    };
+  }
+  async repairPublishedShareIndex() {
+    const { context, index } = await this.loadPublishedShareIndex();
+    await this.writePublishedShareIndex(context, index);
+    return index;
+  }
+  async writePublishedShareIndex(context, index) {
+    const html = renderShareIndexHtml(index, {
+      title: this.settings.githubShareHomeTitle || "MarkTL Shared HTML",
+      baseUrl: buildShareHomeUrl(context.pagesBaseUrl, context.basePath).replace(/\/+$/g, "")
+    });
+    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2));
+    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html);
+  }
+  async deletePublishedShareItem(target) {
+    const { context, index } = await this.loadPublishedShareIndex();
+    const targetKeys = this.shareDeleteKeys(target);
+    const removed = [];
+    const kept = [];
+    for (const item of index.items) {
+      const keys = this.shareDeleteKeys(item);
+      const matches = keys.some((key) => targetKeys.includes(key));
+      if (matches) {
+        removed.push(item);
+      } else {
+        kept.push(item);
+      }
+    }
+    if (!removed.length) {
+      throw new Error("No matching published artifact was found.");
+    }
+    const nextIndex = repairShareIndex({
+      ...index,
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      items: kept
+    });
+    for (const item of removed) {
+      if (item.slug) {
+        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, item.slug, ""));
+      }
+      if (item.shortId) {
+        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, `s/${item.shortId}`, ""));
+      }
+    }
+    await this.writePublishedShareIndex(context, nextIndex);
+    return { removedCount: removed.length, index: nextIndex };
+  }
+  shareDeleteKeys(item) {
+    return [
+      item == null ? void 0 : item.shortId ? `short:${item.shortId}` : "",
+      item == null ? void 0 : item.url ? `url:${String(item.url).replace(/\/+$/g, "")}` : "",
+      item == null ? void 0 : item.canonicalUrl ? `canonical:${String(item.canonicalUrl).replace(/\/+$/g, "")}` : "",
+      item == null ? void 0 : item.sourcePathKey ? `source:${item.sourcePathKey}` : "",
+      item == null ? void 0 : item.slug ? `slug:${item.slug}` : ""
+    ].filter(Boolean);
+  }
+  async deleteGithubPathRecursive(owner, repo, branch, publishPath) {
+    var _a;
+    const cleanPath = String(publishPath || "").replace(/^\/+|\/+$/g, "");
+    if (!cleanPath) {
+      return;
+    }
+    const token = this.settings.githubToken.trim();
+    const url = this.githubContentsUrl(owner, repo, cleanPath);
+    const existing = await (0, import_obsidian7.requestUrl)({
+      url: `${url}?ref=${encodeURIComponent(branch)}`,
+      method: "GET",
+      headers: this.githubHeaders(token),
+      throw: false
+    });
+    if (existing.status === 404) {
+      return;
+    }
+    if (existing.status < 200 || existing.status >= 300) {
+      const message = ((_a = existing.json) == null ? void 0 : _a.message) || existing.text || `GitHub lookup failed with HTTP ${existing.status}`;
+      throw new Error(`GitHub lookup failed for ${cleanPath}: ${message}`);
+    }
+    const content = existing.json;
+    if (Array.isArray(content)) {
+      for (const child of content) {
+        if (child == null ? void 0 : child.path) {
+          await this.deleteGithubPathRecursive(owner, repo, branch, child.path);
+        }
+      }
+      return;
+    }
+    await this.deleteGithubFile(owner, repo, branch, cleanPath, content == null ? void 0 : content.sha);
+  }
+  async deleteGithubFile(owner, repo, branch, publishPath, sha) {
+    var _a;
+    if (!sha) {
+      return;
+    }
+    const token = this.settings.githubToken.trim();
+    const response = await (0, import_obsidian7.requestUrl)({
+      url: this.githubContentsUrl(owner, repo, publishPath),
+      method: "DELETE",
+      headers: {
+        ...this.githubHeaders(token),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: `Delete MarkTL export ${publishPath}`,
+        sha,
+        branch
+      }),
+      throw: false
+    });
+    if (response.status < 200 || response.status >= 300) {
+      const message = ((_a = response.json) == null ? void 0 : _a.message) || response.text || `GitHub delete failed with HTTP ${response.status}`;
+      throw new Error(`GitHub delete failed for ${publishPath}: ${message}`);
+    }
   }
   async publishGithubPages(plan, mappings, sourcePath, markdown, options, shortId = buildShortId(plan.basename), metadata = this.extractShareMetadata(markdown, plan.basename)) {
     const repo = parseRepo(this.settings.githubRepo);
@@ -3496,7 +4331,10 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       url: publicUrl,
       canonicalUrl,
       sourcePath,
+      sourcePathKey: sourcePath.normalize("NFC").replace(/\\/g, "/").trim().toLowerCase(),
       artifactType: options.artifactType,
+      schemaVersion: 2,
+      publishedByHost: String((typeof process !== "undefined" && process.env && process.env.HOSTNAME) || ""),
       ...metadata
     }, pagesBaseUrl);
     return { publicUrl, shareHomeUrl };
@@ -3505,11 +4343,13 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     var _a, _b, _c, _d;
     const value = String(markdown || "");
     const frontmatter = ((_a = /^---\n([\s\S]*?)\n---/.exec(value)) == null ? void 0 : _a[1]) || "";
-    const title = ((_b = /^title:\s*["']?(.+?)["']?\s*$/m.exec(frontmatter)) == null ? void 0 : _b[1]) || ((_c = /^#\s+(.+)$/m.exec(value)) == null ? void 0 : _c[1]) || fallbackTitle;
-    const tagLine = ((_d = /^tags:\s*(.+)$/m.exec(frontmatter)) == null ? void 0 : _d[1]) || "";
-    const yamlListTags = [...frontmatter.matchAll(/^\s*-\s*["']?([^"'\n]+)["']?\s*$/gm)].map((match) => match[1]);
-    const inlineTags = tagLine.replace(/^\[|\]$/g, "").split(",").map((tag) => tag.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
-    const body = value.replace(/^---\n[\s\S]*?\n---\s*/, "").replace(/^#\s+.+$/m, "").replace(/!\[\[[^\]]+]]/g, "").replace(/!\[[^\]]*]\([^)]+\)/g, "").replace(/\[[^\]]+]\([^)]+\)/g, "$1").replace(/[#*_`>~-]/g, "").split("\n").map((line) => line.trim()).filter(Boolean).join(" ");
+    const cleanScalar = (text) => String(text || "").trim().replace(/^["']|["']$/g, "");
+    const title = cleanScalar(((_b = /^title:[ \t]*(.+?)[ \t]*$/m.exec(frontmatter)) == null ? void 0 : _b[1]) || ((_c = /^#\s+(.+)$/m.exec(value)) == null ? void 0 : _c[1]) || fallbackTitle);
+    const tagLine = ((_d = /^tags:[ \t]*(.+)$/m.exec(frontmatter)) == null ? void 0 : _d[1]) || "";
+    const inlineTags = tagLine.replace(/^\[|\]$/g, "").split(",").map(cleanScalar).filter(Boolean);
+    const tagBlock = /^tags:\s*\n((?:\s+-\s*.+(?:\n|$))*)/m.exec(frontmatter);
+    const yamlListTags = tagBlock ? [...tagBlock[1].matchAll(/^\s*-\s*(.+?)\s*$/gm)].map((match) => cleanScalar(match[1])) : [];
+    const body = value.replace(/^---\n[\s\S]*?\n---\s*/, "").replace(/<!--[\s\S]*?-->/g, " ").replace(/<![^>]*>/g, " ").replace(/^#\s+.+$/m, "").replace(/!\[\[[^\]]+]]/g, "").replace(/!\[[^\]]*]\([^)]+\)/g, "").replace(/\[([^\]]+)]\([^)]+\)/g, "$1").replace(/[#*_`>~-]/g, "").split("\n").map((line) => line.trim()).filter(Boolean).join(" ");
     return {
       title: title.trim(),
       excerpt: body.slice(0, 180),
