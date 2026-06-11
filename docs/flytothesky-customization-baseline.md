@@ -1,6 +1,6 @@
 # Flytothesky MarkTL Customization Baseline
 
-This fork preserves the MarkTL copy that is actually running in the MacBook Obsidian proxy vault.
+This fork preserves the MarkTL copy that is actually running in the MacBook Obsidian proxy vault. The Obsidian display name is `Flytothesky MarkTL HTML Exporter`; the plugin id remains `marktl` for settings compatibility.
 
 ## Repository Role
 
@@ -67,4 +67,3 @@ For BRAT, publish these release assets from this fork:
 - `manifest.json`
 - `styles.css`
 - `versions.json`
-

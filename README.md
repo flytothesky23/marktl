@@ -1,9 +1,9 @@
-# MarkTL HTML Exporter
+# Flytothesky MarkTL HTML Exporter
 
 [![YouTube: 배움의 달인](https://img.shields.io/badge/YouTube-%EB%B0%B0%EC%9B%80%EC%9D%98%20%EB%8B%AC%EC%9D%B8-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/@%EB%B0%B0%EC%9B%80%EC%9D%98%EB%8B%AC%EC%9D%B8-p5v)
 [![X: @reallygood83](https://img.shields.io/badge/X-@reallygood83-black?style=for-the-badge&logo=x)](https://x.com/reallygood83)
 
-MarkTL is an Obsidian plugin that turns Markdown notes into readable, visual, share-ready HTML artifacts.
+Flytothesky MarkTL HTML Exporter is a Flytothesky-maintained fork of MarkTL. It keeps the original MarkTL name and credit while carrying Flytothesky-specific setup, workflow, and runtime refinements.
 
 It is inspired by the idea that HTML is often a better medium than Markdown for reviewing long AI-generated notes, strategy documents, research reports, decision memos, and interactive explainers.
 
@@ -93,16 +93,16 @@ Included templates:
 4. Paste this repository URL:
 
 ```text
-https://github.com/reallygood83/marktl
+https://github.com/flytothesky23/marktl
 ```
 
-5. Enable `MarkTL HTML Exporter` in Obsidian community plugin settings.
+5. Enable `Flytothesky MarkTL HTML Exporter` in Obsidian community plugin settings.
 
 ### Agent-Assisted Setup With Codex Or Claude Code
 
 Many users install and configure tools by asking Codex or Claude Code to walk them through the process. MarkTL is designed for that workflow.
 
-Open `MarkTL setup` in Obsidian and use:
+Open `Flytothesky MarkTL setup` in Obsidian and use:
 
 - `Copy Codex setup prompt`
 - `Copy Claude setup prompt`
@@ -432,16 +432,16 @@ Export 모달에서 artifact type을 선택할 수 있습니다.
 4. 아래 저장소 주소를 붙여넣습니다.
 
 ```text
-https://github.com/reallygood83/marktl
+https://github.com/flytothesky23/marktl
 ```
 
-5. Obsidian community plugin 설정에서 `MarkTL HTML Exporter`를 활성화합니다.
+5. Obsidian community plugin 설정에서 `Flytothesky MarkTL HTML Exporter`를 활성화합니다.
 
 ### Codex / Claude Code로 설치와 설정하기
 
 많은 구독자는 직접 설정 화면을 하나씩 만지기보다 Codex나 Claude Code에게 설치와 설정을 맡기는 방식이 더 편합니다. MarkTL은 이 흐름에 맞게 준비되어 있습니다.
 
-Obsidian에서 `MarkTL setup`을 열고 아래 버튼을 사용하세요.
+Obsidian에서 `Flytothesky MarkTL setup`을 열고 아래 버튼을 사용하세요.
 
 - `Copy Codex setup prompt`
 - `Copy Claude setup prompt`

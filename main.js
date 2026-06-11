@@ -2799,7 +2799,7 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "MarkTL HTML Exporter" });
+    containerEl.createEl("h2", { text: "Flytothesky MarkTL HTML Exporter" });
     new import_obsidian5.Setting(containerEl).setName("Setup wizard").setDesc("Guided setup for local export, Claude AI conversion, and share-ready bundles.").addButton((button) => button.setButtonText("Open setup").setCta().onClick(() => {
       this.plugin.openSetupWizard();
     }));
@@ -2970,7 +2970,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle("MarkTL setup");
+    this.setTitle("Flytothesky MarkTL setup");
     contentEl.createEl("p", {
       cls: "marktl-modal-intro",
       text: "Choose the outcome you want from your HTML artifacts. Provider setup stays optional until you need richer AI-generated output."
@@ -3016,7 +3016,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
       this.plugin.settings.setupCompleted = true;
       await this.plugin.saveSettings();
       this.close();
-      new import_obsidian6.Notice("MarkTL setup saved.");
+      new import_obsidian6.Notice("Flytothesky MarkTL setup saved.");
     }));
   }
   onClose() {
@@ -3158,7 +3158,7 @@ function buildAgentSetupPrompt(agent) {
     `You are helping me set up the MarkTL Obsidian plugin using ${agentName}.`,
     "",
     "Goal:",
-    "- Install MarkTL through BRAT from https://github.com/reallygood83/marktl.",
+    "- Install Flytothesky MarkTL through BRAT from https://github.com/flytothesky23/marktl.",
     "- Configure MarkTL so an Obsidian Markdown note can be exported to a GitHub Pages HTML link.",
     "- Make the exported page comment-ready with Giscus GitHub comments.",
     "",
@@ -3457,7 +3457,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     });
     this.addCommand({
       id: "open-marktl-setup",
-      name: "Open MarkTL setup wizard",
+      name: "Open Flytothesky MarkTL setup wizard",
       callback: () => {
         this.openSetupWizard();
       }

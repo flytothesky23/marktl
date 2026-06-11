@@ -19,7 +19,7 @@ export class MarktlSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'MarkTL HTML Exporter' });
+    containerEl.createEl('h2', { text: 'Flytothesky MarkTL HTML Exporter' });
 
     new Setting(containerEl)
       .setName('Setup wizard')

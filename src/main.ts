@@ -109,7 +109,7 @@ export default class MarktlPlugin extends Plugin {
 
     this.addCommand({
       id: 'open-marktl-setup',
-      name: 'Open MarkTL setup wizard',
+      name: 'Open Flytothesky MarkTL setup wizard',
       callback: () => {
         this.openSetupWizard();
       },

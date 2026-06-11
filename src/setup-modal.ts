@@ -16,7 +16,7 @@ export class MarktlSetupModal extends Modal {
   onOpen(): void {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle('MarkTL setup');
+    this.setTitle('Flytothesky MarkTL setup');
 
     contentEl.createEl('p', {
       cls: 'marktl-modal-intro',
@@ -83,7 +83,7 @@ export class MarktlSetupModal extends Modal {
           this.plugin.settings.setupCompleted = true;
           await this.plugin.saveSettings();
           this.close();
-          new Notice('MarkTL setup saved.');
+          new Notice('Flytothesky MarkTL setup saved.');
         }));
   }
 
@@ -215,7 +215,7 @@ function buildAgentSetupPrompt(agent: 'codex' | 'claude'): string {
     `You are helping me set up the MarkTL Obsidian plugin using ${agentName}.`,
     '',
     'Goal:',
-    '- Install MarkTL through BRAT from https://github.com/reallygood83/marktl.',
+    '- Install Flytothesky MarkTL through BRAT from https://github.com/flytothesky23/marktl.',
     '- Configure MarkTL so an Obsidian Markdown note can be exported to a GitHub Pages HTML link.',
     '- Make the exported page comment-ready with Giscus GitHub comments.',
     '',
