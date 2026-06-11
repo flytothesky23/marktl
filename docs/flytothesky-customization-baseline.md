@@ -1,17 +1,19 @@
 # Flytothesky MarkTL Customization Baseline
 
-This fork preserves the MarkTL copy that is actually running in the MacBook Obsidian proxy vault. The Obsidian display name is `Flytothesky MarkTL HTML Exporter`; the plugin id remains `marktl` for settings compatibility.
+This fork preserves the customized MarkTL baseline and prepares the next Flytothesky BRAT release. The active MacBook Obsidian install is intentionally kept unchanged until the upgraded fork is feature-complete and verified.
+
+Future BRAT releases from this fork will use the display name `Flytothesky MarkTL HTML Exporter`; the plugin id remains `marktl` for settings compatibility.
 
 ## Repository Role
 
 - Upstream source: `reallygood83/marktl`
 - Flytothesky fork: `flytothesky23/marktl`
 - Local development clone: `/Users/flytothesky/Downloads/flytothesky-marktl`
-- Active Obsidian install copied from: `/Users/flytothesky/Library/Application Support/ObsidianLocalConfigs/GoogleDrive-Obsidian-MacBook/plugins/marktl`
+- Active Obsidian install baseline copied from: `/Users/flytothesky/Library/Application Support/ObsidianLocalConfigs/GoogleDrive-Obsidian-MacBook/plugins/marktl`
 
 ## Current Baseline
 
-The top-level release assets in this fork were copied from the active Obsidian install:
+The first fork baseline release assets were copied from the active Obsidian install. After that baseline, this repository may advance ahead of the installed plugin while the installed Obsidian plugin remains unchanged.
 
 - `main.js`
 - `manifest.json`
