@@ -3570,6 +3570,13 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
   }
+  async refreshSettingsFromDisk() {
+    const previousSettings = this.settings;
+    await this.loadSettings();
+    if (!String(this.settings.githubToken || "").trim() && String(previousSettings == null ? void 0 : previousSettings.githubToken || "").trim()) {
+      this.settings.githubToken = previousSettings.githubToken;
+    }
+  }
   openSetupWizard() {
     new MarktlSetupModal(this.app, this).open();
   }
@@ -4221,6 +4228,7 @@ ${value}
     };
   }
   async loadPublishedShareIndex() {
+    await this.refreshSettingsFromDisk();
     const context = this.getGithubPagesContext();
     const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
     return {
@@ -4341,6 +4349,7 @@ ${value}
     }
   }
   async publishGithubPages(plan, mappings, sourcePath, markdown, options, shortId = buildShortId(plan.basename), metadata = this.extractShareMetadata(markdown, plan.basename)) {
+    await this.refreshSettingsFromDisk();
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
       throw new Error("GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.");
