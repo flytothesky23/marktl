@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS: MarktlSettings = {
   githubToken: '',
   githubPagesBaseUrl: '',
   githubPublishPath: 'marktl',
-  githubShareHomeTitle: 'MarkTL Shared HTML',
+  githubShareHomeTitle: '유네코 지수 통합선별공장 프로젝트',
   giscusRepo: '',
   giscusRepoId: '',
   giscusCategory: 'Announcements',
@@ -158,6 +158,10 @@ export default class MarktlPlugin extends Plugin {
       this.settings.readerFeedbackMode = DEFAULT_SETTINGS.readerFeedbackMode;
       shouldSave = true;
     }
+    if (!String(this.settings.githubShareHomeTitle || '').trim() || this.settings.githubShareHomeTitle === 'MarkTL Shared HTML') {
+      this.settings.githubShareHomeTitle = DEFAULT_SETTINGS.githubShareHomeTitle;
+      shouldSave = true;
+    }
     if (shouldSave) {
       await this.saveSettings();
     }
@@ -165,6 +169,14 @@ export default class MarktlPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+  }
+
+  async refreshSettingsFromDisk(): Promise<void> {
+    const previousSettings = this.settings;
+    await this.loadSettings();
+    if (!String(this.settings.githubToken || '').trim() && String(previousSettings?.githubToken || '').trim()) {
+      this.settings.githubToken = previousSettings.githubToken;
+    }
   }
 
   openSetupWizard(): void {
@@ -588,6 +600,7 @@ export default class MarktlPlugin extends Plugin {
   }
 
   private async publishGithubPages(plan: OutputPlan, mappings: ImageAssetMapping[], sourcePath: string, markdown: string, options: ExportOptions, shortId = buildShortId(plan.basename), metadata = this.extractShareMetadata(markdown, plan.basename)): Promise<{ publicUrl: string; shareHomeUrl: string }> {
+    await this.refreshSettingsFromDisk();
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
       throw new Error('GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.');
@@ -602,6 +615,8 @@ export default class MarktlPlugin extends Plugin {
     const canonicalUrl = buildPagesUrl(pagesBaseUrl, basePath, plan.basename);
     const publicUrl = buildShortPagesUrl(pagesBaseUrl, basePath, shortId);
     const shareHomeUrl = buildShareHomeUrl(pagesBaseUrl, basePath);
+    const thumbnailAssetName = mappings.find((mapping) => /\.(png|jpe?g|webp|gif|avif|svg)$/i.test(mapping.destinationPath))?.destinationPath.split('/').pop() || '';
+    const thumbnailUrl = thumbnailAssetName ? `${publicUrl}assets/${encodeURIComponent(thumbnailAssetName)}` : '';
     const canonicalFiles = [
       { localPath: plan.outputPath, publishPath: buildPublishPath(basePath, plan.basename, 'index.html') },
       { localPath: normalizePath(`${plan.folder}/share/${plan.basename}/README.md`), publishPath: buildPublishPath(basePath, plan.basename, 'README.md') },
@@ -628,6 +643,7 @@ export default class MarktlPlugin extends Plugin {
       canonicalUrl,
       sourcePath,
       artifactType: options.artifactType,
+      thumbnailUrl,
       ...metadata,
     }, pagesBaseUrl);
 
@@ -666,12 +682,12 @@ export default class MarktlPlugin extends Plugin {
     };
   }
 
-  private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: { slug: string; title: string; url: string; sourcePath: string; shortId?: string; canonicalUrl?: string; artifactType?: string; excerpt?: string; tags?: string[] }, pagesBaseUrl: string): Promise<void> {
+  private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: { slug: string; title: string; url: string; sourcePath: string; shortId?: string; canonicalUrl?: string; artifactType?: string; excerpt?: string; tags?: string[]; thumbnailUrl?: string }, pagesBaseUrl: string): Promise<void> {
     const indexPath = buildPublishPath(basePath, '', 'index.json');
     const existing = await this.getGithubJson(owner, repo, branch, indexPath);
     const index = updateShareIndex(existing, entry);
     const html = renderShareIndexHtml(index, {
-      title: this.settings.githubShareHomeTitle || 'MarkTL Shared HTML',
+      title: this.settings.githubShareHomeTitle || DEFAULT_SETTINGS.githubShareHomeTitle,
       baseUrl: buildShareHomeUrl(pagesBaseUrl, basePath).replace(/\/+$/g, ''),
     });
     await this.putGithubTextFile(owner, repo, branch, indexPath, JSON.stringify(index, null, 2));

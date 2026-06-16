@@ -262,7 +262,7 @@ export class MarktlSettingTab extends PluginSettingTab {
     this.addTextSetting(containerEl, 'GitHub branch', 'Branch to write files to.', 'githubBranch', 'main');
     this.addTextSetting(containerEl, 'GitHub Pages base URL', 'Public Pages root URL. Leave blank to infer https://owner.github.io/repo.', 'githubPagesBaseUrl', 'https://reallygood83.github.io/marktl-shares');
     this.addTextSetting(containerEl, 'Publish path', 'Folder path inside the repository. Exports go to <path>/<slug>/index.html.', 'githubPublishPath', 'marktl');
-    this.addTextSetting(containerEl, 'Share home title', 'Title for the generated index page that lists published exports.', 'githubShareHomeTitle', 'MarkTL Shared HTML');
+    this.addTextSetting(containerEl, 'Share home title', 'Title for the generated index page that lists published exports.', 'githubShareHomeTitle', '유네코 지수 통합선별공장 프로젝트');
     this.addTextSetting(containerEl, 'GitHub token', 'Fine-grained token with Contents read/write permission for the repository.', 'githubToken', 'github_pat_...', true);
 
     new Setting(containerEl)

@@ -6,7 +6,7 @@ const { migrateSettings } = require('../src/core/settings.js');
 const defaults = {
   githubRepo: '',
   githubPublishPath: 'marktl',
-  githubShareHomeTitle: 'MarkTL Shared HTML',
+  githubShareHomeTitle: '유네코 지수 통합선별공장 프로젝트',
   shareTarget: 'local-link',
 };
 
