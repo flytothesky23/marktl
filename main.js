@@ -487,6 +487,28 @@ var require_templates = __commonJS({
     `
       },
       {
+        id: "construction-daily",
+        name: "Construction Daily",
+        description: "Field-report layout with large lead visual, concise flow maps, and execution-gate Gantt sections.",
+        css: `
+      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f7f3eb; }
+      main { max-width: 1180px; margin: 0 auto; padding: 34px 24px 72px; }
+      article { background: rgba(255,255,255,.74); border: 1px solid #d9cfc0; border-radius: 8px; padding: 30px; box-shadow: 0 18px 44px rgba(23,32,51,.08); }
+      h1 { font-size: clamp(2.4rem, 5vw, 5.5rem); line-height: .98; letter-spacing: 0; margin: 0 0 22px; color: #172033; }
+      h2 { margin: 42px 0 16px; color: #174ea6; border-left: 6px solid #f97316; padding-left: 12px; font-size: clamp(1.5rem, 3vw, 2.4rem); }
+      h3 { margin: 24px 0 10px; color: #1f2937; }
+      p, li { line-height: 1.68; }
+      table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d9e2ec; border-radius: 8px; overflow: hidden; }
+      th, td { border-bottom: 1px solid #d9e2ec; padding: 10px 12px; text-align: left; vertical-align: top; }
+      th { background: #10233f; color: #fff; }
+      img { max-width: 100%; height: auto; border-radius: 8px; display: block; }
+      pre { overflow: auto; background: #111827; color: #f8fafc; border-radius: 8px; padding: 16px; }
+      .callout { border-left: 5px solid #174ea6; background: #eff6ff; border-radius: 8px; padding: 14px 18px; }
+      .marktl-mermaid-rendered, .marktl-mermaid-source { margin: 22px 0; }
+      @media (max-width: 760px) { main { padding: 18px 12px 52px; } article { padding: 20px; } table { display: block; overflow-x: auto; } }
+    `
+      },
+      {
         id: "playground",
         name: "Playground",
         description: "Purpose-built working surface with editable notes, sliders, and copyable state.",
@@ -1041,6 +1063,9 @@ ${markdown}`;
       if (!trusted) {
         return "Keep interaction affordances static: anchors, tables, checklists, and copy-ready text blocks only. Do not add editable playground controls, state JSON panels, or scripts.";
       }
+      if (template === "construction-daily") {
+        return "Build a Korean construction daily report, not a generic article. On desktop, use a first-screen two-column hero where the left side contains the title and concise project summary and the right side renders the primary infographic or lead image at comparable visual weight. On mobile, do not preserve the desktop side-by-side composition; stack the hero in this reader order: kicker/date, primary infographic or lead image, title, then summary. Convert Obsidian callouts, DataviewJS, and raw markdown syntax into clean reader-facing HTML; never show raw markers such as [!abstract]+, dataviewjs, frontmatter, or code used only for Obsidian rendering. Include concise Mermaid-style flow maps for overall structure and staff/contractor handling with short node labels only, keeping detailed commentary outside nodes. Include an HTML/CSS execution-gate Gantt section for permit, funding/bond, kickoff, retaining wall, gate/fence, and expansion work. Use Korean-only reader tags and card-ready summary text around 50 characters. Keep all controls local-only and self-contained.";
+      }
       if (artifactGoal === "tune" || template === "playground") {
         return "Use local-only editable controls, state JSON, and copy-next-prompt affordances, but label why the controls exist and what the reader should do next. Keep everything self-contained.";
       }
@@ -1193,6 +1218,16 @@ var require_presets = __commonJS({
         artifactGoal: "review",
         artifactType: "interactive-explainer",
         template: "interactive-report",
+        mode: "presentation",
+        previewSecurity: "trusted"
+      },
+      {
+        id: "construction-daily-report",
+        name: "Construction Daily",
+        description: "Korean construction daily report with large lead infographic, concise Mermaid-style flow maps, and execution-gate Gantt UI.",
+        artifactGoal: "review",
+        artifactType: "research-report",
+        template: "construction-daily",
         mode: "presentation",
         previewSecurity: "trusted"
       },
@@ -1394,12 +1429,12 @@ var require_github_pages = __commonJS({
           tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
         }
       }
-      const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} <span>${count}</span></button>`).join("");
+      const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).slice(0, 14).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} <span>${count}</span></button>`).join("");
       const list = items.map((item) => {
         const href = item.url || item.canonicalUrl || (baseUrl ? `${baseUrl}/${encodeURIComponent(item.slug)}/` : `${encodeURIComponent(item.slug)}/`);
         const tags = normalizeTags(item.tags);
         const itemTitle = recoverShareTitle(item);
-        const excerpt = cleanArchiveText(item.excerpt || item.sourcePath || "", "");
+        const excerpt = truncateArchiveText(cleanArchiveText(item.excerpt || item.sourcePath || "", ""), 58);
         const sourcePath = cleanArchiveText(item.sourcePath || "", "");
         const artifactType = cleanArchiveText(item.artifactType || "HTML artifact", "HTML artifact");
         const searchText = [
@@ -1411,15 +1446,16 @@ var require_github_pages = __commonJS({
           ...tags
         ].filter(Boolean).join(" ").toLowerCase();
         return `<article class="item" data-search="${escapeHtml(searchText)}" data-tags="${escapeHtml(tags.join(" "))}">
+${item.thumbnail ? `<a class="thumb" href="${escapeHtml(href)}"><img src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.thumbnailAlt || itemTitle)}" loading="lazy"></a>` : ""}
 <div class="item-top"><a href="${escapeHtml(href)}">${escapeHtml(itemTitle)}</a><span>${escapeHtml(formatDate(item.updatedAt))}</span></div>
 ${excerpt ? `<p>${escapeHtml(excerpt)}</p>` : ""}
 <div class="item-meta"><span>${escapeHtml(artifactType)}</span>${sourcePath ? `<span>${escapeHtml(sourcePath)}</span>` : ""}</div>
 ${tags.length ? `<div class="tags">${tags.map((tag) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")}</div>` : ""}
-<a class="open-link" href="${escapeHtml(href)}">Open artifact</a>
+<a class="open-link" href="${escapeHtml(href)}">문서 열기</a>
 </article>`;
       }).join("\n");
       return `<!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1432,9 +1468,10 @@ main{max-width:1180px;margin:0 auto;padding:44px 22px 72px}
 h1{font-size:clamp(34px,6vw,72px);line-height:.98;margin:0;overflow-wrap:anywhere}.meta{color:#68737d;margin:0;font-size:18px}
 .toolbar{position:sticky;top:0;z-index:2;display:grid;gap:12px;background:rgba(246,247,244,.94);backdrop-filter:blur(12px);border-bottom:1px solid #dde2e6;padding:14px 0;margin-bottom:22px}
 .toolbar input{width:100%;border:1px solid #cfd8e5;border-radius:8px;padding:12px 14px;font-size:16px;background:#fff;color:#172033}
-.tagbar{display:flex;flex-wrap:wrap;gap:8px;max-height:96px;overflow:auto}.tagbar button,.tags button{border:1px solid #d6dfeb;background:#fff;color:#33506d;border-radius:999px;padding:6px 10px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tagbar button.active,.tags button:hover{background:#174ea6;color:#fff}
+.tagbar{display:flex;flex-wrap:nowrap;gap:6px;max-height:28px;overflow:hidden}.tagbar button,.tags button{border:1px solid #d6dfeb;background:#fff;color:#33506d;border-radius:999px;padding:4px 8px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.tagbar button.active,.tags button:hover{background:#174ea6;color:#fff}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:16px;align-items:stretch}
 .item{display:flex;min-width:0;min-height:260px;flex-direction:column;gap:12px;background:#fff;border:1px solid #dde2e6;border-radius:8px;padding:18px;box-shadow:0 12px 32px rgba(23,32,51,.05);overflow:hidden}
+.thumb{display:flex;align-items:center;justify-content:center;height:150px;margin:-18px -18px 4px;background:#f3f6fb;border-bottom:1px solid #dde2e6;overflow:hidden}.thumb img{width:100%;height:100%;object-fit:cover}
 .item-top{display:grid;gap:8px}.item a{color:#174ea6;font-size:20px;font-weight:800;line-height:1.25;text-decoration:none;overflow-wrap:anywhere}.item a:hover{text-decoration:underline}
 .item-top span,.item-meta{color:#68737d;font-size:13px}.item p{color:#344054;line-height:1.55;margin:0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.item-meta{display:grid;gap:4px;margin-top:auto;overflow-wrap:anywhere}.tags{display:flex;flex-wrap:wrap;gap:6px;max-height:78px;overflow:hidden}
 .open-link{align-self:flex-start;border:1px solid #d6dfeb;border-radius:999px;padding:7px 11px;background:#f8fbff;font-size:13px!important;font-weight:800!important}
@@ -1443,9 +1480,9 @@ h1{font-size:clamp(34px,6vw,72px);line-height:.98;margin:0;overflow-wrap:anywher
 </style>
 </head>
 <body><main>
-<section class="hero"><div class="eyebrow">MarkTL Archive</div><h1>${escapeHtml(title)}</h1><p class="meta"><span id="count">${items.length}</span> published document(s). Search, filter, and open any shared HTML artifact.</p></section>
-<section class="toolbar" aria-label="Archive controls"><input id="search" type="search" placeholder="Search documents, tags, sources..." aria-label="Search documents"><div class="tagbar"><button type="button" data-tag="">All</button>${tagButtons}</div></section>
-<section class="grid" id="items">${list || '<p class="empty">No published documents yet.</p>'}</section>
+<section class="hero"><div class="eyebrow">통합선별공장 Archive</div><h1>${escapeHtml(title)}</h1><p class="meta">공유 문서 <span id="count">${items.length}</span>건. 검색, 필터, 날짜별로 HTML 산출물을 열 수 있습니다.</p></section>
+<section class="toolbar" aria-label="Archive controls"><input id="search" type="search" placeholder="문서, 태그, 출처 검색..." aria-label="문서 검색"><div class="tagbar"><button type="button" data-tag="">전체</button>${tagButtons}</div></section>
+<section class="grid" id="items">${list || '<p class="empty">게시된 문서가 없습니다.</p>'}</section>
 </main>
 <script>
 const search = document.getElementById('search');
@@ -1616,6 +1653,13 @@ applyFilters();
         return fallback;
       }
       return cleaned.length > 220 ? `${cleaned.slice(0, 217)}...` : cleaned;
+    }
+    function truncateArchiveText(value, limit = 58) {
+      const text = String(value || "").trim();
+      if (!text || text.length <= limit) {
+        return text;
+      }
+      return `${text.slice(0, limit).trim()}...`;
     }
     function repairMojibake(value) {
       let best = String(value || "");
@@ -2279,6 +2323,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       "readable-note": "읽기 좋게",
       presentation: "발표하기",
       "interactive-report": "검토하기",
+      "construction-daily-report": "공사일보",
       "compare-options": "옵션 비교",
       "shareable-article": "게시/공유",
       playground: "AI로 다시 작업"
@@ -2287,11 +2332,12 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       "readable-note": "더 나은 타이포그래피로 원문을 충실하고 깔끔하게 보여줍니다.",
       presentation: "노트를 발표나 리뷰에 맞는 섹션형 HTML로 구성합니다.",
       "interactive-report": "목차, 접힘 섹션, 복사 버튼을 포함한 HTML 검토 화면입니다.",
+      "construction-daily-report": "대표 인포그래픽, 현장 흐름도, 실행 게이트 간트를 포함한 공사일보 HTML입니다.",
       "compare-options": "선택지, 점수표, 필터, 비교 요약에 적합합니다.",
       "shareable-article": "이미지를 묶어 정적 호스팅에 바로 올릴 수 있는 기사형 레이아웃입니다.",
       playground: "슬라이더와 복사 가능한 상태를 가진 재작업용 인터랙티브 화면입니다."
     };
-    const order = ["readable-note", "presentation", "interactive-report", "compare-options", "shareable-article", "playground"];
+    const order = ["readable-note", "presentation", "interactive-report", "construction-daily-report", "compare-options", "shareable-article", "playground"];
     for (const id of order) {
       const preset = (0, import_presets.findExportPreset)(id);
       if (!preset) {
@@ -4349,11 +4395,42 @@ ${value}
     const inlineTags = tagLine.replace(/^\[|\]$/g, "").split(",").map(cleanScalar).filter(Boolean);
     const tagBlock = /^tags:\s*\n((?:\s+-\s*.+(?:\n|$))*)/m.exec(frontmatter);
     const yamlListTags = tagBlock ? [...tagBlock[1].matchAll(/^\s*-\s*(.+?)\s*$/gm)].map((match) => cleanScalar(match[1])) : [];
-    const body = value.replace(/^---\n[\s\S]*?\n---\s*/, "").replace(/<!--[\s\S]*?-->/g, " ").replace(/<![^>]*>/g, " ").replace(/^#\s+.+$/m, "").replace(/!\[\[[^\]]+]]/g, "").replace(/!\[[^\]]*]\([^)]+\)/g, "").replace(/\[([^\]]+)]\([^)]+\)/g, "$1").replace(/[#*_`>~-]/g, "").split("\n").map((line) => line.trim()).filter(Boolean).join(" ");
+    const readerTagMap = {
+      "project/지수통합선별공장": "지수통합선별공장",
+      "topic/지수통합선별공장": "지수통합선별공장",
+      "construction/daily-report": "공사일보",
+      "construction/착공": "착공",
+      "construction/콘크리트철거": "콘크리트철거",
+      "construction/옹벽기초": "옹벽기초",
+      "risk/준공검사": "준공리스크",
+      "risk/방수": "방수배수",
+      "obsidian/project-management": "프로젝트관리",
+      "obsidian/dataviewjs": "",
+      "obsidian/mermaid": "",
+      dataviewjs: "",
+      gantt: "일정관리",
+      budget: "예산",
+      risk: "리스크",
+      "function/ops": "운영관리",
+      "doc/보고서": "보고서",
+      "doc/meeting": "회의록"
+    };
+    const toReaderTag = (tag) => {
+      const raw = String(tag || "").replace(/^#/, "").trim();
+      if (!raw) {
+        return "";
+      }
+      if (Object.prototype.hasOwnProperty.call(readerTagMap, raw)) {
+        return readerTagMap[raw];
+      }
+      const last = raw.includes("/") ? raw.split("/").filter(Boolean).pop() : raw;
+      return /[가-힣]/.test(last) ? last.replace(/^업무\//, "").replace(/^프로젝트\//, "").slice(0, 18) : "";
+    };
+    const body = value.replace(/^---\n[\s\S]*?\n---\s*/, "").replace(/```(?:dataviewjs|dataview|mermaid|gantt)?[\s\S]*?```/gi, " ").replace(/<!--[\s\S]*?-->/g, " ").replace(/<![^>]*>/g, " ").replace(/^#\s+.+$/m, "").replace(/\[!abstract]\+?/gi, " ").replace(/한 줄\s*(요약|브리프)/g, " ").replace(/!\[\[[^\]]+]]/g, "").replace(/!\[[^\]]*]\([^)]+\)/g, "").replace(/\[([^\]]+)]\([^)]+\)/g, "$1").replace(/[#*_`>~-]/g, "").split("\n").map((line) => line.trim()).filter(Boolean).join(" ");
     return {
       title: title.trim(),
       excerpt: body.slice(0, 180),
-      tags: [...new Set([...inlineTags, ...yamlListTags].map((tag) => tag.replace(/^#/, "").trim()).filter(Boolean))].slice(0, 8)
+      tags: [...new Set([...inlineTags, ...yamlListTags].map(toReaderTag).filter(Boolean))].slice(0, 8)
     };
   }
   async publishShareIndex(owner, repo, branch, basePath, entry, pagesBaseUrl) {
