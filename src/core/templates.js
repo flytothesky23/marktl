@@ -230,6 +230,28 @@ const templates = [
     `,
   },
   {
+    id: 'construction-daily',
+    name: 'Construction Daily',
+    description: 'Field-report layout with large lead visual, concise flow maps, and execution-gate Gantt sections.',
+    css: `
+      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f7f3eb; }
+      main { max-width: 1180px; margin: 0 auto; padding: 34px 24px 72px; }
+      article { background: rgba(255,255,255,.74); border: 1px solid #d9cfc0; border-radius: 8px; padding: 30px; box-shadow: 0 18px 44px rgba(23,32,51,.08); }
+      h1 { font-size: clamp(2.4rem, 5vw, 5.5rem); line-height: .98; letter-spacing: 0; margin: 0 0 22px; color: #172033; }
+      h2 { margin: 42px 0 16px; color: #174ea6; border-left: 6px solid #f97316; padding-left: 12px; font-size: clamp(1.5rem, 3vw, 2.4rem); }
+      h3 { margin: 24px 0 10px; color: #1f2937; }
+      p, li { line-height: 1.68; }
+      table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d9e2ec; border-radius: 8px; overflow: hidden; }
+      th, td { border-bottom: 1px solid #d9e2ec; padding: 10px 12px; text-align: left; vertical-align: top; }
+      th { background: #10233f; color: #fff; }
+      img { max-width: 100%; height: auto; border-radius: 8px; display: block; }
+      pre { overflow: auto; background: #111827; color: #f8fafc; border-radius: 8px; padding: 16px; }
+      .callout { border-left: 5px solid #174ea6; background: #eff6ff; border-radius: 8px; padding: 14px 18px; }
+      .marktl-mermaid-rendered, .marktl-mermaid-source { margin: 22px 0; }
+      @media (max-width: 760px) { main { padding: 18px 12px 52px; } article { padding: 20px; } table { display: block; overflow-x: auto; } }
+    `,
+  },
+  {
     id: 'playground',
     name: 'Playground',
     description: 'Purpose-built working surface with editable notes, sliders, and copyable state.',

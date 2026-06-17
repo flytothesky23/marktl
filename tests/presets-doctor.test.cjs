@@ -13,6 +13,7 @@ test('ships beginner-facing HTML value presets', () => {
   assert.deepEqual(ids, [
     'readable-note',
     'interactive-report',
+    'construction-daily-report',
     'presentation',
     'decision-memo',
     'shareable-article',
@@ -21,6 +22,7 @@ test('ships beginner-facing HTML value presets', () => {
     'pr-explainer',
   ]);
   assert.equal(findExportPreset('interactive-report').previewSecurity, 'trusted');
+  assert.equal(findExportPreset('construction-daily-report').template, 'construction-daily');
   assert.equal(findExportPreset('shareable-article').mode, 'blog');
   assert.equal(findExportPreset('decision-memo').artifactGoal, 'decide');
   assert.equal(findExportPreset('playground').template, 'playground');

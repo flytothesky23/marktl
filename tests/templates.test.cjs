@@ -8,8 +8,9 @@ test('ships multiple selectable templates for advanced conversion', () => {
 
   assert.deepEqual(
     templates.map((template) => template.id),
-    ['minimal', 'editorial', 'deck', 'dashboard', 'investor-brief', 'research-memo', 'interactive-report', 'playground'],
+    ['minimal', 'editorial', 'deck', 'dashboard', 'investor-brief', 'research-memo', 'interactive-report', 'construction-daily', 'playground'],
   );
+  assert.match(getTemplate('construction-daily').description, /Field-report/);
   assert.equal(getTemplate('missing').id, 'minimal');
 });
 

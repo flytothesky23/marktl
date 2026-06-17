@@ -43,6 +43,9 @@ export class MarktlResultModal extends Modal {
       : this.summary.usedFallback ? `${this.summary.aiProvider} failed; local fallback used` : `${this.summary.aiProvider} generated HTML`);
     this.addFact(facts, 'Images', `${this.summary.assetCount} bundled local image(s)`);
     this.addFact(facts, 'Share target', this.describeShareTarget());
+    if (this.summary.shareHomeTitle) {
+      this.addFact(facts, 'Share hub', this.summary.shareHomeTitle);
+    }
     this.addFact(facts, 'Comments', this.summary.commentsStatus);
     if (this.summary.publicUrl) {
       this.addFact(facts, 'Public URL', this.summary.publicUrl);

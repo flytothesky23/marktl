@@ -417,18 +417,18 @@ var require_templates = __commonJS({
       const copyText = async (label, text) => {
         try {
           await navigator.clipboard.writeText(text);
-          label.textContent = '복사됨';
+          label.textContent = 'Copied';
           setTimeout(() => { label.textContent = label.dataset.label; }, 1200);
         } catch {
-          label.textContent = '복사 실패';
+          label.textContent = 'Copy failed';
         }
       };
       const toolbox = document.createElement('div');
       toolbox.className = 'toolbox';
       const filter = document.createElement('input');
       filter.type = 'search';
-      filter.placeholder = '섹션 필터';
-      filter.setAttribute('aria-label', '섹션 필터');
+      filter.placeholder = 'Filter sections';
+      filter.setAttribute('aria-label', 'Filter sections');
       toolbox.append(filter);
       const makeButton = (label, getText) => {
         const button = document.createElement('button');
@@ -438,13 +438,13 @@ var require_templates = __commonJS({
         button.addEventListener('click', () => copyText(button, getText()));
         toolbox.append(button);
       };
-      makeButton('프롬프트로 복사', () => '이 HTML 산출물을 맥락으로 삼아 결정과 구조를 이어서 개선해 주세요:\\n\\n' + document.body.innerText);
-      makeButton('Markdown 복사', () => document.querySelector('article').innerText);
-      makeButton('요약 복사', () => [...document.querySelectorAll('h1,h2,h3')].map((h) => '- ' + h.textContent).join('\\n'));
-      makeButton('목차 JSON 복사', () => JSON.stringify([...document.querySelectorAll('h1,h2,h3')].map((h) => ({ level: h.tagName, text: h.textContent.trim(), id: h.id || '' })), null, 2));
+      makeButton('Copy as prompt', () => 'Use this HTML artifact as context and continue from its decisions and structure:\\n\\n' + document.body.innerText);
+      makeButton('Copy as markdown', () => document.querySelector('article').innerText);
+      makeButton('Copy summary', () => [...document.querySelectorAll('h1,h2,h3')].map((h) => '- ' + h.textContent).join('\\n'));
+      makeButton('Copy outline JSON', () => JSON.stringify([...document.querySelectorAll('h1,h2,h3')].map((h) => ({ level: h.tagName, text: h.textContent.trim(), id: h.id || '' })), null, 2));
       const expandButton = document.createElement('button');
       expandButton.type = 'button';
-      expandButton.textContent = '모두 펼치기';
+      expandButton.textContent = 'Expand all';
       expandButton.addEventListener('click', () => {
         document.querySelectorAll('article [hidden]').forEach((node) => { node.hidden = false; });
       });
@@ -467,7 +467,7 @@ var require_templates = __commonJS({
       if (headings.length) {
         const toc = document.createElement('nav');
         toc.className = 'toc';
-        toc.innerHTML = '<strong>목차</strong> ';
+        toc.innerHTML = '<strong>Contents</strong> ';
         headings.forEach((heading, index) => {
           heading.id = heading.id || 'section-' + (index + 1);
           const link = document.createElement('a');
@@ -539,10 +539,10 @@ var require_templates = __commonJS({
       const article = document.querySelector('article');
       const panel = document.createElement('div');
       panel.className = 'playground-panel';
-      panel.innerHTML = '<label><span class="playground-muted">강조도</span><input type="range" min="1" max="3" value="2" aria-label="강조도"></label><button type="button" data-action="copy-prompt">프롬프트 복사</button><button type="button" data-action="copy-state">상태 JSON 복사</button>';
+      panel.innerHTML = '<label><span class="playground-muted">Emphasis</span><input type="range" min="1" max="3" value="2" aria-label="Emphasis"></label><button type="button" data-action="copy-prompt">Copy prompt</button><button type="button" data-action="copy-state">Copy state JSON</button>';
       document.querySelector('main').prepend(panel);
       const note = document.createElement('section');
-      note.innerHTML = '<h2>작업 메모</h2><div class="playground-note" contenteditable="true" role="textbox" aria-label="작업 메모">산출물을 검토하며 이 영역을 편집하세요. 프롬프트 복사 또는 상태 JSON 복사로 AI 세션에 다시 전달할 수 있습니다.</div>';
+      note.innerHTML = '<h2>Working notes</h2><div class="playground-note" contenteditable="true" role="textbox" aria-label="Working notes">Edit this area while reviewing the artifact. Use Copy prompt or Copy state JSON to bring the result back to your AI session.</div>';
       article.prepend(note);
       const applyEmphasis = () => {
         article.classList.remove('playground-emphasis-low', 'playground-emphasis-medium', 'playground-emphasis-high');
@@ -559,14 +559,14 @@ var require_templates = __commonJS({
         const original = button.textContent;
         try {
           await navigator.clipboard.writeText(text);
-          button.textContent = '복사됨';
+          button.textContent = 'Copied';
         } catch {
-          button.textContent = '복사 실패';
+          button.textContent = 'Copy failed';
         }
         setTimeout(() => { button.textContent = original; }, 1200);
       };
       panel.querySelector('[data-action="copy-state"]').addEventListener('click', (event) => copy(event.currentTarget, JSON.stringify(state(), null, 2)));
-      panel.querySelector('[data-action="copy-prompt"]').addEventListener('click', (event) => copy(event.currentTarget, '검토한 HTML 산출물 상태를 다음 개선 작업의 피드백으로 사용해 주세요:\\n\\n' + JSON.stringify(state(), null, 2)));
+      panel.querySelector('[data-action="copy-prompt"]').addEventListener('click', (event) => copy(event.currentTarget, 'Use this reviewed HTML artifact state as feedback for the next iteration:\\n\\n' + JSON.stringify(state(), null, 2)));
     `
       }
     ];
@@ -576,26 +576,17 @@ var require_templates = __commonJS({
     function getTemplate(id) {
       return templates.find((template) => template.id === id) || templates[0];
     }
-    function getCommonExportCss() {
-      return `
-      .marktl-mermaid-rendered { margin: 24px 0; padding: 12px; border: 1px solid rgba(37, 99, 235, 0.18); border-radius: 16px; background: rgba(255,255,255,0.72); overflow-x: auto; }
-      .marktl-mermaid-rendered svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
-      .marktl-mermaid-source { margin: 20px 0; border-radius: 14px; overflow: hidden; }
-      .marktl-skipped-links { margin: 18px 0; padding: 12px 14px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 12px; color: #64748b; background: rgba(248,250,252,0.82); font-size: 0.92rem; }
-      `;
-    }
     function wrapWithTemplate(bodyHtml, options = {}) {
       const template = getTemplate(options.template);
       const title = options.title || "Exported note";
       const script = options.trusted && template.script ? `<script>${template.script}</script>` : "";
       return `<!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
-<style>${template.css}
-${getCommonExportCss()}</style>
+<style>${template.css}</style>
 </head>
 <body>
 <main data-template="${escapeHtml(template.id)}">
@@ -680,10 +671,7 @@ var require_converter = __commonJS({
             index += 1;
           }
           index += 1;
-          const normalizedLanguage = language.toLowerCase().trim().split(/\s+/)[0];
-          const languageClass = language ? ` class="language-${escapeHtml(language)}"` : "";
-          const mermaidAttr = normalizedLanguage === "mermaid" ? ` class="marktl-mermaid-source"><code class="language-mermaid" data-marktl-mermaid="true"` : `><code${languageClass}`;
-          blocks.push(`<pre${mermaidAttr}>${escapeHtml(code.join("\n"))}</code></pre>`);
+          blocks.push(`<pre><code${language ? ` class="language-${escapeHtml(language)}"` : ""}>${escapeHtml(code.join("\n"))}</code></pre>`);
           continue;
         }
         const callout = readCallout(lines, index);
@@ -799,17 +787,389 @@ var require_converter = __commonJS({
   }
 });
 
+// src/core/export-profiles.js
+var require_export_profiles = __commonJS({
+  "src/core/export-profiles.js"(exports2, module2) {
+    "use strict";
+    var exportGenres = [
+      {
+        id: "construction-daily",
+        label: "\uACF5\uC0AC\uC77C\uBCF4",
+        description: "\uD604\uC7A5 \uC0AC\uC9C4, \uB2F9\uC77C \uC791\uC5C5, \uB9AC\uC2A4\uD06C \uC911\uC2EC"
+      },
+      {
+        id: "meeting-notes",
+        label: "\uD68C\uC758\uB85D",
+        description: "\uC548\uAC74, \uACB0\uC815\uC0AC\uD56D, \uD6C4\uC18D \uC870\uCE58"
+      },
+      {
+        id: "integrated-note",
+        label: "\uD1B5\uD569\uB178\uD2B8",
+        description: "\uC5EC\uB7EC \uD750\uB984\uC744 \uD55C \uD654\uBA74\uC5D0 \uC815\uB9AC"
+      },
+      {
+        id: "report",
+        label: "\uBCF4\uACE0\uC11C",
+        description: "\uC694\uC57D, \uADFC\uAC70, \uC2DC\uC0AC\uC810 \uC911\uC2EC"
+      },
+      {
+        id: "general-note",
+        label: "\uC77C\uBC18 \uB178\uD2B8",
+        description: "\uC6D0\uBB38 \uAD6C\uC870\uB97C \uC77D\uAE30 \uC88B\uAC8C \uBCF4\uC874"
+      },
+      {
+        id: "compare-review",
+        label: "\uBE44\uAD50 \uAC80\uD1A0",
+        description: "\uC120\uD0DD\uC9C0, \uAE30\uC900, \uC7A5\uB2E8\uC810 \uBE44\uAD50"
+      },
+      {
+        id: "presentation",
+        label: "\uBC1C\uD45C \uC790\uB8CC",
+        description: "\uBCF4\uACE0/\uBC1C\uD45C\uC6A9 \uC139\uC158 \uD654\uBA74"
+      },
+      {
+        id: "share-article",
+        label: "\uACF5\uC720 \uAE30\uC0AC",
+        description: "\uACF5\uAC1C \uACF5\uC720\uC6A9 \uAE30\uC0AC\uD615 HTML"
+      }
+    ];
+    var exportDepths = [
+      {
+        id: "brief",
+        label: "\uAC04\uB2E8 \uAE30\uB85D",
+        description: "\uC0AC\uC9C4\uACFC \uB2F9\uC77C \uC791\uC5C5 \uC911\uC2EC"
+      },
+      {
+        id: "standard",
+        label: "\uD45C\uC900 \uC77C\uBCF4",
+        description: "\uC791\uC5C5, \uC99D\uBE59, \uB9AC\uC2A4\uD06C, \uB2E4\uC74C \uC791\uC5C5"
+      },
+      {
+        id: "milestone",
+        label: "\uC885\uD569\xB7\uB9C8\uC77C\uC2A4\uD1A4",
+        description: "\uC77C\uC815, \uACF5\uC815 \uD750\uB984, \uACC4\uD68D \uB300\uBE44 \uC2E4\uC801"
+      }
+    ];
+    var exportPurposes = [
+      {
+        id: "internal-share",
+        label: "\uB0B4\uBD80 \uACF5\uC720",
+        description: "\uD300 \uC0C1\uD669 \uACF5\uC720"
+      },
+      {
+        id: "field-review",
+        label: "\uD604\uC7A5 \uAC80\uD1A0",
+        description: "\uC99D\uBE59, \uB9AC\uC2A4\uD06C, \uB2E4\uC74C \uC870\uCE58 \uD655\uC778"
+      },
+      {
+        id: "external-report",
+        label: "\uC678\uBD80 \uBCF4\uACE0",
+        description: "\uC678\uBD80 \uC774\uD574\uAD00\uACC4\uC790 \uBCF4\uACE0"
+      },
+      {
+        id: "public-archive",
+        label: "\uACF5\uAC1C \uC544\uCE74\uC774\uBE0C",
+        description: "\uACF5\uAC1C \uBAA9\uB85D\uACFC \uC7AC\uC5F4\uB78C \uAE30\uC900"
+      },
+      {
+        id: "presentation",
+        label: "\uBC1C\uD45C",
+        description: "\uD68C\uC758 \uD654\uBA74 \uACF5\uC720"
+      },
+      {
+        id: "ai-rework",
+        label: "AI \uC7AC\uC791\uC5C5",
+        description: "\uAC80\uD1A0\uC640 \uC7AC\uC791\uC5C5\uC6A9 \uD654\uBA74"
+      }
+    ];
+    var defaultSelection = {
+      exportGenre: "construction-daily",
+      exportDepth: "standard",
+      exportPurpose: "field-review"
+    };
+    var genreProfiles = {
+      "construction-daily": {
+        artifactGoal: "review",
+        artifactType: "research-report",
+        template: "construction-daily",
+        conversionMode: "presentation",
+        previewSecurity: "trusted"
+      },
+      "meeting-notes": {
+        artifactGoal: "review",
+        artifactType: "interactive-explainer",
+        template: "interactive-report",
+        conversionMode: "presentation",
+        previewSecurity: "trusted"
+      },
+      "integrated-note": {
+        artifactGoal: "read",
+        artifactType: "strategy-brief",
+        template: "dashboard",
+        conversionMode: "presentation",
+        previewSecurity: "trusted"
+      },
+      report: {
+        artifactGoal: "review",
+        artifactType: "research-report",
+        template: "research-memo",
+        conversionMode: "presentation",
+        previewSecurity: "trusted"
+      },
+      "general-note": {
+        artifactGoal: "read",
+        artifactType: "faithful-note",
+        template: "editorial",
+        conversionMode: "preserve",
+        previewSecurity: "sanitized"
+      },
+      "compare-review": {
+        artifactGoal: "compare",
+        artifactType: "decision-memo",
+        template: "dashboard",
+        conversionMode: "presentation",
+        previewSecurity: "trusted"
+      },
+      presentation: {
+        artifactGoal: "read",
+        artifactType: "slide-deck",
+        template: "deck",
+        conversionMode: "presentation",
+        previewSecurity: "trusted"
+      },
+      "share-article": {
+        artifactGoal: "publish",
+        artifactType: "research-report",
+        template: "editorial",
+        conversionMode: "blog",
+        previewSecurity: "sanitized"
+      }
+    };
+    function listExportGenres3() {
+      return exportGenres.slice();
+    }
+    function listExportDepths3() {
+      return exportDepths.slice();
+    }
+    function listExportPurposes3() {
+      return exportPurposes.slice();
+    }
+    function findExportGenre(id) {
+      return exportGenres.find((item) => item.id === id) || exportGenres[0];
+    }
+    function findExportDepth(id) {
+      return exportDepths.find((item) => item.id === id) || exportDepths[1];
+    }
+    function findExportPurpose(id) {
+      return exportPurposes.find((item) => item.id === id) || exportPurposes[1];
+    }
+    function normalizeExportSelection2(selection = {}) {
+      return {
+        exportGenre: findExportGenre(selection.exportGenre || defaultSelection.exportGenre).id,
+        exportDepth: findExportDepth(selection.exportDepth || defaultSelection.exportDepth).id,
+        exportPurpose: findExportPurpose(selection.exportPurpose || defaultSelection.exportPurpose).id
+      };
+    }
+    function getExecutionProfile(selection = {}) {
+      const normalized = normalizeExportSelection2(selection);
+      const profile = {
+        ...genreProfiles[normalized.exportGenre] || genreProfiles[defaultSelection.exportGenre]
+      };
+      if (normalized.exportGenre === "construction-daily") {
+        if (normalized.exportDepth === "brief") {
+          Object.assign(profile, {
+            artifactGoal: "read",
+            artifactType: "faithful-note",
+            conversionMode: "preserve",
+            previewSecurity: "sanitized"
+          });
+        }
+        if (normalized.exportDepth === "milestone") {
+          Object.assign(profile, {
+            artifactGoal: "review",
+            artifactType: "strategy-brief",
+            conversionMode: "presentation",
+            previewSecurity: "trusted"
+          });
+        }
+      }
+      if (normalized.exportPurpose === "public-archive") {
+        profile.artifactGoal = normalized.exportGenre === "construction-daily" ? profile.artifactGoal : "publish";
+      }
+      if (normalized.exportPurpose === "presentation") {
+        profile.conversionMode = "presentation";
+        profile.previewSecurity = "trusted";
+      }
+      if (normalized.exportPurpose === "ai-rework") {
+        Object.assign(profile, {
+          artifactGoal: "tune",
+          artifactType: "interactive-explainer",
+          template: "playground",
+          conversionMode: "presentation",
+          previewSecurity: "trusted"
+        });
+      }
+      return {
+        ...normalized,
+        ...profile
+      };
+    }
+    function applySelectionProfile3(baseOptions = {}, selection = {}) {
+      const profile = getExecutionProfile(selection);
+      return {
+        ...baseOptions,
+        exportGenre: profile.exportGenre,
+        exportDepth: profile.exportDepth,
+        exportPurpose: profile.exportPurpose,
+        artifactGoal: profile.artifactGoal,
+        artifactType: profile.artifactType,
+        template: profile.template,
+        conversionMode: profile.conversionMode,
+        previewSecurity: profile.previewSecurity
+      };
+    }
+    function describeExecutionProfile2(selection = {}) {
+      const profile = getExecutionProfile(selection);
+      return [
+        findExportGenre(profile.exportGenre).label,
+        findExportDepth(profile.exportDepth).label,
+        findExportPurpose(profile.exportPurpose).label
+      ].join(" \xB7 ");
+    }
+    module2.exports = {
+      applySelectionProfile: applySelectionProfile3,
+      defaultSelection,
+      describeExecutionProfile: describeExecutionProfile2,
+      findExportDepth,
+      findExportGenre,
+      findExportPurpose,
+      getExecutionProfile,
+      listExportDepths: listExportDepths3,
+      listExportGenres: listExportGenres3,
+      listExportPurposes: listExportPurposes3,
+      normalizeExportSelection: normalizeExportSelection2
+    };
+  }
+});
+
+// src/core/prompt-composer.js
+var require_prompt_composer = __commonJS({
+  "src/core/prompt-composer.js"(exports2, module2) {
+    "use strict";
+    var {
+      findExportDepth,
+      findExportGenre,
+      findExportPurpose,
+      normalizeExportSelection: normalizeExportSelection2
+    } = require_export_profiles();
+    function buildSelectionPrompt(options = {}) {
+      const selection = normalizeExportSelection2(options);
+      const referencePath = String(options.referenceContextNotePath || "").trim();
+      const blocks = [
+        "Selection-driven generation contract:",
+        `- Document genre: ${findExportGenre(selection.exportGenre).label}`,
+        `- Writing depth: ${findExportDepth(selection.exportDepth).label}`,
+        `- Reader purpose: ${findExportPurpose(selection.exportPurpose).label}`,
+        `Genre instruction: ${getGenreInstruction(selection.exportGenre)}`,
+        `Depth instruction: ${getDepthInstruction(selection.exportGenre, selection.exportDepth)}`,
+        `Audience instruction: ${getPurposeInstruction(selection.exportPurpose)}`,
+        `Context instruction: ${getContextInstruction(selection.exportGenre, selection.exportDepth, referencePath)}`,
+        `Quality contract: ${getQualityContract(selection.exportGenre, selection.exportDepth)}`
+      ];
+      return blocks.join("\n");
+    }
+    function getGenreInstruction(genre) {
+      return {
+        "construction-daily": "Create a Korean construction daily HTML report. The reader must quickly understand what happened today, where the work sits in the project sequence, what evidence exists, what risks remain, and what should happen next.",
+        "meeting-notes": "Create a Korean meeting note artifact with agenda, attendees if available, decisions, unresolved questions, owners, and next actions.",
+        "integrated-note": "Create an integrated project note that connects status, context, decisions, risks, and next steps without turning it into a generic article.",
+        report: "Create a structured report with executive summary, evidence, analysis, implications, and next actions.",
+        "general-note": "Create a faithful readable note. Preserve the original meaning and avoid unnecessary restructuring.",
+        "compare-review": "Create a comparison review with criteria, alternatives, pros and cons, risks, and a clear comparison matrix.",
+        presentation: "Create a presentation-ready artifact with strong section rhythm, concise slide-like grouping, and one main idea per section.",
+        "share-article": "Create a polished public-facing article with clear title, summary, body sections, and share-friendly framing."
+      }[genre] || "Create a useful HTML artifact from the note.";
+    }
+    function getDepthInstruction(genre, depth) {
+      if (genre === "construction-daily") {
+        return {
+          brief: "Use a compact daily log structure. Prioritize date, location/work area, today work, image evidence, short comments, and next step. Do not force Gantt, Mermaid, or large baseline sections when the active note does not need them.",
+          standard: "Use a standard daily report structure. Include today work, image evidence, project context from the reference note when available, risks or blockers, next work, and a compact plan-versus-actual view. Include baseline Gantt/Mermaid only when the reference context provides enough material.",
+          milestone: "Use a full milestone report structure. Strongly integrate the reference note schedule, Mermaid/Gantt/process flow, plan-versus-actual status, major risks, decisions, and forward gates. Keep today facts visibly separated from continuing baseline context."
+        }[depth];
+      }
+      return {
+        brief: "Keep the artifact compact. Summarize only enough structure to make the note easy to scan.",
+        standard: "Create a balanced artifact with summary, main sections, evidence, and next actions.",
+        milestone: "Create a full artifact with context, detailed sections, implications, risks, and decision-ready next steps."
+      }[depth] || "Use a balanced level of detail.";
+    }
+    function getPurposeInstruction(purpose) {
+      return {
+        "internal-share": "Write for internal teammates. Be concise, operational, and explicit about next actions.",
+        "field-review": "Write for field review. Make evidence, risks, blockers, work sequence, and next site actions easy to inspect.",
+        "external-report": "Write for external stakeholders. Use polished Korean, avoid internal shorthand, and separate confirmed facts from assumptions.",
+        "public-archive": "Write for a searchable public archive. Include a concise card-ready summary, reader-friendly tags, and stable section titles.",
+        presentation: "Write for live presentation. Use short sections, strong headings, and visual hierarchy that can be scanned from a screen.",
+        "ai-rework": "Write for iterative AI review. Include copy-ready review notes, improvement prompts, and clear assumptions that can be brought into a next prompt."
+      }[purpose] || "Make the intended reader action obvious.";
+    }
+    function getContextInstruction(genre, depth, referencePath) {
+      if (!referencePath) {
+        return "Use only the active note. Do not invent missing project context. If the note is brief, produce a brief artifact instead of padding it.";
+      }
+      if (genre === "construction-daily") {
+        const carryForward = depth === "brief" ? "Use the reference note lightly only for names, work sequence, and recurring context." : "Carry forward schedule, process order, Mermaid/Gantt diagrams, recurring risks, and baseline assumptions from the reference note when they help explain today.";
+        return [
+          `A user-selected reference note is attached: ${referencePath}.`,
+          "The active note is the source of today/current facts.",
+          "The reference note is continuing baseline context, not today evidence.",
+          "If the active note conflicts with the reference note, follow the active note and label the difference as \uAE30\uC900 \uB300\uBE44 \uBCC0\uACBD/\uD655\uC778 \uD544\uC694.",
+          "Do not fabricate progress, quantities, completion status, manpower, weather, dates, or inspection outcomes that are not present in either note.",
+          carryForward
+        ].join(" ");
+      }
+      return [
+        `A user-selected reference note is attached: ${referencePath}.`,
+        "Use it only to clarify background, definitions, previous decisions, recurring risks, or baseline context.",
+        "The active note remains the primary source of current facts."
+      ].join(" ");
+    }
+    function getQualityContract(genre, depth) {
+      const common = "Never show raw Obsidian-only syntax such as frontmatter, dataviewjs, [!callout] markers, or code that exists only to render inside Obsidian. Keep Korean documents in Korean.";
+      if (genre !== "construction-daily") {
+        return common;
+      }
+      const byDepth = {
+        brief: "Construction daily brief must include a clear title/date, today work summary, and photo/evidence section when images exist.",
+        standard: "Construction daily standard must include title/date, today work, evidence/photos, baseline context when supplied, risks/blockers, and next work.",
+        milestone: "Construction daily milestone must include title/date, today work, baseline schedule/process context, plan-versus-actual or execution-gate view, risks/issues, decisions, and next gates."
+      };
+      return `${byDepth[depth] || byDepth.standard} ${common}`;
+    }
+    module2.exports = {
+      buildSelectionPrompt,
+      getContextInstruction,
+      getDepthInstruction,
+      getGenreInstruction,
+      getPurposeInstruction,
+      getQualityContract
+    };
+  }
+});
+
 // src/core/ai.js
 var require_ai = __commonJS({
   "src/core/ai.js"(exports2, module2) {
     "use strict";
-    var { spawn } = require("node:child_process");
+    var { spawn: spawn2 } = require("node:child_process");
     var fs = require("node:fs");
     var os = require("node:os");
     var path = require("node:path");
     var { buildAiAssetInstruction } = require_assets();
     var { getArtifactGoalInstruction } = require_artifact_goals();
     var { convertMarkdownToHtml } = require_converter();
+    var { buildSelectionPrompt } = require_prompt_composer();
     var { looksLikeHtmlDocument, sanitizeHtml } = require_sanitizer();
     var providerCommands = {
       claude: {
@@ -865,7 +1225,7 @@ var require_ai = __commonJS({
       }
       const prompt = buildPrompt(markdown, options);
       const timeout = Number(options.timeoutMs || 9e5);
-      const command = resolveCliCommandPath(options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command);
+      const command = options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command;
       const args = provider.promptAsArgument ? [...provider.args, prompt] : provider.args;
       const execOptions = {
         timeout,
@@ -894,16 +1254,6 @@ var require_ai = __commonJS({
         throw new Error(details || String(error));
       }
     }
-    function resolveCliCommandPath(command) {
-      const value = String(command || "").trim();
-      if (value === "~") {
-        return os.homedir();
-      }
-      if (value.startsWith("~/")) {
-        return path.join(os.homedir(), value.slice(2));
-      }
-      return value;
-    }
     function getProviderPrivacyNote3(provider) {
       return provider === "claude" ? "Claude Code CLI receives the note prompt as a command-line argument; avoid sending private notes if local process inspection is a concern." : "";
     }
@@ -919,7 +1269,7 @@ var require_ai = __commonJS({
     }
     function runProcess(command, args, options) {
       return new Promise((resolve, reject) => {
-        const child = spawn(command, args, {
+        const child = spawn2(command, args, {
           env: options.env,
           shell: Boolean(options.shell),
           stdio: ["pipe", "pipe", "pipe"]
@@ -993,12 +1343,14 @@ var require_ai = __commonJS({
       }[options.mode || "preserve"];
       const dynamicInstruction = options.trusted ? "Trusted mode is enabled: you may include small inline JavaScript for useful interactions, animations, toggles, table-of-contents behavior, or reveal effects. Keep it self-contained and do not load remote resources." : "Sanitized mode is enabled: do not use JavaScript, iframes, external CSS, external scripts, or remote assets. Use rich CSS-only layout and interactions instead.";
       const affordanceInstruction = getGoalAffordanceInstruction(artifactGoal, Boolean(options.trusted));
-      const interactionStandard = getInteractionStandard(artifactGoal, options.template || "minimal", Boolean(options.trusted));
+      const interactionStandard = getInteractionStandard(artifactGoal, options.template || "minimal", Boolean(options.trusted), options);
+      const selectionInstruction = buildSelectionPrompt(options);
       return `Convert this Obsidian Markdown note to a complete standalone HTML document.
 Artifact goal: ${artifactGoal}
 Artifact type: ${options.artifactType || "faithful-note"}
 Template: ${options.template || "minimal"}
 Mode: ${options.mode || "preserve"}
+${selectionInstruction}
 Goal instruction: ${goalInstruction}
 Artifact instruction: ${artifactInstruction}
 Instruction: ${modeInstruction}
@@ -1059,12 +1411,18 @@ ${markdown}`;
         publish: "Include social-friendly title, description, share framing, and polished article structure. In sanitized mode, avoid JavaScript entirely."
       }[artifactGoal] || `Make the artifact's intended next action obvious. ${policy}`;
     }
-    function getInteractionStandard(artifactGoal, template, trusted) {
+    function getInteractionStandard(artifactGoal, template, trusted, options = {}) {
       if (!trusted) {
         return "Keep interaction affordances static: anchors, tables, checklists, and copy-ready text blocks only. Do not add editable playground controls, state JSON panels, or scripts.";
       }
       if (template === "construction-daily") {
-        return "Build a Korean construction daily report, not a generic article. On desktop, use a first-screen two-column hero where the left side contains the title and concise project summary and the right side renders the primary infographic or lead image at comparable visual weight. On mobile, do not preserve the desktop side-by-side composition; stack the hero in this reader order: kicker/date, primary infographic or lead image, title, then summary. Convert Obsidian callouts, DataviewJS, and raw markdown syntax into clean reader-facing HTML; never show raw markers such as [!abstract]+, dataviewjs, frontmatter, or code used only for Obsidian rendering. Include concise Mermaid-style flow maps for overall structure and staff/contractor handling with short node labels only, keeping detailed commentary outside nodes. Include an HTML/CSS execution-gate Gantt section for permit, funding/bond, kickoff, retaining wall, gate/fence, and expansion work. Use Korean-only reader tags and card-ready summary text around 50 characters. Keep all controls local-only and self-contained.";
+        const depth = options.exportDepth || "standard";
+        const depthInstruction = {
+          brief: "For brief daily logs, keep the page compact and do not force Mermaid, Gantt, execution gates, or large baseline sections unless the active note explicitly contains them.",
+          standard: "For standard daily reports, include compact Mermaid/Gantt/process context only when the active or reference note provides enough schedule/process material.",
+          milestone: "For milestone reports, include a visible baseline schedule/process section and an HTML/CSS execution-gate or Gantt-style view when the reference note provides schedule or process material."
+        }[depth] || "";
+        return `Build a Korean construction daily report, not a generic article. On desktop, use a first-screen two-column hero where the left side contains the title and concise project summary and the right side renders the primary infographic or lead image at comparable visual weight when an image exists. On mobile, do not preserve the desktop side-by-side composition; stack the hero in this reader order: kicker/date, primary infographic or lead image, title, then summary. Convert Obsidian callouts, DataviewJS, and raw markdown syntax into clean reader-facing HTML; never show raw markers such as [!abstract]+, dataviewjs, frontmatter, or code used only for Obsidian rendering. ${depthInstruction} Use Korean-only reader tags and card-ready summary text around 50 characters. Keep all controls local-only and self-contained.`;
       }
       if (artifactGoal === "tune" || template === "playground") {
         return "Use local-only editable controls, state JSON, and copy-next-prompt affordances, but label why the controls exist and what the reader should do next. Keep everything self-contained.";
@@ -1196,6 +1554,1127 @@ ${markdown}`;
   }
 });
 
+// src/core/github-pages.js
+var require_github_pages = __commonJS({
+  "src/core/github-pages.js"(exports2, module2) {
+    "use strict";
+    var path = require("node:path");
+    function parseRepo2(value) {
+      const cleaned = String(value || "").trim().replace(/^https:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "");
+      const [owner, repo] = cleaned.split("/");
+      if (!owner || !repo) {
+        return null;
+      }
+      return { owner, repo };
+    }
+    function normalizePublishPath(value) {
+      return String(value || "").trim().replace(/^\/+|\/+$/g, "").replace(/\\/g, "/").replace(/\/+/g, "/");
+    }
+    function buildPublishPath2(basePath, slug, filePath) {
+      return [normalizePublishPath(basePath), slug, filePath].filter(Boolean).join("/").replace(/\/+/g, "/");
+    }
+    function buildPagesUrl2(baseUrl, basePath, slug) {
+      const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
+      if (!root) {
+        return "";
+      }
+      const suffix = [normalizePublishPath(basePath), slug].filter(Boolean).map((part) => encodePathPart(part)).join("/");
+      return `${root}/${suffix ? `${suffix}/` : ""}`;
+    }
+    function buildShortPagesUrl2(baseUrl, basePath, shortId) {
+      return buildPagesUrl2(baseUrl, basePath, `s/${shortId}`);
+    }
+    function buildShareHomeUrl2(baseUrl, basePath) {
+      const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
+      if (!root) {
+        return "";
+      }
+      const suffix = normalizePublishPath(basePath);
+      return `${root}/${suffix ? `${encodePathPart(suffix)}/` : ""}`;
+    }
+    function encodePathPart(value) {
+      return String(value || "").split("/").map((part) => encodeURIComponent(part)).join("/");
+    }
+    function inferPagesBaseUrl3(repoValue) {
+      const repo = parseRepo2(repoValue);
+      if (!repo) {
+        return "";
+      }
+      if (repo.repo.toLowerCase() === `${repo.owner.toLowerCase()}.github.io`) {
+        return `https://${repo.repo}`;
+      }
+      return `https://${repo.owner}.github.io/${repo.repo}`;
+    }
+    function mimeTypeForPath(filePath) {
+      const extension = path.extname(filePath).toLowerCase();
+      return {
+        ".html": "text/html; charset=utf-8",
+        ".md": "text/markdown; charset=utf-8",
+        ".css": "text/css; charset=utf-8",
+        ".js": "application/javascript",
+        ".json": "application/json",
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+        ".avif": "image/avif"
+      }[extension] || "application/octet-stream";
+    }
+    function updateShareIndex2(existingIndex, entry) {
+      const now = (entry == null ? void 0 : entry.updatedAt) || (/* @__PURE__ */ new Date()).toISOString();
+      const current = Array.isArray(existingIndex == null ? void 0 : existingIndex.items) ? existingIndex.items : [];
+      const nextEntry = normalizeShareEntry(entry, now);
+      const merged = nextEntry ? [nextEntry, ...repairShareItems(current).filter((item) => !shareItemsMatch(item, nextEntry))] : repairShareItems(current);
+      const items = dedupeShareItems(merged).sort(compareShareItems);
+      return {
+        version: 2,
+        updatedAt: now,
+        items
+      };
+    }
+    function repairShareIndex2(existingIndex) {
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const current = Array.isArray(existingIndex == null ? void 0 : existingIndex.items) ? existingIndex.items : [];
+      const items = dedupeShareItems(repairShareItems(current)).sort(compareShareItems);
+      return {
+        version: 2,
+        updatedAt: (existingIndex == null ? void 0 : existingIndex.updatedAt) || now,
+        items
+      };
+    }
+    function renderShareIndexHtml2(index, options = {}) {
+      var _a;
+      const title = cleanArchiveText(options.title || "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8", "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8");
+      const eyebrow = cleanArchiveText(options.eyebrow || "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive", "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive");
+      const description = cleanArchiveText(options.description || "\uACF5\uC0AC\uC77C\uBCF4, \uD68C\uC758\uB85D, \uBCF4\uACE0\uC11C\uB97C \uC2A4\uD2B8\uB9AC\uBC0D \uCF58\uD150\uCE20\uCC98\uB7FC \uBE60\uB974\uAC8C \uACE0\uB974\uACE0 \uBC14\uB85C \uC5EC\uB294 MarkTL \uACF5\uC720 \uC544\uCE74\uC774\uBE0C.", "\uACF5\uC720 HTML\uC744 \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uC544\uCE74\uC774\uBE0C.");
+      const baseUrl = String(options.baseUrl || "").replace(/\/+$/g, "");
+      const items = repairShareItems(Array.isArray(index == null ? void 0 : index.items) ? index.items : []).map((item, itemIndex) => normalizeArchiveItem(item, itemIndex, baseUrl));
+      const tagCounts = /* @__PURE__ */ new Map();
+      const typeCounts = /* @__PURE__ */ new Map();
+      for (const item of items) {
+        typeCounts.set(item.type, (typeCounts.get(item.type) || 0) + 1);
+        for (const tag of item.tags) {
+          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        }
+      }
+      const preferredTypes = ["\uACF5\uC0AC\uC77C\uBCF4", "\uD1B5\uD569\uB178\uD2B8", "\uD68C\uC758\uB85D", "\uB178\uD2B8", "\uBCF4\uACE0\uC11C"];
+      const typeButtons = preferredTypes.filter((type) => typeCounts.has(type)).concat([...typeCounts.keys()].filter((type) => !preferredTypes.includes(type)).sort((left, right) => left.localeCompare(right))).map((type) => `<button type="button" data-filter="${escapeHtml(type)}">${escapeHtml(type)}</button>`).join("");
+      const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).slice(0, 10).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} ${count}</button>`).join("");
+      const list = items.map(renderArchiveTile).join("\n");
+      const latestMonth = (((_a = items.find((item) => item.date)) == null ? void 0 : _a.date) || formatDate(index == null ? void 0 : index.updatedAt)).slice(0, 7) || (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
+      const docsJson = safeInlineJson(items.map((item) => ({
+        title: item.title,
+        type: item.type,
+        date: item.date,
+        url: item.href,
+        tags: item.tags
+      })));
+      return `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${escapeHtml(title)}</title>
+<meta name="description" content="${escapeHtml(description)}">
+<style>
+*{box-sizing:border-box}html,body{height:100%;background:#050507}body{margin:0;min-width:0;width:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f7f8fb;background:radial-gradient(circle at 12% 0%,rgba(255,61,61,.3),transparent 32rem),radial-gradient(circle at 88% 5%,rgba(25,211,197,.22),transparent 30rem),linear-gradient(180deg,#08090d 0%,#111014 48%,#050507 100%);overflow:hidden}a{color:inherit;text-decoration:none}button,input{font:inherit}.app{width:min(1480px,100%);height:100dvh;margin:0 auto;padding:clamp(14px,2vw,28px);display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;overflow:hidden}.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,370px);gap:24px;align-items:start;min-height:0}.hero-panel{display:grid;align-content:start;gap:0;min-width:0;padding-top:8px}.eyebrow{margin:0 0 8px;color:#ffb020;font-size:12px;font-weight:950;letter-spacing:.16em;text-transform:uppercase}.top h1{max-width:860px;margin:0;font-size:clamp(30px,4vw,56px);line-height:1.02;letter-spacing:0;font-weight:950;text-wrap:balance}.hero-copy{max-width:820px;margin:12px 0 0;color:#c8d0dc;font-size:clamp(14px,1.18vw,17px);line-height:1.5}.calendar{height:300px;min-height:300px;align-self:start;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.105),rgba(255,255,255,.045));box-shadow:0 18px 48px rgba(0,0,0,.26);padding:16px 16px 22px;backdrop-filter:blur(18px)}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.cal-title{font-size:16px;font-weight:950;letter-spacing:.02em}.cal-nav{display:flex;gap:6px}.cal-nav button{display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer}.cal-nav button:hover{background:#ff3d3d}.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:4px}.cal-week{color:#8d98a8;font-size:10px;font-weight:900;text-align:center}.cal-day{position:relative;display:grid;place-items:center;min-height:24px;border:0;border-radius:7px;background:transparent;color:#cfd6e4;font-size:12px;font-weight:800}.cal-day.muted{opacity:.28}.cal-day.has-doc{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;min-height:30px!important;padding:3px 4px 2px!important;line-height:1!important;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ff3d3d,#ff9f1c);box-shadow:0 8px 18px rgba(255,80,40,.22)}.cal-day.has-doc::after{content:attr(data-type);display:block;max-width:38px;font-size:6.5px;font-weight:900;color:rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{position:static;display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:10px;align-items:center;max-width:100%;overflow:hidden;margin-top:16px;padding:8px 0 0;background:transparent;border:0;backdrop-filter:none}.search{height:38px;min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;padding:0 13px;outline:none}.search::placeholder{color:#8f98a8}.search:focus{border-color:#ffb020;box-shadow:0 0 0 3px rgba(255,176,32,.16)}.filters{min-width:0;max-width:100%;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;max-height:48px;overflow:hidden;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.filters button,.tags button{border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(255,255,255,.065);color:#dce3ef;cursor:pointer;white-space:nowrap}.filters button{height:22px;padding:0 7px;font-size:10px;line-height:1;font-weight:850}.filters button.active{border-color:#ff3d3d;background:#ff3d3d;color:#fff}.content{min-height:0;overflow:auto;padding:0 2px 28px 0;scrollbar-color:rgba(255,255,255,.26) transparent}.content::-webkit-scrollbar{width:10px}.content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:999px}.section-head{position:static;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 8px;padding:2px 0 8px;background:transparent}.section-head h2{margin:0;font-size:18px;letter-spacing:0}.section-head span{color:#9aa4b5;font-size:12px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.tile{container-type:inline-size;position:relative;display:grid;grid-template-columns:42% minmax(0,1fr);min-height:198px;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.095),rgba(255,255,255,.035));box-shadow:0 16px 34px rgba(0,0,0,.28);animation:tileIn .42s ease both;animation-delay:calc(var(--i)*42ms);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.tile::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 34%,transparent),transparent 58%);opacity:.34;pointer-events:none}.tile:hover{transform:translateY(-4px) scale(1.01);border-color:color-mix(in srgb,var(--accent) 72%,white);box-shadow:0 24px 54px rgba(0,0,0,.42)}.poster{position:relative;min-width:0;background:#181a22;overflow:hidden}.poster img{width:100%;height:100%;min-height:198px;object-fit:cover;display:block;transform:scale(1.01);transition:transform .25s ease,filter .25s ease}.tile:hover .poster img{transform:scale(1.05);filter:saturate(1.12)}.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 48%,rgba(10,10,12,.88) 100%)}.tile-body{position:relative;min-width:0;display:flex;flex-direction:column;padding:14px 44px 16px 14px}.meta-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;color:#aab4c4;font-size:11px;font-weight:850}.type{color:var(--accent2);text-transform:uppercase}.tile h2{margin:0;color:#fff;font-size:clamp(17px,2cqi,23px);line-height:1.18;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tile p{margin:8px 0 0;color:#c9d0dc;font-size:13px;line-height:1.42;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tags{display:flex;flex-wrap:nowrap;align-items:center;gap:5px;min-height:26px;max-height:26px;overflow-x:auto;overflow-y:hidden;margin-top:auto;padding:4px 38px 0 0;scrollbar-width:none}.tags::-webkit-scrollbar{display:none}.tags button{flex:0 0 auto;height:21px;line-height:1;padding:0 7px;font-size:10px;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.play{position:absolute;right:12px;bottom:12px;z-index:4;display:grid;place-items:center;width:30px;height:30px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 20px rgba(0,0,0,.26);font-size:12px}.empty{padding:18px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;color:#aab4c4}.hidden{display:none!important}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"]{grid-template-columns:minmax(245px,47%) minmax(0,1fr)}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster{align-self:center;aspect-ratio:16/9;height:auto;min-height:0;margin-left:10px;border-radius:8px;background:#090b10;border:1px solid rgba(255,255,255,.1)}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster img{height:100%;min-height:0;object-fit:contain;padding:0;background:#090b10}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster::after{background:linear-gradient(90deg,transparent 72%,rgba(10,10,12,.82) 100%)}@keyframes tileIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}@media(max-width:980px){.app{padding:10px 12px 16px;gap:8px}.top{grid-template-columns:1fr;gap:9px}.hero-panel{padding-top:0}.eyebrow{font-size:10px;margin-bottom:5px;letter-spacing:.14em}.top h1{font-size:clamp(25px,7.4vw,32px);line-height:1.02;max-width:360px}.hero-copy{margin-top:7px;font-size:12.5px;line-height:1.42;max-width:390px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.toolbar{grid-template-columns:1fr;gap:6px;margin-top:8px;padding:0;overflow:visible}.search{height:34px;border-radius:7px;font-size:12.5px;padding:0 10px}.filters{max-height:52px;gap:4px}.filters button{height:22px;padding:0 7px;font-size:10px}.calendar{height:256px;min-height:256px;padding:10px 10px 14px}.cal-title{font-size:14px}.cal-nav button{width:25px;height:25px}.cal-day{min-height:20px;font-size:10.5px}.cal-day.has-doc{min-height:24px!important;padding:2px 3px!important}.cal-day.has-doc::after{display:none}.section-head{padding:4px 0 7px;margin-bottom:7px}.section-head h2{font-size:15px}.section-head span{font-size:11px}.grid{grid-template-columns:1fr;gap:7px}.tile,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"]{grid-template-columns:94px minmax(0,1fr);min-height:96px;border-radius:8px}.poster,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster{width:auto;aspect-ratio:auto;margin-left:0;border:0;border-radius:0}.poster img,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster img{min-height:96px;height:100%;object-fit:cover}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster img{object-fit:contain;background:#090b10}.poster::after,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster::after{background:linear-gradient(90deg,transparent 28%,rgba(10,10,12,.9) 100%)}.tile-body{padding:8px 34px 7px 10px}.meta-line{font-size:9.5px;margin-bottom:4px}.tile h2{font-size:15px;line-height:1.12;-webkit-line-clamp:2}.tile p{font-size:11px;line-height:1.25;margin-top:4px;-webkit-line-clamp:1}.play{width:24px;height:24px;right:7px;bottom:7px;font-size:10px}.tags{display:none}}@media(max-width:420px){.app{padding:9px 10px 14px}.calendar{display:none}.tile,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"]{grid-template-columns:88px minmax(0,1fr);min-height:92px}.poster img,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster img{min-height:92px}.top h1{font-size:25px}.hero-copy{font-size:12px}.filters button{font-size:10px}.tile h2{font-size:14.5px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="hero-panel">
+      <p class="eyebrow">${escapeHtml(eyebrow)}</p>
+      <h1>${escapeHtml(title)}</h1>
+      <p class="hero-copy">${escapeHtml(description)}</p>
+      <section class="toolbar" aria-label="\uAC80\uC0C9\uACFC \uD544\uD130">
+        <input class="search" id="search" type="search" placeholder="\uBB38\uC11C, \uD604\uC7A5, \uD68C\uC758, \uD0DC\uADF8 \uAC80\uC0C9" aria-label="\uBB38\uC11C \uAC80\uC0C9">
+        <div class="filters"><button class="active" type="button" data-filter="">\uC804\uCCB4</button>${typeButtons}${tagButtons}</div>
+      </section>
+    </div>
+    <aside class="calendar" aria-label="\uAC8C\uC2DC \uB0A0\uC9DC \uCE98\uB9B0\uB354">
+      <div class="cal-head"><button type="button" class="cal-title" id="calTitle" aria-label="\uD604\uC7AC \uC6D4"></button><div class="cal-nav"><button type="button" id="prevMonth" aria-label="\uC774\uC804 \uB2EC">\u2039</button><button type="button" id="nextMonth" aria-label="\uB2E4\uC74C \uB2EC">\u203A</button></div></div>
+      <div class="cal-grid" id="calendarGrid"></div>
+    </aside>
+  </header>
+  <section class="content" aria-label="\uBB38\uC11C \uBAA9\uB85D \uC2A4\uD06C\uB864 \uC601\uC5ED">
+    <div class="section-head"><h2>\uC9C0\uAE08 \uBCFC \uBB38\uC11C</h2><span id="count">${items.length}\uAC1C \uD45C\uC2DC</span></div>
+    <main class="grid" id="items">${list || '<p class="empty">\uAC8C\uC2DC\uB41C \uBB38\uC11C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.</p>'}</main>
+  </section>
+</div>
+<script>
+const docs=${docsJson};
+const initialMonth='${escapeJsString(latestMonth)}';
+const search=document.getElementById('search');const count=document.getElementById('count');const cards=[...document.querySelectorAll('.tile')];let activeType='';let activeTag='';let activeDate='';let calDate=new Date(Number(initialMonth.slice(0,4)),Number(initialMonth.slice(5,7))-1,1);
+function apply(){const q=(search.value||'').trim().toLowerCase();let n=0;for(const card of cards){const okQ=!q||card.dataset.search.includes(q);const okT=!activeType||card.dataset.type===activeType;const okTag=!activeTag||(' '+card.dataset.tags+' ').includes(' '+activeTag+' ');const okDate=!activeDate||card.dataset.date===activeDate;const show=okQ&&okT&&okTag&&okDate;card.classList.toggle('hidden',!show);if(show)n++;}count.textContent=(activeDate?activeDate+' \xB7 ':'')+n+'\uAC1C \uD45C\uC2DC';}
+function setActiveButton(btn){document.querySelectorAll('.filters button').forEach(b=>b.classList.toggle('active',b===btn));}
+document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{activeType=btn.dataset.filter||'';activeTag='';activeDate='';setActiveButton(btn);apply();}));document.querySelectorAll('[data-tag]').forEach(btn=>btn.addEventListener('click',()=>{activeTag=btn.dataset.tag||'';activeType='';activeDate='';setActiveButton(btn);apply();}));search.addEventListener('input',()=>{activeDate='';apply();});
+function docsByDate(date){return docs.filter(d=>d.date===date)}
+function renderCalendar(){const y=calDate.getFullYear();const m=calDate.getMonth();const title=document.getElementById('calTitle');title.textContent=y+'.'+String(m+1).padStart(2,'0');const grid=document.getElementById('calendarGrid');grid.innerHTML='';['\uC77C','\uC6D4','\uD654','\uC218','\uBAA9','\uAE08','\uD1A0'].forEach(w=>{const el=document.createElement('div');el.className='cal-week';el.textContent=w;grid.append(el);});const first=new Date(y,m,1);const days=new Date(y,m+1,0).getDate();for(let i=0;i<first.getDay();i++){const blank=document.createElement('span');blank.className='cal-day muted';grid.append(blank);}for(let d=1;d<=days;d++){const date=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');const dayDocs=docsByDate(date);const button=document.createElement('button');button.type='button';button.className='cal-day'+(dayDocs.length?' has-doc':'');button.textContent=String(d);button.dataset.date=date;if(dayDocs.length){button.dataset.type=dayDocs[0].type;button.title=dayDocs.map(x=>x.title).join(String.fromCharCode(10));button.addEventListener('click',()=>{if(dayDocs.length===1){location.href=dayDocs[0].url;}else{activeDate=date;activeType='';activeTag='';setActiveButton(document.querySelector('[data-filter=""]'));apply();}});}grid.append(button);}}
+document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar();});document.getElementById('nextMonth').addEventListener('click',()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar();});document.getElementById('calTitle').addEventListener('click',()=>{calDate=new Date(Number(initialMonth.slice(0,4)),Number(initialMonth.slice(5,7))-1,1);renderCalendar();});renderCalendar();apply();
+</script>
+</body>
+</html>`;
+    }
+    function normalizeArchiveItem(item, itemIndex, baseUrl) {
+      const tags = normalizeTags(item == null ? void 0 : item.tags);
+      const title = recoverShareTitle(item);
+      const date = extractArchiveDate(item);
+      const type = inferArchiveType(item, title, tags);
+      const accents = archiveAccents(type, itemIndex);
+      const href = (item == null ? void 0 : item.url) || (item == null ? void 0 : item.canonicalUrl) || (baseUrl ? `${baseUrl}/${encodeURIComponent((item == null ? void 0 : item.slug) || "")}/` : `${encodeURIComponent((item == null ? void 0 : item.slug) || "")}/`);
+      const excerpt = cleanArchiveText((item == null ? void 0 : item.excerpt) || (item == null ? void 0 : item.sourcePath) || "", "");
+      const thumbnail = firstImageUrl(item) || buildArchivePosterSvg(title, type, date, accents, itemIndex);
+      const searchText = [title, item == null ? void 0 : item.slug, excerpt, item == null ? void 0 : item.sourcePath, type, date, ...tags].filter(Boolean).join(" ").toLowerCase();
+      return { title, date, type, accents, href, excerpt, tags, thumbnail, searchText, itemIndex };
+    }
+    function renderArchiveTile(item) {
+      return `<article class="tile" data-search="${escapeHtml(item.searchText)}" data-tags="${escapeHtml(item.tags.join(" "))}" data-type="${escapeHtml(item.type)}" data-date="${escapeHtml(item.date)}" style="--accent:${escapeHtml(item.accents[0])};--accent2:${escapeHtml(item.accents[1])};--i:${item.itemIndex}">
+  <a class="poster" href="${escapeHtml(item.href)}"><img src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" loading="lazy"></a>
+  <div class="tile-body">
+    <div class="meta-line"><span class="type">${escapeHtml(item.type)}</span><time>${escapeHtml(item.date)}</time></div>
+    <h2><a href="${escapeHtml(item.href)}">${escapeHtml(item.title)}</a></h2>
+    ${item.excerpt ? `<p>${escapeHtml(item.excerpt)}</p>` : ""}
+    ${item.tags.length ? `<div class="tags">${item.tags.map((tag) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")}</div>` : '<div class="tags"></div>'}
+  </div>
+  <a class="play" href="${escapeHtml(item.href)}" aria-label="${escapeHtml(item.title)} \uC5F4\uAE30">\u25B6</a>
+</article>`;
+    }
+    function extractArchiveDate(item) {
+      const text = [item == null ? void 0 : item.title, item == null ? void 0 : item.sourcePath, item == null ? void 0 : item.slug, item == null ? void 0 : item.updatedAt].filter(Boolean).join(" ");
+      const match = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+      return match ? match[1] : formatDate(item == null ? void 0 : item.updatedAt) || "";
+    }
+    function compareShareItems(left, right) {
+      const dateCompare = String(extractArchiveDate(right) || "").localeCompare(String(extractArchiveDate(left) || ""));
+      if (dateCompare !== 0) {
+        return dateCompare;
+      }
+      return String((right == null ? void 0 : right.updatedAt) || "").localeCompare(String((left == null ? void 0 : left.updatedAt) || ""));
+    }
+    function inferArchiveType(item, title, tags) {
+      const text = [title, item == null ? void 0 : item.sourcePath, item == null ? void 0 : item.artifactType, ...tags].join(" ").toLowerCase();
+      if (/공사일보|daily\s*construction/.test(text)) return "\uACF5\uC0AC\uC77C\uBCF4";
+      if (/회의록|회의|meeting/.test(text)) return "\uD68C\uC758\uB85D";
+      if (/통합노트|프로젝트관리|통합관리|integrated/.test(text)) return "\uD1B5\uD569\uB178\uD2B8";
+      if (/보고서|report|research-report|decision-memo/.test(text)) return "\uBCF4\uACE0\uC11C";
+      return "\uB178\uD2B8";
+    }
+    function archiveAccents(type, index) {
+      const byType = {
+        \uACF5\uC0AC\uC77C\uBCF4: ["#ff3d3d", "#ff9f1c"],
+        \uD1B5\uD569\uB178\uD2B8: ["#10b981", "#84cc16"],
+        \uD68C\uC758\uB85D: ["#8b5cf6", "#06b6d4"],
+        \uBCF4\uACE0\uC11C: ["#f59e0b", "#ef4444"],
+        \uB178\uD2B8: ["#38bdf8", "#a78bfa"]
+      };
+      const fallbacks = [["#38bdf8", "#a78bfa"], ["#ec4899", "#f97316"], ["#22c55e", "#14b8a6"]];
+      return byType[type] || fallbacks[index % fallbacks.length];
+    }
+    function firstImageUrl(item) {
+      const value = (item == null ? void 0 : item.thumbnail) || (item == null ? void 0 : item.thumbnailUrl) || (item == null ? void 0 : item.image) || (item == null ? void 0 : item.imageUrl) || (item == null ? void 0 : item.coverUrl) || "";
+      const text = String(value || "").trim();
+      return /^(https?:\/\/|data:image\/)/i.test(text) ? text : "";
+    }
+    function buildArchivePosterSvg(title, type, date, accents, index) {
+      const safeTitle = truncateArchiveText(title, 42);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="${escapeHtml(safeTitle)}"><defs><linearGradient id="g${index}" x1="0" x2="1" y1="0" y2="1"><stop stop-color="${accents[0]}"/><stop offset="1" stop-color="${accents[1]}"/></linearGradient><filter id="s${index}" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000" flood-opacity=".32"/></filter></defs><rect width="640" height="360" rx="28" fill="#10131a"/><circle cx="520" cy="-10" r="210" fill="url(#g${index})" opacity=".9"/><circle cx="55" cy="315" r="180" fill="url(#g${index})" opacity=".42"/><path d="M60 250h520" stroke="#fff" stroke-opacity=".13" stroke-width="2"/><g filter="url(#s${index})"><rect x="58" y="60" width="116" height="116" rx="24" fill="rgba(255,255,255,.14)"/><path d="M89 132h54M89 101h92M89 162h140" stroke="#fff" stroke-width="12" stroke-linecap="round" opacity=".82"/></g><text x="58" y="224" fill="#fff" font-family="system-ui, sans-serif" font-size="30" font-weight="900">${escapeHtml(type)}</text><text x="58" y="270" fill="#fff" font-family="system-ui, sans-serif" font-size="22" font-weight="800" opacity=".92">${escapeHtml(date)}</text><text x="58" y="314" fill="#fff" font-family="system-ui, sans-serif" font-size="22" font-weight="700" opacity=".82">${escapeHtml(safeTitle)}</text></svg>`;
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+    function truncateArchiveText(value, limit = 58) {
+      const text = String(value || "").trim();
+      return text.length > limit ? `${text.slice(0, limit).trim()}...` : text;
+    }
+    function safeInlineJson(value) {
+      return JSON.stringify(value).replace(/</g, "\\u003c");
+    }
+    function escapeJsString(value) {
+      return String(value || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    }
+    function normalizeShareEntry(entry, now) {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+      const normalized = {
+        ...entry,
+        schemaVersion: 2,
+        updatedAt: entry.updatedAt || now || (/* @__PURE__ */ new Date()).toISOString()
+      };
+      normalized.sourcePathKey = normalized.sourcePathKey || buildSourcePathKey(normalized.sourcePath || "");
+      normalized.title = recoverShareTitle(normalized);
+      normalized.excerpt = cleanArchiveText(normalized.excerpt || "", "");
+      normalized.tags = normalizeTags(normalized.tags);
+      return normalized;
+    }
+    function repairShareItems(items) {
+      return items.map((item) => normalizeShareEntry(item, item == null ? void 0 : item.updatedAt)).filter(Boolean);
+    }
+    function dedupeShareItems(items) {
+      const deduped = [];
+      for (const item of items) {
+        if (!deduped.some((existing) => shareItemsMatch(existing, item))) {
+          deduped.push(item);
+        }
+      }
+      return deduped;
+    }
+    function shareItemsMatch(left, right) {
+      const rightKeys = new Set(shareItemKeys(right));
+      return shareItemKeys(left).some((key) => rightKeys.has(key));
+    }
+    function shareItemKeys(item) {
+      const keys = [];
+      const shortId = cleanArchiveText(item == null ? void 0 : item.shortId, "");
+      if (shortId) {
+        keys.push(`short:${shortId}`);
+      }
+      const url = normalizeUrlKey(item == null ? void 0 : item.url);
+      if (url) {
+        keys.push(`url:${url}`);
+      }
+      const canonicalUrl = normalizeUrlKey(item == null ? void 0 : item.canonicalUrl);
+      if (canonicalUrl) {
+        keys.push(`canonical:${canonicalUrl}`);
+      }
+      const sourcePath = buildSourcePathKey((item == null ? void 0 : item.sourcePathKey) || (item == null ? void 0 : item.sourcePath) || "");
+      if (sourcePath) {
+        keys.push(`source:${sourcePath}`);
+      }
+      const slug = normalizeIndexKey(item == null ? void 0 : item.slug);
+      if (slug) {
+        keys.push(`slug:${slug}`);
+      }
+      return keys;
+    }
+    function normalizeUrlKey(value) {
+      return normalizeIndexKey(value).replace(/\/+$/g, "");
+    }
+    function buildSourcePathKey(value) {
+      return normalizeIndexKey(value);
+    }
+    function normalizeIndexKey(value) {
+      return repairMojibake(decodeArchiveComponent(value)).normalize("NFC").replace(/\\/g, "/").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+    function recoverShareTitle(item) {
+      const candidates = [
+        item == null ? void 0 : item.title,
+        titleFromUrl(item == null ? void 0 : item.canonicalUrl),
+        titleFromSourcePath(item == null ? void 0 : item.sourcePath),
+        item == null ? void 0 : item.slug
+      ];
+      for (const candidate of candidates) {
+        const title = normalizeTitleCandidate(candidate);
+        if (title) {
+          return title;
+        }
+      }
+      return "\uC81C\uBAA9 \uC5C6\uB294 HTML \uC0B0\uCD9C\uBB3C";
+    }
+    function titleFromUrl(value) {
+      try {
+        const url = new URL(String(value || ""));
+        const segments = url.pathname.split("/").filter(Boolean);
+        const last = segments[segments.length - 1] || "";
+        const previous = segments[segments.length - 2] || "";
+        if (previous === "s") {
+          return "";
+        }
+        return last;
+      } catch (e) {
+        return "";
+      }
+    }
+    function titleFromSourcePath(value) {
+      const text = decodeArchiveComponent(value).split(/[\\/]/).filter(Boolean).pop() || "";
+      return text.replace(/\.(md|html?)$/i, "");
+    }
+    function normalizeTitleCandidate(value) {
+      const basename = decodeArchiveComponent(value).split(/[\\/]/).filter(Boolean).pop() || value;
+      const cleaned = cleanArchiveText(prettifySlugTitle(String(basename || "").replace(/\.(md|html?)$/i, "")), "");
+      if (isGenericShareTitle(cleaned)) {
+        return "";
+      }
+      return cleanArchiveText(cleaned, "");
+    }
+    function isGenericShareTitle(value) {
+      const text = repairMojibake(value).toLowerCase().replace(/\s+/g, " ").trim();
+      return [
+        "marktl shared html",
+        "marktl archive",
+        "open artifact",
+        "html artifact"
+      ].includes(text);
+    }
+    function prettifySlugTitle(value) {
+      const text = String(value || "").trim();
+      const match = /^(\d{4}-\d{2}-\d{2})-(\S.+)$/.exec(text);
+      if (!match || text.includes(" ")) {
+        return text;
+      }
+      const parts = match[2].split("-").filter(Boolean);
+      if (parts.length >= 4) {
+        return `${match[1]} - ${parts.slice(0, 2).join(" ")} - ${parts.slice(2).join(" ")}`;
+      }
+      return `${match[1]} - ${parts.join(" ")}`;
+    }
+    function decodeArchiveComponent(value) {
+      let text = String(value || "");
+      for (let index = 0; index < 2; index += 1) {
+        try {
+          const decoded = decodeURIComponent(text);
+          if (decoded === text) {
+            break;
+          }
+          text = decoded;
+        } catch (e) {
+          break;
+        }
+      }
+      return text;
+    }
+    function normalizeTags(tags) {
+      const values = Array.isArray(tags) ? tags : String(tags || "").split(",");
+      return [...new Set(values.map((tag) => cleanArchiveText(String(tag || "").replace(/^\s*-\s*/, "").replace(/^#/, "").replace(/^["']|["']$/g, "").trim(), "")).filter(Boolean).filter((tag) => !looksLikeMojibake(tag)).map(toReaderTag).filter(Boolean).map((tag) => tag.length > 44 ? `${tag.slice(0, 41)}...` : tag))].slice(0, 8);
+    }
+    var READER_TAG_ALIASES = /* @__PURE__ */ new Map([
+      ["obsidian/project-management", "\uD504\uB85C\uC81D\uD2B8\uAD00\uB9AC"],
+      ["gantt", "\uAC04\uD2B8"],
+      ["budget", "\uC608\uC0B0"],
+      ["risk", "\uB9AC\uC2A4\uD06C"],
+      ["function/ops", "\uC6B4\uC601"],
+      ["doc/meeting", "\uD68C\uC758\uB85D"],
+      ["doc/\uBCF4\uACE0\uC11C", "\uBCF4\uACE0\uC11C"],
+      ["state/\uAC80\uD1A0\uC911", "\uAC80\uD1A0\uC911"]
+    ]);
+    var HIDDEN_READER_TAGS = /* @__PURE__ */ new Set([
+      "ai",
+      "dataviewjs",
+      "reforged-note",
+      "obsidian/mermaid",
+      "obsidian/dataviewjs"
+    ]);
+    function toReaderTag(tag) {
+      const normalized = String(tag || "").trim().replace(/^#/, "");
+      const key = normalized.toLowerCase();
+      if (!normalized || HIDDEN_READER_TAGS.has(key)) {
+        return "";
+      }
+      if (READER_TAG_ALIASES.has(key)) {
+        return READER_TAG_ALIASES.get(key);
+      }
+      if (/^obsidian\//i.test(normalized)) {
+        return "";
+      }
+      if (/^(project|topic|doc|state|function|업무|회의록|프로젝트)\//i.test(normalized)) {
+        return normalized.split("/").filter(Boolean).pop() || "";
+      }
+      return normalized;
+    }
+    function cleanArchiveText(value, fallback = "") {
+      const cleaned = repairMojibake(String(value || "")).replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<iframe\b[\s\S]*?<\/iframe>/gi, " ").replace(/<[^>]+>/g, " ").replace(/<[^>]*$/g, " ").replace(/\s+/g, " ").trim();
+      if (!cleaned || looksLikeMojibake(cleaned)) {
+        return fallback;
+      }
+      return cleaned.length > 220 ? `${cleaned.slice(0, 217)}...` : cleaned;
+    }
+    function repairMojibake(value) {
+      let best = String(value || "");
+      let bestScore = mojibakeScore(best);
+      for (let index = 0; index < 2; index++) {
+        const next = Buffer.from(best, "latin1").toString("utf8");
+        const score = mojibakeScore(next);
+        if (score >= bestScore) {
+          break;
+        }
+        best = next;
+        bestScore = score;
+      }
+      return best;
+    }
+    function looksLikeMojibake(value) {
+      const text = String(value || "");
+      if (!text) {
+        return false;
+      }
+      if (text.includes("\uFFFD")) {
+        return true;
+      }
+      return mojibakeScore(text) / Math.max(text.length, 1) > 0.08;
+    }
+    function mojibakeScore(value) {
+      const text = String(value || "");
+      if (!text) {
+        return 0;
+      }
+      return (text.match(/[�ÂÃìíëê¼½¾]/g) || []).length;
+    }
+    function formatDate(value) {
+      if (!value) {
+        return "";
+      }
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
+      return date.toISOString().slice(0, 10);
+    }
+    function escapeHtml(value) {
+      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+    module2.exports = {
+      buildPagesUrl: buildPagesUrl2,
+      buildPublishPath: buildPublishPath2,
+      buildShareHomeUrl: buildShareHomeUrl2,
+      buildShortPagesUrl: buildShortPagesUrl2,
+      inferPagesBaseUrl: inferPagesBaseUrl3,
+      mimeTypeForPath,
+      normalizePublishPath,
+      parseRepo: parseRepo2,
+      repairShareIndex: repairShareIndex2,
+      renderShareIndexHtml: renderShareIndexHtml2,
+      updateShareIndex: updateShareIndex2
+    };
+  }
+});
+
+// src/core/share-home-profiles.js
+var require_share_home_profiles = __commonJS({
+  "src/core/share-home-profiles.js"(exports2, module2) {
+    "use strict";
+    var { buildShareHomeUrl: buildShareHomeUrl2, inferPagesBaseUrl: inferPagesBaseUrl3, normalizePublishPath } = require_github_pages();
+    var DEFAULT_SHARE_HOME_PROFILE_ID2 = "jisu-construction";
+    var DEFAULT_SHARE_HOME_TITLE = "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8";
+    var DEFAULT_SHARE_HOME_EYEBROW = "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive";
+    var DEFAULT_SHARE_HOME_DESCRIPTION = "\uACF5\uC0AC\uC77C\uBCF4, \uD68C\uC758\uB85D, \uBCF4\uACE0\uC11C\uB97C \uD504\uB85C\uC81D\uD2B8\uBCC4 \uD5C8\uBE0C\uC5D0\uC11C \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uACF5\uC720 \uC544\uCE74\uC774\uBE0C.";
+    function cleanProfileText(value, fallback = "") {
+      const text = String(value || "").replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
+      return text || fallback;
+    }
+    function normalizeShareHomeProfileId(value, fallback = DEFAULT_SHARE_HOME_PROFILE_ID2) {
+      const ascii = String(value || "").normalize("NFKD").replace(/[^\w\s-]/g, "").trim().toLowerCase().replace(/[\s_]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      return ascii || fallback;
+    }
+    function buildDefaultShareHomeProfile2(settings = {}) {
+      return {
+        id: DEFAULT_SHARE_HOME_PROFILE_ID2,
+        title: cleanProfileText(settings.githubShareHomeTitle, DEFAULT_SHARE_HOME_TITLE),
+        basePath: normalizePublishPath(
+          Object.prototype.hasOwnProperty.call(settings, "githubPublishPath") ? settings.githubPublishPath : "marktl"
+        ),
+        eyebrow: DEFAULT_SHARE_HOME_EYEBROW,
+        description: DEFAULT_SHARE_HOME_DESCRIPTION
+      };
+    }
+    function normalizeShareHomeProfile(profile, settings = {}, index = 0, usedIds = /* @__PURE__ */ new Set()) {
+      const fallback = buildDefaultShareHomeProfile2(settings);
+      const raw = profile && typeof profile === "object" ? profile : {};
+      const baseFallback = index === 0 ? fallback.basePath : `marktl/hub-${index + 1}`;
+      const idFallback = index === 0 ? fallback.id : `share-hub-${index + 1}`;
+      const normalized = {
+        id: normalizeShareHomeProfileId(raw.id || raw.key || raw.name, idFallback),
+        title: cleanProfileText(raw.title || raw.name, index === 0 ? fallback.title : `\uACF5\uC720 \uD5C8\uBE0C ${index + 1}`),
+        basePath: Object.prototype.hasOwnProperty.call(raw, "basePath") ? normalizePublishPath(raw.basePath) : baseFallback,
+        eyebrow: cleanProfileText(raw.eyebrow || raw.badge, index === 0 ? fallback.eyebrow : "MarkTL Archive"),
+        description: cleanProfileText(raw.description, index === 0 ? fallback.description : DEFAULT_SHARE_HOME_DESCRIPTION)
+      };
+      let id = normalized.id;
+      let suffix = 2;
+      while (usedIds.has(id)) {
+        id = `${normalized.id}-${suffix}`;
+        suffix += 1;
+      }
+      usedIds.add(id);
+      normalized.id = id;
+      return normalized;
+    }
+    function normalizeShareHomeProfiles4(rawProfiles, settings = {}) {
+      const usedIds = /* @__PURE__ */ new Set();
+      const source = Array.isArray(rawProfiles) && rawProfiles.length > 0 ? rawProfiles : [buildDefaultShareHomeProfile2(settings)];
+      return source.map((profile, index) => normalizeShareHomeProfile(profile, settings, index, usedIds));
+    }
+    function resolveShareHomeProfile4(settings = {}, profileId = "") {
+      const profiles = normalizeShareHomeProfiles4(settings.shareHomeProfiles, settings);
+      const selectedId = cleanProfileText(profileId || settings.activeShareHomeProfileId, "");
+      return profiles.find((profile) => profile.id === selectedId) || profiles[0] || buildDefaultShareHomeProfile2(settings);
+    }
+    function normalizeShareHomeSettings(settings = {}) {
+      const profiles = normalizeShareHomeProfiles4(settings.shareHomeProfiles, settings);
+      const activeId = cleanProfileText(settings.activeShareHomeProfileId, "");
+      const activeProfile = profiles.find((profile) => profile.id === activeId) || profiles[0];
+      return {
+        shareHomeProfiles: profiles,
+        activeShareHomeProfileId: (activeProfile == null ? void 0 : activeProfile.id) || DEFAULT_SHARE_HOME_PROFILE_ID2
+      };
+    }
+    function createShareHomeProfile2(existingProfiles = [], seed = {}) {
+      const profiles = normalizeShareHomeProfiles4(existingProfiles, {});
+      const index = profiles.length + 1;
+      const usedIds = new Set(profiles.map((profile) => profile.id));
+      return normalizeShareHomeProfile({
+        id: seed.id || `share-hub-${index}`,
+        title: seed.title || `\uC0C8 \uACF5\uC720 \uD5C8\uBE0C ${index}`,
+        basePath: Object.prototype.hasOwnProperty.call(seed, "basePath") ? seed.basePath : `marktl/hub-${index}`,
+        eyebrow: seed.eyebrow || "MarkTL Archive",
+        description: seed.description || DEFAULT_SHARE_HOME_DESCRIPTION
+      }, {}, index - 1, usedIds);
+    }
+    function describeShareHomeProfile3(profile, settings = {}) {
+      const pagesBaseUrl = cleanProfileText(settings.githubPagesBaseUrl, "") || inferPagesBaseUrl3(settings.githubRepo);
+      const homeUrl = buildShareHomeUrl2(pagesBaseUrl, (profile == null ? void 0 : profile.basePath) || "");
+      const pathLabel = (profile == null ? void 0 : profile.basePath) ? `/${profile.basePath}/` : "/";
+      return {
+        pathLabel,
+        homeUrl,
+        summary: homeUrl ? `${profile.title} \xB7 ${homeUrl}` : `${profile.title} \xB7 ${pathLabel}`
+      };
+    }
+    function sameShareHomeSettings(left = {}, right = {}) {
+      return JSON.stringify({
+        activeShareHomeProfileId: left.activeShareHomeProfileId,
+        shareHomeProfiles: left.shareHomeProfiles
+      }) === JSON.stringify({
+        activeShareHomeProfileId: right.activeShareHomeProfileId,
+        shareHomeProfiles: right.shareHomeProfiles
+      });
+    }
+    module2.exports = {
+      DEFAULT_SHARE_HOME_DESCRIPTION,
+      DEFAULT_SHARE_HOME_EYEBROW,
+      DEFAULT_SHARE_HOME_PROFILE_ID: DEFAULT_SHARE_HOME_PROFILE_ID2,
+      DEFAULT_SHARE_HOME_TITLE,
+      buildDefaultShareHomeProfile: buildDefaultShareHomeProfile2,
+      cleanProfileText,
+      createShareHomeProfile: createShareHomeProfile2,
+      describeShareHomeProfile: describeShareHomeProfile3,
+      normalizeShareHomeProfileId,
+      normalizeShareHomeProfiles: normalizeShareHomeProfiles4,
+      normalizeShareHomeSettings,
+      resolveShareHomeProfile: resolveShareHomeProfile4,
+      sameShareHomeSettings
+    };
+  }
+});
+
+// src/core/setup-guidance.js
+var require_setup_guidance = __commonJS({
+  "src/core/setup-guidance.js"(exports2, module2) {
+    "use strict";
+    function buildPagesSetupChecklist2(settings = {}) {
+      const repo = String(settings.githubRepo || "owner/repo").trim() || "owner/repo";
+      const branch = String(settings.githubBranch || "main").trim() || "main";
+      const baseUrl = String(settings.githubPagesBaseUrl || "").trim() || "https://owner.github.io/repo";
+      const publishPath = String(settings.githubPublishPath || "marktl").trim() || "marktl";
+      return [
+        "MarkTL GitHub Pages setup checklist",
+        "",
+        `1. GitHub repository: ${repo}`,
+        `2. Enable GitHub Pages for branch "${branch}" in GitHub repository Settings > Pages.`,
+        "3. Pages source should publish from the same branch/folder that receives MarkTL files.",
+        `4. GitHub Pages base URL: ${baseUrl}`,
+        `5. Publish path: ${publishPath}`,
+        `6. Expected export URL: ${baseUrl.replace(/\/+$/g, "")}/${publishPath.replace(/^\/+|\/+$/g, "")}/<slug>/`,
+        "7. Open https://github.com/settings/personal-access-tokens/new and create a fine-grained token.",
+        `8. Limit repository access to ${repo}.`,
+        "9. Grant Contents read/write permission. No broader permissions are required for publishing files.",
+        "10. Paste the token into MarkTL settings, then export one test note with Share target = GitHub Pages link."
+      ].join("\n");
+    }
+    function buildGiscusSetupChecklist2(settings = {}) {
+      const repo = String(settings.giscusRepo || settings.githubRepo || "owner/repo").trim() || "owner/repo";
+      const category = String(settings.giscusCategory || "Announcements").trim() || "Announcements";
+      return [
+        "MarkTL Giscus setup checklist",
+        "",
+        `1. Use repository: ${repo}`,
+        "2. Install the Giscus GitHub App from https://github.com/apps/giscus for this repository.",
+        "3. In GitHub repository Settings, enable Discussions.",
+        "4. Create or choose a discussion category, for example General or Announcements.",
+        "5. Open https://giscus.app and enter the repository.",
+        `6. Choose category: ${category}`,
+        "7. Choose mapping: pathname",
+        "8. Choose theme: preferred_color_scheme",
+        "9. Copy data-repo-id and data-category-id from the generated Giscus script.",
+        "10. Paste those IDs into MarkTL settings.",
+        "11. Export with Preview/export = Trusted interactive preview and Reader feedback = Giscus GitHub comments."
+      ].join("\n");
+    }
+    module2.exports = {
+      buildGiscusSetupChecklist: buildGiscusSetupChecklist2,
+      buildPagesSetupChecklist: buildPagesSetupChecklist2
+    };
+  }
+});
+
+// src/core/provider-doctor.js
+var require_provider_doctor = __commonJS({
+  "src/core/provider-doctor.js"(exports2, module2) {
+    "use strict";
+    var { spawn: spawn2 } = require("node:child_process");
+    var { mergePath } = require_ai();
+    async function checkClaudeProvider2(options = {}) {
+      return checkTextProvider({
+        ...options,
+        command: options.command || "claude",
+        name: "Claude Code CLI",
+        versionArgs: ["--version"],
+        probeArgs: ["-p", "Return only this exact text: MARKTL_OK"],
+        readyMessage: "Claude Code CLI is installed, logged in, and ready.",
+        missingMessage: "Claude Code CLI was not found or did not start.",
+        failedMessage: "Claude Code CLI is installed, but the login probe failed."
+      });
+    }
+    async function checkCodexProvider2(options = {}) {
+      return checkTextProvider({
+        ...options,
+        command: options.command || "codex",
+        name: "Codex CLI",
+        versionArgs: ["--version"],
+        probeArgs: ["exec", "--json", "--sandbox", "read-only", "--skip-git-repo-check", "-"],
+        probeInput: "Return only this exact text: MARKTL_OK",
+        readyMessage: "Codex CLI is installed, logged in, and ready.",
+        missingMessage: "Codex CLI was not found or did not start.",
+        failedMessage: "Codex CLI is installed, but the probe failed."
+      });
+    }
+    async function checkTextProvider(options = {}) {
+      const command = options.command || "claude";
+      const timeoutMs = Number(options.timeoutMs || 15e3);
+      const runner = options.runCommand || runCommand;
+      const version = await runner(command, options.versionArgs || ["--version"], timeoutMs);
+      if (version.code !== 0) {
+        return {
+          ok: false,
+          status: "missing",
+          message: cleanDoctorOutput(version.output) || options.missingMessage || `${options.name || "Provider"} was not found or did not start.`,
+          version: ""
+        };
+      }
+      const probe = await runner(command, options.probeArgs, timeoutMs, options.probeInput);
+      if (probe.code !== 0) {
+        const output = cleanDoctorOutput(probe.output);
+        return {
+          ok: false,
+          status: output.toLowerCase().includes("not logged in") ? "not-logged-in" : "probe-failed",
+          message: output || options.failedMessage || `${options.name || "Provider"} is installed, but the probe failed.`,
+          version: cleanDoctorOutput(version.output)
+        };
+      }
+      return {
+        ok: /MARKTL_OK/i.test(probe.output),
+        status: /MARKTL_OK/i.test(probe.output) ? "ready" : "unexpected-output",
+        message: /MARKTL_OK/i.test(probe.output) ? options.readyMessage || `${options.name || "Provider"} is installed, logged in, and ready.` : cleanDoctorOutput(probe.output) || `${options.name || "Provider"} responded, but not with the expected probe text.`,
+        version: cleanDoctorOutput(version.output)
+      };
+    }
+    function runCommand(command, args, timeoutMs, input = "") {
+      return new Promise((resolve) => {
+        const child = spawn2(command, args, {
+          env: {
+            ...process.env,
+            PATH: mergePath(process.env.PATH)
+          },
+          stdio: ["pipe", "pipe", "pipe"]
+        });
+        let output = "";
+        let settled = false;
+        const timeout = setTimeout(() => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          child.kill("SIGTERM");
+          resolve({ code: -1, output: `Provider doctor timed out after ${timeoutMs}ms.` });
+        }, timeoutMs);
+        child.stdout.on("data", (chunk) => {
+          output += chunk;
+        });
+        child.stderr.on("data", (chunk) => {
+          output += chunk;
+        });
+        if (input) {
+          child.stdin.write(input);
+        }
+        child.stdin.end();
+        child.on("error", (error) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeout);
+          resolve({ code: -1, output: error.message });
+        });
+        child.on("close", (code) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeout);
+          resolve({ code: code || 0, output });
+        });
+      });
+    }
+    function cleanDoctorOutput(value = "") {
+      return String(value || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 6).join("\n");
+    }
+    module2.exports = {
+      checkCodexProvider: checkCodexProvider2,
+      checkClaudeProvider: checkClaudeProvider2,
+      cleanDoctorOutput,
+      runCommand
+    };
+  }
+});
+
+// src/core/context-pack.js
+var require_context_pack = __commonJS({
+  "src/core/context-pack.js"(exports2, module2) {
+    "use strict";
+    var { escapeHtml } = require_html();
+    var MAX_CONTEXT_NOTES = 6;
+    var MAX_CONTEXT_CHARS = 1400;
+    function extractMarkdownContextTargets2(markdown) {
+      const targets = [];
+      const seen = /* @__PURE__ */ new Set();
+      const add = (target) => {
+        const clean = normalizeContextTarget(target);
+        if (!clean || seen.has(clean)) {
+          return;
+        }
+        seen.add(clean);
+        targets.push(clean);
+      };
+      const wikiPattern = /(^|[^!])\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]/g;
+      let match;
+      while ((match = wikiPattern.exec(String(markdown || ""))) !== null) {
+        add(match[2]);
+      }
+      const markdownLinkPattern = /(^|[^!])\[[^\]]*]\((?!https?:|data:|blob:|mailto:|#)([^)#]+)(?:#[^)]*)?\)/gi;
+      while ((match = markdownLinkPattern.exec(String(markdown || ""))) !== null) {
+        add(decodeURI(match[2]));
+      }
+      return targets.slice(0, MAX_CONTEXT_NOTES);
+    }
+    function normalizeContextTarget(target) {
+      return String(target || "").replace(/\\/g, "/").replace(/^\.\//, "").trim();
+    }
+    function compactMarkdownForContext(markdown, maxChars = MAX_CONTEXT_CHARS) {
+      const compact = String(markdown || "").replace(/^---[\s\S]*?---\s*/m, "").replace(/```([a-z0-9_-]*)\s*\n([\s\S]*?)```/gi, (_match, lang, code) => {
+        const language = String(lang || "").trim().toLowerCase();
+        const source = String(code || "").trim();
+        const looksLikeDiagram = /^(mermaid|gantt)$/i.test(language) || /^(gantt|graph|flowchart|timeline|journey|mindmap)\b/i.test(source);
+        if (/^dataview/.test(language)) {
+          return "[dataview query omitted]";
+        }
+        if (looksLikeDiagram) {
+          const fence = language || "mermaid";
+          return `\`\`\`${fence}
+${source}
+\`\`\``;
+        }
+        return "[code block omitted]";
+      }).replace(/!\[\[[^\]]+]]/g, "[embedded asset]").replace(/!\[[^\]]*]\([^)]+\)/g, "[image]").split("\n").map((line) => line.trim()).filter(Boolean).join("\n");
+      if (compact.length <= maxChars) {
+        return compact;
+      }
+      return `${compact.slice(0, maxChars).trim()}
+[truncated]`;
+    }
+    function buildContextPackMarkdown2(items, options = {}) {
+      const usable = Array.isArray(items) ? items.filter((item) => item && item.content) : [];
+      if (!usable.length) {
+        return "";
+      }
+      const kind = options.kind === "reference" ? "reference" : "linked";
+      const intro = kind === "reference" ? "Reference context note is available. Treat the active note as today/current facts, and use this reference note only for continuing project context such as schedule, process order, Mermaid/Gantt diagrams, recurring risks, and baseline assumptions." : "Additional vault context is available. Use it only to clarify the active note; do not let it override the source note.";
+      return [
+        intro,
+        ...usable.map((item, index) => [
+          `
+[${kind === "reference" ? "Reference context note" : `Context note ${index + 1}`}: ${item.path || item.target || "linked note"}]`,
+          compactMarkdownForContext(item.content)
+        ].join("\n"))
+      ].join("\n");
+    }
+    function buildContextPackHtml(items) {
+      const usable = Array.isArray(items) ? items.filter((item) => item && item.content) : [];
+      if (!usable.length) {
+        return "";
+      }
+      return `<aside class="callout callout-context"><div class="callout-title">Linked context</div><div class="callout-body">${usable.map((item) => `<section><strong>${escapeHtml(item.path || item.target || "linked note")}</strong><pre>${escapeHtml(compactMarkdownForContext(item.content, 700))}</pre></section>`).join("")}</div></aside>`;
+    }
+    module2.exports = {
+      buildContextPackHtml,
+      buildContextPackMarkdown: buildContextPackMarkdown2,
+      compactMarkdownForContext,
+      extractMarkdownContextTargets: extractMarkdownContextTargets2
+    };
+  }
+});
+
+// src/core/feedback.js
+var require_feedback = __commonJS({
+  "src/core/feedback.js"(exports2, module2) {
+    "use strict";
+    var { escapeHtml } = require_html();
+    function buildGiscusFeedbackSection(options = {}) {
+      const config = normalizeGiscusConfig(options);
+      if (!config.ready) {
+        return "";
+      }
+      return `<section class="marktl-reader-feedback" aria-label="Reader feedback">
+<style>
+.marktl-reader-feedback { margin: 40px auto 0; padding: 0; }
+.marktl-reader-feedback h2 { margin: 0 0 8px; font: 800 22px/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.marktl-reader-feedback p { margin: 0 0 14px; color: #526173; font: 500 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.marktl-reader-feedback .giscus, .marktl-reader-feedback .giscus-frame { width: 100%; }
+</style>
+<h2>Reader feedback</h2>
+<p>Leave a public GitHub comment or reaction below.</p>
+<script src="https://giscus.app/client.js"
+        data-repo="${escapeAttr(config.repo)}"
+        data-repo-id="${escapeAttr(config.repoId)}"
+        data-category="${escapeAttr(config.category)}"
+        data-category-id="${escapeAttr(config.categoryId)}"
+        data-mapping="${escapeAttr(config.mapping)}"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="${escapeAttr(config.theme)}"
+        data-lang="${escapeAttr(config.lang)}"
+        crossorigin="anonymous"
+        async>
+</script>
+</section>`;
+    }
+    function injectReaderFeedback2(html, options = {}) {
+      const section = buildGiscusFeedbackSection(options);
+      if (!section) {
+        return String(html || "");
+      }
+      const value = String(html || "");
+      if (/<\/main>/i.test(value)) {
+        return value.replace(/<\/main>/i, `${section}
+</main>`);
+      }
+      if (/<\/body>/i.test(value)) {
+        return value.replace(/<\/body>/i, `${section}
+</body>`);
+      }
+      return `${value}
+${section}`;
+    }
+    function validateGiscusConfig2(options = {}) {
+      const config = normalizeGiscusConfig(options);
+      const warnings = [];
+      if (!config.repo) warnings.push("Giscus feedback is missing repository.");
+      if (!config.repoId) warnings.push("Giscus feedback is missing repository ID.");
+      if (!config.category) warnings.push("Giscus feedback is missing discussion category.");
+      if (!config.categoryId) warnings.push("Giscus feedback is missing discussion category ID.");
+      return warnings;
+    }
+    function shouldAttachReaderFeedback2(options = {}) {
+      return options.readerFeedbackMode === "giscus" && options.shareTarget !== "local-link";
+    }
+    function normalizeGiscusConfig(options = {}) {
+      const config = {
+        repo: String(options.repo || "").trim(),
+        repoId: String(options.repoId || "").trim(),
+        category: String(options.category || "").trim(),
+        categoryId: String(options.categoryId || "").trim(),
+        mapping: String(options.mapping || "pathname").trim() || "pathname",
+        theme: String(options.theme || "preferred_color_scheme").trim() || "preferred_color_scheme",
+        lang: String(options.lang || "ko").trim() || "ko"
+      };
+      return {
+        ...config,
+        ready: Boolean(config.repo && config.repoId && config.category && config.categoryId)
+      };
+    }
+    function escapeAttr(value) {
+      return escapeHtml(String(value || "")).replace(/"/g, "&quot;");
+    }
+    module2.exports = {
+      buildGiscusFeedbackSection,
+      injectReaderFeedback: injectReaderFeedback2,
+      shouldAttachReaderFeedback: shouldAttachReaderFeedback2,
+      validateGiscusConfig: validateGiscusConfig2
+    };
+  }
+});
+
+// src/core/html-qa.js
+var require_html_qa = __commonJS({
+  "src/core/html-qa.js"(exports2, module2) {
+    "use strict";
+    function validateHtmlArtifact2(html, options = {}) {
+      const warnings = [];
+      const value = String(html || "");
+      if (!/<!doctype\s+html/i.test(value)) {
+        warnings.push("HTML QA: missing <!doctype html>.");
+      }
+      if (!/<meta\s+name=["']viewport["']/i.test(value)) {
+        warnings.push("HTML QA: missing responsive viewport meta tag.");
+      }
+      if (!/<style\b/i.test(value)) {
+        warnings.push("HTML QA: no inline CSS found; output may be too plain.");
+      }
+      if (!/<h1\b/i.test(value)) {
+        warnings.push("HTML QA: no H1 heading found.");
+      }
+      const trusted = Boolean(options.trusted);
+      const artifactGoal = String(options.artifactGoal || "");
+      if (trusted && !/<script\b/i.test(value)) {
+        warnings.push("HTML QA: trusted interactive mode produced no script; artifact may be static.");
+      }
+      if (!trusted && /<script\b|<iframe\b|\son[a-z]+\s*=/i.test(value)) {
+        warnings.push("HTML QA: sanitized mode output still contains dynamic markup.");
+      }
+      if (trusted && ["review", "compare", "tune"].includes(artifactGoal) && !/<button\b|<input\b|<select\b|<textarea\b|contenteditable=/i.test(value)) {
+        warnings.push(`HTML QA: ${artifactGoal} artifact has no obvious copy-back or interactive controls.`);
+      }
+      const expectedAssets = Array.isArray(options.assetMappings) ? options.assetMappings.map((mapping) => mapping.relativeSrc).filter(Boolean) : [];
+      for (const src of expectedAssets) {
+        if (!value.includes(src)) {
+          warnings.push(`HTML QA: bundled image is not referenced in final HTML: ${src}`);
+        }
+      }
+      if (/<img\b/i.test(value) && !/<img\b[^>]*\balt\s*=/i.test(value)) {
+        warnings.push("HTML QA: at least one image is missing alt text.");
+      }
+      if (/\bdataviewjs\b|\bdataview\b|\[![-\w]+]|\n---\s*(?:\n|$)/i.test(value)) {
+        warnings.push("HTML QA fatal: raw Obsidian-only syntax remains in the HTML.");
+      }
+      if (options.exportGenre === "construction-daily") {
+        const depth = options.exportDepth || "standard";
+        const text = value.replace(/<[^>]+>/g, " ");
+        if (!/(공사일보|공사 일보|daily)/i.test(text)) {
+          warnings.push("HTML QA: construction daily output does not clearly identify itself as a construction daily report.");
+        }
+        if (depth === "brief") {
+          if (!/(오늘|당일|작업|공정|사진|증빙)/.test(text)) {
+            warnings.push("HTML QA: brief construction daily should include today work or evidence.");
+          }
+        }
+        if (depth === "standard") {
+          if (!/(리스크|위험|이슈|다음|후속|예정|계획|공정|일정)/.test(text)) {
+            warnings.push("HTML QA: standard construction daily should include risk/next-work or schedule context.");
+          }
+        }
+        if (depth === "milestone") {
+          if (!/(간트|gantt|mermaid|실행\s*게이트|계획\s*대비|공정\s*흐름|마일스톤)/i.test(text)) {
+            warnings.push("HTML QA: milestone construction daily should include schedule/process or plan-versus-actual context.");
+          }
+        }
+      }
+      return warnings;
+    }
+    module2.exports = {
+      validateHtmlArtifact: validateHtmlArtifact2
+    };
+  }
+});
+
+// src/core/settings.js
+var require_settings = __commonJS({
+  "src/core/settings.js"(exports2, module2) {
+    "use strict";
+    var { normalizeShareHomeSettings, sameShareHomeSettings } = require_share_home_profiles();
+    function firstString(...values) {
+      for (const value of values) {
+        if (typeof value === "string" && value.trim()) {
+          return value.trim();
+        }
+      }
+      return "";
+    }
+    function migrateSettings2(defaultSettings, rawSettings) {
+      const raw = rawSettings && typeof rawSettings === "object" ? rawSettings : {};
+      const settings = Object.assign({}, defaultSettings, raw);
+      let migrated = false;
+      const legacyRepo = firstString(raw.githubRepository, raw.repository);
+      if (!firstString(settings.githubRepo) && legacyRepo) {
+        settings.githubRepo = legacyRepo;
+        migrated = true;
+      }
+      const legacyPublishPath = firstString(raw.publishPath, raw.githubPath);
+      if ((!firstString(settings.githubPublishPath) || settings.githubPublishPath === defaultSettings.githubPublishPath) && legacyPublishPath) {
+        settings.githubPublishPath = legacyPublishPath;
+        migrated = true;
+      }
+      const legacyShareHomeTitle = firstString(raw.shareHomeTitle);
+      if ((!firstString(settings.githubShareHomeTitle) || settings.githubShareHomeTitle === defaultSettings.githubShareHomeTitle) && legacyShareHomeTitle) {
+        settings.githubShareHomeTitle = legacyShareHomeTitle;
+        migrated = true;
+      }
+      if (!Array.isArray(raw.shareHomeProfiles) || raw.shareHomeProfiles.length === 0) {
+        settings.shareHomeProfiles = [];
+        settings.activeShareHomeProfileId = "";
+      }
+      const shareHomeSettings = normalizeShareHomeSettings(settings);
+      if (!sameShareHomeSettings(settings, shareHomeSettings)) {
+        settings.shareHomeProfiles = shareHomeSettings.shareHomeProfiles;
+        settings.activeShareHomeProfileId = shareHomeSettings.activeShareHomeProfileId;
+        migrated = true;
+      }
+      return { settings, migrated };
+    }
+    module2.exports = {
+      migrateSettings: migrateSettings2
+    };
+  }
+});
+
+// src/core/social.js
+var require_social = __commonJS({
+  "src/core/social.js"(exports2, module2) {
+    "use strict";
+    var { escapeHtml } = require_html();
+    function buildShortId2(value) {
+      let hash = 2166136261;
+      for (const char of String(value || "")) {
+        hash ^= char.codePointAt(0) || 0;
+        hash = Math.imul(hash, 16777619);
+      }
+      return Math.abs(hash >>> 0).toString(36).slice(0, 7) || "doc";
+    }
+    function injectSocialMeta2(html, options = {}) {
+      const title = options.title || "MarkTL HTML artifact";
+      const description = options.description || "A shared HTML document generated with MarkTL.";
+      const url = options.url || "";
+      const image = options.image || "";
+      const tags = [
+        `<meta property="og:type" content="article">`,
+        `<meta property="og:title" content="${escapeAttr(title)}">`,
+        `<meta property="og:description" content="${escapeAttr(description)}">`,
+        url ? `<meta property="og:url" content="${escapeAttr(url)}">` : "",
+        image ? `<meta property="og:image" content="${escapeAttr(image)}">` : "",
+        `<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}">`,
+        `<meta name="twitter:title" content="${escapeAttr(title)}">`,
+        `<meta name="twitter:description" content="${escapeAttr(description)}">`,
+        image ? `<meta name="twitter:image" content="${escapeAttr(image)}">` : "",
+        url ? `<link rel="canonical" href="${escapeAttr(url)}">` : ""
+      ].filter(Boolean).join("\n");
+      const value = String(html || "");
+      if (/<\/head>/i.test(value)) {
+        return value.replace(/<\/head>/i, `${tags}
+</head>`);
+      }
+      return `${tags}
+${value}`;
+    }
+    function escapeAttr(value) {
+      return escapeHtml(String(value || "")).replace(/"/g, "&quot;");
+    }
+    module2.exports = {
+      buildShortId: buildShortId2,
+      injectSocialMeta: injectSocialMeta2
+    };
+  }
+});
+
 // src/core/presets.js
 var require_presets = __commonJS({
   "src/core/presets.js"(exports2, module2) {
@@ -1292,14 +2771,14 @@ var require_presets = __commonJS({
         previewSecurity: "trusted"
       }
     ];
-    function listExportPresets2() {
+    function listExportPresets() {
       return exportPresets.slice();
     }
-    function findExportPreset2(id) {
+    function findExportPreset(id) {
       return exportPresets.find((preset) => preset.id === id) || null;
     }
     function applyPresetToOptions2(baseOptions, presetId) {
-      const preset = findExportPreset2(presetId);
+      const preset = findExportPreset(presetId);
       if (!preset) {
         return { ...baseOptions };
       }
@@ -1313,938 +2792,15 @@ var require_presets = __commonJS({
         previewSecurity: preset.previewSecurity
       };
     }
-    function findPresetForOptions2(options = {}) {
+    function findPresetForOptions(options = {}) {
       const preset = exportPresets.find((item) => item.artifactGoal === options.artifactGoal && item.artifactType === options.artifactType && item.template === options.template && item.mode === options.conversionMode && item.previewSecurity === options.previewSecurity);
       return preset ? preset.id : "custom";
     }
     module2.exports = {
       applyPresetToOptions: applyPresetToOptions2,
-      findExportPreset: findExportPreset2,
-      findPresetForOptions: findPresetForOptions2,
-      listExportPresets: listExportPresets2
-    };
-  }
-});
-
-// src/core/github-pages.js
-var require_github_pages = __commonJS({
-  "src/core/github-pages.js"(exports2, module2) {
-    "use strict";
-    var path = require("node:path");
-    function parseRepo2(value) {
-      const cleaned = String(value || "").trim().replace(/^https:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "");
-      const [owner, repo] = cleaned.split("/");
-      if (!owner || !repo) {
-        return null;
-      }
-      return { owner, repo };
-    }
-    function normalizePublishPath(value) {
-      return String(value || "").trim().replace(/^\/+|\/+$/g, "").replace(/\\/g, "/").replace(/\/+/g, "/");
-    }
-    function buildPublishPath2(basePath, slug, filePath) {
-      return [normalizePublishPath(basePath), slug, filePath].filter(Boolean).join("/").replace(/\/+/g, "/");
-    }
-    function buildPagesUrl2(baseUrl, basePath, slug) {
-      const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
-      if (!root) {
-        return "";
-      }
-      const suffix = [normalizePublishPath(basePath), slug].filter(Boolean).map((part) => encodePathPart(part)).join("/");
-      return `${root}/${suffix ? `${suffix}/` : ""}`;
-    }
-    function buildShortPagesUrl2(baseUrl, basePath, shortId) {
-      return buildPagesUrl2(baseUrl, basePath, `s/${shortId}`);
-    }
-    function buildShareHomeUrl2(baseUrl, basePath) {
-      const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
-      if (!root) {
-        return "";
-      }
-      const suffix = normalizePublishPath(basePath);
-      return `${root}/${suffix ? `${encodePathPart(suffix)}/` : ""}`;
-    }
-    function encodePathPart(value) {
-      return String(value || "").split("/").map((part) => encodeURIComponent(part)).join("/");
-    }
-    function inferPagesBaseUrl3(repoValue) {
-      const repo = parseRepo2(repoValue);
-      if (!repo) {
-        return "";
-      }
-      if (repo.repo.toLowerCase() === `${repo.owner.toLowerCase()}.github.io`) {
-        return `https://${repo.repo}`;
-      }
-      return `https://${repo.owner}.github.io/${repo.repo}`;
-    }
-    function mimeTypeForPath(filePath) {
-      const extension = path.extname(filePath).toLowerCase();
-      return {
-        ".html": "text/html; charset=utf-8",
-        ".md": "text/markdown; charset=utf-8",
-        ".css": "text/css; charset=utf-8",
-        ".js": "application/javascript",
-        ".json": "application/json",
-        ".svg": "image/svg+xml",
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".gif": "image/gif",
-        ".webp": "image/webp",
-        ".avif": "image/avif"
-      }[extension] || "application/octet-stream";
-    }
-    function updateShareIndex2(existingIndex, entry) {
-      const now = (entry == null ? void 0 : entry.updatedAt) || (/* @__PURE__ */ new Date()).toISOString();
-      const current = Array.isArray(existingIndex == null ? void 0 : existingIndex.items) ? existingIndex.items : [];
-      const nextEntry = normalizeShareEntry(entry, now);
-      const merged = nextEntry ? [
-        nextEntry,
-        ...repairShareItems(current).filter((item) => !shareItemsMatch(item, nextEntry))
-      ] : repairShareItems(current);
-      const items = dedupeShareItems(merged).sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
-      return {
-        version: 2,
-        updatedAt: now,
-        items
-      };
-    }
-    function repairShareIndex2(existingIndex) {
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const current = Array.isArray(existingIndex == null ? void 0 : existingIndex.items) ? existingIndex.items : [];
-      const items = dedupeShareItems(repairShareItems(current)).sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
-      return {
-        version: 2,
-        updatedAt: (existingIndex == null ? void 0 : existingIndex.updatedAt) || now,
-        items
-      };
-    }
-    function renderShareIndexHtml2(index, options = {}) {
-      const title = cleanArchiveText(options.title || "유네코 지수 통합선별공장 프로젝트", "유네코 지수 통합선별공장 프로젝트");
-      const baseUrl = String(options.baseUrl || "").replace(/\/+$/g, "");
-      const items = repairShareItems(Array.isArray(index == null ? void 0 : index.items) ? index.items : []).map((item, itemIndex) => normalizeArchiveItem2(item, itemIndex, baseUrl));
-      const tagCounts = /* @__PURE__ */ new Map();
-      const typeCounts = /* @__PURE__ */ new Map();
-      for (const item of items) {
-        typeCounts.set(item.type, (typeCounts.get(item.type) || 0) + 1);
-        for (const tag of item.tags) {
-          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-        }
-      }
-      const preferredTypes = ["공사일보", "통합노트", "회의록", "노트", "보고서"];
-      const typeButtons = preferredTypes.filter((type) => typeCounts.has(type)).concat([...typeCounts.keys()].filter((type) => !preferredTypes.includes(type)).sort((left, right) => left.localeCompare(right))).map((type) => `<button type="button" data-filter="${escapeHtml(type)}">${escapeHtml(type)}</button>`).join("");
-      const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).slice(0, 10).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} ${count}</button>`).join("");
-      const list = items.map(renderArchiveTile2).join("\n");
-      const latestMonth = ((items.find((item) => item.date) || {}).date || formatDate(index == null ? void 0 : index.updatedAt)).slice(0, 7) || (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
-      const docsJson = safeInlineJson2(items.map((item) => ({ title: item.title, type: item.type, date: item.date, url: item.href, tags: item.tags })));
-      return `<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${escapeHtml(title)}</title>
-<meta name="description" content="지수 통합선별공장 프로젝트의 공사일보, 회의록, 보고서를 빠르게 탐색하는 MarkTL 아카이브입니다.">
-<style>
-*{box-sizing:border-box}html,body{height:100%;background:#050507}body{margin:0;min-width:0;width:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f7f8fb;background:radial-gradient(circle at 12% 0%,rgba(255,61,61,.3),transparent 32rem),radial-gradient(circle at 88% 5%,rgba(25,211,197,.22),transparent 30rem),linear-gradient(180deg,#08090d 0%,#111014 48%,#050507 100%);overflow:hidden}a{color:inherit;text-decoration:none}button,input{font:inherit}.app{width:min(1480px,100%);height:100dvh;margin:0 auto;padding:clamp(14px,2vw,28px);display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;overflow:hidden}.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,370px);gap:24px;align-items:start;min-height:0}.hero-panel{display:grid;align-content:start;gap:0;min-width:0;padding-top:8px}.eyebrow{margin:0 0 8px;color:#ffb020;font-size:12px;font-weight:950;letter-spacing:.16em;text-transform:uppercase}.top h1{max-width:860px;margin:0;font-size:clamp(30px,4vw,56px);line-height:1.02;letter-spacing:0;font-weight:950;text-wrap:balance}.hero-copy{max-width:820px;margin:12px 0 0;color:#c8d0dc;font-size:clamp(14px,1.18vw,17px);line-height:1.5}.calendar{height:300px;min-height:300px;align-self:start;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.105),rgba(255,255,255,.045));box-shadow:0 18px 48px rgba(0,0,0,.26);padding:16px 16px 22px;backdrop-filter:blur(18px)}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.cal-title{font-size:16px;font-weight:950;letter-spacing:.02em}.cal-nav{display:flex;gap:6px}.cal-nav button{display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer}.cal-nav button:hover{background:#ff3d3d}.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:4px}.cal-week{color:#8d98a8;font-size:10px;font-weight:900;text-align:center}.cal-day{position:relative;display:grid;place-items:center;min-height:24px;border:0;border-radius:7px;background:transparent;color:#cfd6e4;font-size:12px;font-weight:800}.cal-day.muted{opacity:.28}.cal-day.has-doc{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;min-height:30px!important;padding:3px 4px 2px!important;line-height:1!important;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ff3d3d,#ff9f1c);box-shadow:0 8px 18px rgba(255,80,40,.22)}.cal-day.has-doc::after{content:attr(data-type);display:block;max-width:38px;font-size:6.5px;font-weight:900;color:rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{position:static;display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:10px;align-items:center;max-width:100%;overflow:hidden;margin-top:16px;padding:8px 0 0;background:transparent;border:0;backdrop-filter:none}.search{height:38px;min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;padding:0 13px;outline:none}.search::placeholder{color:#8f98a8}.search:focus{border-color:#ffb020;box-shadow:0 0 0 3px rgba(255,176,32,.16)}.filters{min-width:0;max-width:100%;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;max-height:48px;overflow:hidden;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.filters button,.tags button{border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(255,255,255,.065);color:#dce3ef;cursor:pointer;white-space:nowrap}.filters button{height:22px;padding:0 7px;font-size:10px;line-height:1;font-weight:850}.filters button.active{border-color:#ff3d3d;background:#ff3d3d;color:#fff}.content{min-height:0;overflow:auto;padding:0 2px 28px 0;scrollbar-color:rgba(255,255,255,.26) transparent}.content::-webkit-scrollbar{width:10px}.content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:999px}.section-head{position:static;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 8px;padding:2px 0 8px;background:transparent}.section-head h2{margin:0;font-size:18px;letter-spacing:0}.section-head span{color:#9aa4b5;font-size:12px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.tile{container-type:inline-size;position:relative;display:grid;grid-template-columns:42% minmax(0,1fr);min-height:198px;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.095),rgba(255,255,255,.035));box-shadow:0 16px 34px rgba(0,0,0,.28);animation:tileIn .42s ease both;animation-delay:calc(var(--i)*42ms);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.tile::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 34%,transparent),transparent 58%);opacity:.34;pointer-events:none}.tile:hover{transform:translateY(-4px) scale(1.01);border-color:color-mix(in srgb,var(--accent) 72%,white);box-shadow:0 24px 54px rgba(0,0,0,.42)}.poster{position:relative;min-width:0;background:#181a22;overflow:hidden}.poster img{width:100%;height:100%;min-height:198px;object-fit:cover;display:block;transform:scale(1.01);transition:transform .25s ease,filter .25s ease}.tile:hover .poster img{transform:scale(1.05);filter:saturate(1.12)}.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 48%,rgba(10,10,12,.88) 100%)}.tile-body{position:relative;min-width:0;display:flex;flex-direction:column;padding:14px 44px 16px 14px}.meta-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;color:#aab4c4;font-size:11px;font-weight:850}.type{color:var(--accent2);text-transform:uppercase}.tile h2{margin:0;color:#fff;font-size:clamp(17px,2cqi,23px);line-height:1.18;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tile p{margin:8px 0 0;color:#c9d0dc;font-size:13px;line-height:1.42;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tags{display:flex;flex-wrap:nowrap;align-items:center;gap:5px;min-height:26px;max-height:26px;overflow-x:auto;overflow-y:hidden;margin-top:auto;padding:4px 38px 0 0;scrollbar-width:none}.tags::-webkit-scrollbar{display:none}.tags button{flex:0 0 auto;height:21px;line-height:1;padding:0 7px;font-size:10px;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.play{position:absolute;right:12px;bottom:12px;z-index:4;display:grid;place-items:center;width:30px;height:30px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 20px rgba(0,0,0,.26);font-size:12px}.empty{padding:18px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;color:#aab4c4}.hidden{display:none!important}.tile[data-type="공사일보"]{grid-template-columns:minmax(245px,47%) minmax(0,1fr)}.tile[data-type="공사일보"] .poster{align-self:center;aspect-ratio:16/9;height:auto;min-height:0;margin-left:10px;border-radius:8px;background:#090b10;border:1px solid rgba(255,255,255,.1)}.tile[data-type="공사일보"] .poster img{height:100%;min-height:0;object-fit:contain;padding:0;background:#090b10}.tile[data-type="공사일보"] .poster::after{background:linear-gradient(90deg,transparent 72%,rgba(10,10,12,.82) 100%)}@keyframes tileIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}@media(max-width:980px){.app{padding:10px 12px 16px;gap:8px}.top{grid-template-columns:1fr;gap:9px}.hero-panel{padding-top:0}.eyebrow{font-size:10px;margin-bottom:5px;letter-spacing:.14em}.top h1{font-size:clamp(25px,7.4vw,32px);line-height:1.02;max-width:360px}.hero-copy{margin-top:7px;font-size:12.5px;line-height:1.42;max-width:390px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.toolbar{grid-template-columns:1fr;gap:6px;margin-top:8px;padding:0;overflow:visible}.search{height:34px;border-radius:7px;font-size:12.5px;padding:0 10px}.filters{max-height:52px;gap:4px}.filters button{height:22px;padding:0 7px;font-size:10px}.calendar{height:256px;min-height:256px;padding:10px 10px 14px}.cal-title{font-size:14px}.cal-nav button{width:25px;height:25px}.cal-day{min-height:20px;font-size:10.5px}.cal-day.has-doc{min-height:24px!important;padding:2px 3px!important}.cal-day.has-doc::after{display:none}.section-head{padding:4px 0 7px;margin-bottom:7px}.section-head h2{font-size:15px}.section-head span{font-size:11px}.grid{grid-template-columns:1fr;gap:7px}.tile,.tile[data-type="공사일보"]{grid-template-columns:94px minmax(0,1fr);min-height:96px;border-radius:8px}.poster,.tile[data-type="공사일보"] .poster{width:auto;aspect-ratio:auto;margin-left:0;border:0;border-radius:0}.poster img,.tile[data-type="공사일보"] .poster img{min-height:96px;height:100%;object-fit:cover}.tile[data-type="공사일보"] .poster img{object-fit:contain;background:#090b10}.poster::after,.tile[data-type="공사일보"] .poster::after{background:linear-gradient(90deg,transparent 28%,rgba(10,10,12,.9) 100%)}.tile-body{padding:8px 34px 7px 10px}.meta-line{font-size:9.5px;margin-bottom:4px}.tile h2{font-size:15px;line-height:1.12;-webkit-line-clamp:2}.tile p{font-size:11px;line-height:1.25;margin-top:4px;-webkit-line-clamp:1}.play{width:24px;height:24px;right:7px;bottom:7px;font-size:10px}.tags{display:none}}@media(max-width:420px){.app{padding:9px 10px 14px}.calendar{display:none}.tile,.tile[data-type="공사일보"]{grid-template-columns:88px minmax(0,1fr);min-height:92px}.poster img,.tile[data-type="공사일보"] .poster img{min-height:92px}.top h1{font-size:25px}.hero-copy{font-size:12px}.filters button{font-size:10px}.tile h2{font-size:14.5px}}
-</style>
-</head>
-<body>
-<div class="app">
-  <header class="top">
-    <div class="hero-panel">
-      <p class="eyebrow">통합선별공장 Archive</p>
-      <h1>${escapeHtml(title)}</h1>
-      <p class="hero-copy">공사일보, 회의록, 보고서를 스트리밍 콘텐츠처럼 빠르게 고르고 바로 여는 MarkTL 공유 아카이브.</p>
-      <section class="toolbar" aria-label="검색과 필터">
-        <input class="search" id="search" type="search" placeholder="문서, 현장, 회의, 태그 검색" aria-label="문서 검색">
-        <div class="filters"><button class="active" type="button" data-filter="">전체</button>${typeButtons}${tagButtons}</div>
-      </section>
-    </div>
-    <aside class="calendar" aria-label="게시 날짜 캘린더">
-      <div class="cal-head"><button type="button" class="cal-title" id="calTitle" aria-label="현재 월"></button><div class="cal-nav"><button type="button" id="prevMonth" aria-label="이전 달">‹</button><button type="button" id="nextMonth" aria-label="다음 달">›</button></div></div>
-      <div class="cal-grid" id="calendarGrid"></div>
-    </aside>
-  </header>
-  <section class="content" aria-label="문서 목록 스크롤 영역">
-    <div class="section-head"><h2>지금 볼 문서</h2><span id="count">${items.length}개 표시</span></div>
-    <main class="grid" id="items">${list || '<p class="empty">게시된 문서가 없습니다.</p>'}</main>
-  </section>
-</div>
-<script>
-const docs=${docsJson};
-const initialMonth='${escapeJsString2(latestMonth)}';
-const search=document.getElementById('search');const count=document.getElementById('count');const cards=[...document.querySelectorAll('.tile')];let activeType='';let activeTag='';let activeDate='';let calDate=new Date(Number(initialMonth.slice(0,4)),Number(initialMonth.slice(5,7))-1,1);
-function apply(){const q=(search.value||'').trim().toLowerCase();let n=0;for(const card of cards){const okQ=!q||card.dataset.search.includes(q);const okT=!activeType||card.dataset.type===activeType;const okTag=!activeTag||(' '+card.dataset.tags+' ').includes(' '+activeTag+' ');const okDate=!activeDate||card.dataset.date===activeDate;const show=okQ&&okT&&okTag&&okDate;card.classList.toggle('hidden',!show);if(show)n++;}count.textContent=(activeDate?activeDate+' · ':'')+n+'개 표시';}
-function setActiveButton(btn){document.querySelectorAll('.filters button').forEach(b=>b.classList.toggle('active',b===btn));}
-document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{activeType=btn.dataset.filter||'';activeTag='';activeDate='';setActiveButton(btn);apply();}));document.querySelectorAll('[data-tag]').forEach(btn=>btn.addEventListener('click',()=>{activeTag=btn.dataset.tag||'';activeType='';activeDate='';setActiveButton(btn);apply();}));search.addEventListener('input',()=>{activeDate='';apply();});
-function docsByDate(date){return docs.filter(d=>d.date===date)}
-function renderCalendar(){const y=calDate.getFullYear();const m=calDate.getMonth();const title=document.getElementById('calTitle');title.textContent=y+'.'+String(m+1).padStart(2,'0');const grid=document.getElementById('calendarGrid');grid.innerHTML='';['일','월','화','수','목','금','토'].forEach(w=>{const el=document.createElement('div');el.className='cal-week';el.textContent=w;grid.append(el);});const first=new Date(y,m,1);const days=new Date(y,m+1,0).getDate();for(let i=0;i<first.getDay();i++){const blank=document.createElement('span');blank.className='cal-day muted';grid.append(blank);}for(let d=1;d<=days;d++){const date=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');const dayDocs=docsByDate(date);const button=document.createElement('button');button.type='button';button.className='cal-day'+(dayDocs.length?' has-doc':'');button.textContent=String(d);button.dataset.date=date;if(dayDocs.length){button.dataset.type=dayDocs[0].type;button.title=dayDocs.map(x=>x.title).join(String.fromCharCode(10));button.addEventListener('click',()=>{if(dayDocs.length===1){location.href=dayDocs[0].url;}else{activeDate=date;activeType='';activeTag='';setActiveButton(document.querySelector('[data-filter=""]'));apply();}});}grid.append(button);}}
-document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar();});document.getElementById('nextMonth').addEventListener('click',()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar();});document.getElementById('calTitle').addEventListener('click',()=>{calDate=new Date(Number(initialMonth.slice(0,4)),Number(initialMonth.slice(5,7))-1,1);renderCalendar();});renderCalendar();apply();
-</script>
-</body>
-</html>`;
-    }
-    function normalizeArchiveItem2(item, itemIndex, baseUrl) {
-      const tags = normalizeTags(item == null ? void 0 : item.tags);
-      const title = recoverShareTitle(item);
-      const date = extractArchiveDate2(item);
-      const type = inferArchiveType2(item, title, tags);
-      const accents = archiveAccents2(type, itemIndex);
-      const href = (item == null ? void 0 : item.url) || (item == null ? void 0 : item.canonicalUrl) || (baseUrl ? `${baseUrl}/${encodeURIComponent((item == null ? void 0 : item.slug) || "")}/` : `${encodeURIComponent((item == null ? void 0 : item.slug) || "")}/`);
-      const excerpt = cleanArchiveText((item == null ? void 0 : item.excerpt) || (item == null ? void 0 : item.sourcePath) || "", "");
-      const thumbnail = firstImageUrl2(item) || buildArchivePosterSvg2(title, type, date, accents, itemIndex);
-      const searchText = [title, item == null ? void 0 : item.slug, excerpt, item == null ? void 0 : item.sourcePath, type, date, ...tags].filter(Boolean).join(" ").toLowerCase();
-      return { title, date, type, accents, href, excerpt, tags, thumbnail, searchText, itemIndex };
-    }
-    function renderArchiveTile2(item) {
-      return `<article class="tile" data-search="${escapeHtml(item.searchText)}" data-tags="${escapeHtml(item.tags.join(" "))}" data-type="${escapeHtml(item.type)}" data-date="${escapeHtml(item.date)}" style="--accent:${escapeHtml(item.accents[0])};--accent2:${escapeHtml(item.accents[1])};--i:${item.itemIndex}">
-  <a class="poster" href="${escapeHtml(item.href)}"><img src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" loading="lazy"></a>
-  <div class="tile-body">
-    <div class="meta-line"><span class="type">${escapeHtml(item.type)}</span><time>${escapeHtml(item.date)}</time></div>
-    <h2><a href="${escapeHtml(item.href)}">${escapeHtml(item.title)}</a></h2>
-    ${item.excerpt ? `<p>${escapeHtml(item.excerpt)}</p>` : ""}
-    ${item.tags.length ? `<div class="tags">${item.tags.map((tag) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")}</div>` : '<div class="tags"></div>'}
-  </div>
-  <a class="play" href="${escapeHtml(item.href)}" aria-label="${escapeHtml(item.title)} 열기">▶</a>
-</article>`;
-    }
-    function extractArchiveDate2(item) {
-      const text = [item == null ? void 0 : item.title, item == null ? void 0 : item.sourcePath, item == null ? void 0 : item.slug, item == null ? void 0 : item.updatedAt].filter(Boolean).join(" ");
-      const match = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
-      return match ? match[1] : formatDate(item == null ? void 0 : item.updatedAt) || "";
-    }
-    function inferArchiveType2(item, title, tags) {
-      const text = [title, item == null ? void 0 : item.sourcePath, item == null ? void 0 : item.artifactType, ...tags].join(" ").toLowerCase();
-      if (/공사일보|daily\s*construction/.test(text)) return "공사일보";
-      if (/회의록|회의|meeting/.test(text)) return "회의록";
-      if (/통합노트|프로젝트관리|통합관리|integrated/.test(text)) return "통합노트";
-      if (/보고서|report|research-report|decision-memo/.test(text)) return "보고서";
-      return "노트";
-    }
-    function archiveAccents2(type, index) {
-      const byType = { "공사일보": ["#ff3d3d", "#ff9f1c"], "통합노트": ["#10b981", "#84cc16"], "회의록": ["#8b5cf6", "#06b6d4"], "보고서": ["#f59e0b", "#ef4444"], "노트": ["#38bdf8", "#a78bfa"] };
-      const fallbacks = [["#38bdf8", "#a78bfa"], ["#ec4899", "#f97316"], ["#22c55e", "#14b8a6"]];
-      return byType[type] || fallbacks[index % fallbacks.length];
-    }
-    function firstImageUrl2(item) {
-      const value = (item == null ? void 0 : item.thumbnail) || (item == null ? void 0 : item.thumbnailUrl) || (item == null ? void 0 : item.image) || (item == null ? void 0 : item.imageUrl) || (item == null ? void 0 : item.coverUrl) || "";
-      const text = String(value || "").trim();
-      return /^(https?:\/\/|data:image\/)/i.test(text) ? text : "";
-    }
-    function buildArchivePosterSvg2(title, type, date, accents, index) {
-      const safeTitle = truncateArchiveText(title, 42);
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="${escapeHtml(safeTitle)}"><defs><linearGradient id="g${index}" x1="0" x2="1" y1="0" y2="1"><stop stop-color="${accents[0]}"/><stop offset="1" stop-color="${accents[1]}"/></linearGradient><filter id="s${index}" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000" flood-opacity=".32"/></filter></defs><rect width="640" height="360" rx="28" fill="#10131a"/><circle cx="520" cy="-10" r="210" fill="url(#g${index})" opacity=".9"/><circle cx="55" cy="315" r="180" fill="url(#g${index})" opacity=".42"/><path d="M60 250h520" stroke="#fff" stroke-opacity=".13" stroke-width="2"/><g filter="url(#s${index})"><rect x="58" y="60" width="116" height="116" rx="24" fill="rgba(255,255,255,.14)"/><path d="M89 132h54M89 101h92M89 162h140" stroke="#fff" stroke-width="12" stroke-linecap="round" opacity=".82"/></g><text x="58" y="224" fill="#fff" font-family="system-ui, sans-serif" font-size="30" font-weight="900">${escapeHtml(type)}</text><text x="58" y="270" fill="#fff" font-family="system-ui, sans-serif" font-size="22" font-weight="800" opacity=".92">${escapeHtml(date)}</text><text x="58" y="314" fill="#fff" font-family="system-ui, sans-serif" font-size="22" font-weight="700" opacity=".82">${escapeHtml(safeTitle)}</text></svg>`;
-      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-    }
-    function safeInlineJson2(value) {
-      return JSON.stringify(value).replace(/</g, "\\u003c");
-    }
-    function escapeJsString2(value) {
-      return String(value || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-    }
-    function normalizeShareEntry(entry, now) {
-      if (!entry || typeof entry !== "object") {
-        return null;
-      }
-      const normalized = {
-        ...entry,
-        schemaVersion: 2,
-        updatedAt: entry.updatedAt || now || (/* @__PURE__ */ new Date()).toISOString()
-      };
-      normalized.sourcePathKey = normalized.sourcePathKey || buildSourcePathKey(normalized.sourcePath || "");
-      normalized.title = recoverShareTitle(normalized);
-      normalized.excerpt = cleanArchiveText(normalized.excerpt || "", "");
-      normalized.tags = normalizeTags(normalized.tags);
-      return normalized;
-    }
-    function repairShareItems(items) {
-      return items.map((item) => normalizeShareEntry(item, item == null ? void 0 : item.updatedAt)).filter(Boolean);
-    }
-    function dedupeShareItems(items) {
-      const deduped = [];
-      for (const item of items) {
-        if (!deduped.some((existing) => shareItemsMatch(existing, item))) {
-          deduped.push(item);
-        }
-      }
-      return deduped;
-    }
-    function shareItemsMatch(left, right) {
-      const rightKeys = new Set(shareItemKeys(right));
-      return shareItemKeys(left).some((key) => rightKeys.has(key));
-    }
-    function shareItemKeys(item) {
-      const keys = [];
-      const shortId = cleanArchiveText(item == null ? void 0 : item.shortId, "");
-      if (shortId) {
-        keys.push(`short:${shortId}`);
-      }
-      const url = normalizeUrlKey(item == null ? void 0 : item.url);
-      if (url) {
-        keys.push(`url:${url}`);
-      }
-      const canonicalUrl = normalizeUrlKey(item == null ? void 0 : item.canonicalUrl);
-      if (canonicalUrl) {
-        keys.push(`canonical:${canonicalUrl}`);
-      }
-      const sourcePath = buildSourcePathKey((item == null ? void 0 : item.sourcePathKey) || (item == null ? void 0 : item.sourcePath) || "");
-      if (sourcePath) {
-        keys.push(`source:${sourcePath}`);
-      }
-      const slug = normalizeIndexKey(item == null ? void 0 : item.slug);
-      if (slug) {
-        keys.push(`slug:${slug}`);
-      }
-      return keys;
-    }
-    function normalizeUrlKey(value) {
-      return normalizeIndexKey(value).replace(/\/+$/g, "");
-    }
-    function buildSourcePathKey(value) {
-      return normalizeIndexKey(value);
-    }
-    function normalizeIndexKey(value) {
-      return repairMojibake(decodeArchiveComponent(value)).normalize("NFC").replace(/\\/g, "/").replace(/\s+/g, " ").trim().toLowerCase();
-    }
-    function recoverShareTitle(item) {
-      const candidates = [
-        item == null ? void 0 : item.title,
-        titleFromUrl(item == null ? void 0 : item.canonicalUrl),
-        titleFromSourcePath(item == null ? void 0 : item.sourcePath),
-        item == null ? void 0 : item.slug
-      ];
-      for (const candidate of candidates) {
-        const title = normalizeTitleCandidate(candidate);
-        if (title) {
-          return title;
-        }
-      }
-      return "제목 없는 HTML 산출물";
-    }
-    function titleFromUrl(value) {
-      try {
-        const url = new URL(String(value || ""));
-        const segments = url.pathname.split("/").filter(Boolean);
-        const last = segments[segments.length - 1] || "";
-        const previous = segments[segments.length - 2] || "";
-        if (previous === "s") {
-          return "";
-        }
-        return last;
-      } catch (error) {
-        return "";
-      }
-    }
-    function titleFromSourcePath(value) {
-      const text = decodeArchiveComponent(value).split(/[\\/]/).filter(Boolean).pop() || "";
-      return text.replace(/\.(md|html?)$/i, "");
-    }
-    function normalizeTitleCandidate(value) {
-      const basename = decodeArchiveComponent(value).split(/[\\/]/).filter(Boolean).pop() || value;
-      const cleaned = cleanArchiveText(prettifySlugTitle(String(basename || "").replace(/\.(md|html?)$/i, "")), "");
-      return cleanArchiveText(cleaned, "");
-    }
-    function prettifySlugTitle(value) {
-      const text = String(value || "").trim();
-      const match = /^(\d{4}-\d{2}-\d{2})-(\S.+)$/.exec(text);
-      if (!match || text.includes(" ")) {
-        return text;
-      }
-      const parts = match[2].split("-").filter(Boolean);
-      if (parts.length >= 4) {
-        return `${match[1]} - ${parts.slice(0, 2).join(" ")} - ${parts.slice(2).join(" ")}`;
-      }
-      return `${match[1]} - ${parts.join(" ")}`;
-    }
-    function decodeArchiveComponent(value) {
-      let text = String(value || "");
-      for (let index = 0; index < 2; index++) {
-        try {
-          const decoded = decodeURIComponent(text);
-          if (decoded === text) {
-            break;
-          }
-          text = decoded;
-        } catch (error) {
-          break;
-        }
-      }
-      return text;
-    }
-    function normalizeTags(tags) {
-      const values = Array.isArray(tags) ? tags : String(tags || "").split(",");
-      return [...new Set(values.map((tag) => cleanArchiveText(String(tag || "").replace(/^\s*-\s*/, "").replace(/^#/, "").replace(/^["']|["']$/g, "").trim(), "")).filter(Boolean).filter((tag) => !looksLikeMojibake(tag)).map(toReaderTag).filter(Boolean).map((tag) => tag.length > 44 ? `${tag.slice(0, 41)}...` : tag))].slice(0, 8);
-    }
-    var READER_TAG_ALIASES = /* @__PURE__ */ new Map([
-      ["obsidian/project-management", "\uD504\uB85C\uC81D\uD2B8\uAD00\uB9AC"],
-      ["gantt", "\uAC04\uD2B8"],
-      ["budget", "\uC608\uC0B0"],
-      ["risk", "\uB9AC\uC2A4\uD06C"],
-      ["function/ops", "\uC6B4\uC601"],
-      ["doc/meeting", "\uD68C\uC758\uB85D"],
-      ["doc/\uBCF4\uACE0\uC11C", "\uBCF4\uACE0\uC11C"],
-      ["state/\uAC80\uD1A0\uC911", "\uAC80\uD1A0\uC911"]
-    ]);
-    var HIDDEN_READER_TAGS = /* @__PURE__ */ new Set([
-      "ai",
-      "dataviewjs",
-      "reforged-note",
-      "obsidian/mermaid",
-      "obsidian/dataviewjs"
-    ]);
-    function toReaderTag(tag) {
-      const normalized = String(tag || "").trim().replace(/^#/, "");
-      const key = normalized.toLowerCase();
-      if (!normalized || HIDDEN_READER_TAGS.has(key)) {
-        return "";
-      }
-      if (READER_TAG_ALIASES.has(key)) {
-        return READER_TAG_ALIASES.get(key);
-      }
-      if (/^obsidian\//i.test(normalized)) {
-        return "";
-      }
-      if (/^(project|topic|doc|state|function|\uC5C5\uBB34|\uD68C\uC758\uB85D|\uD504\uB85C\uC81D\uD2B8)\//i.test(normalized)) {
-        return normalized.split("/").filter(Boolean).pop() || "";
-      }
-      return normalized;
-    }
-    function cleanArchiveText(value, fallback = "") {
-      const cleaned = repairMojibake(String(value || "")).replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<iframe\b[\s\S]*?<\/iframe>/gi, " ").replace(/<[^>]+>/g, " ").replace(/<[^>]*$/g, " ").replace(/\s+/g, " ").trim();
-      if (!cleaned || looksLikeMojibake(cleaned)) {
-        return fallback;
-      }
-      return cleaned.length > 220 ? `${cleaned.slice(0, 217)}...` : cleaned;
-    }
-    function truncateArchiveText(value, limit = 58) {
-      const text = String(value || "").trim();
-      if (!text || text.length <= limit) {
-        return text;
-      }
-      return `${text.slice(0, limit).trim()}...`;
-    }
-    function repairMojibake(value) {
-      let best = String(value || "");
-      let bestScore = mojibakeScore(best);
-      for (let index = 0; index < 2; index++) {
-        const next = Buffer.from(best, "latin1").toString("utf8");
-        const score = mojibakeScore(next);
-        if (score >= bestScore) {
-          break;
-        }
-        best = next;
-        bestScore = score;
-      }
-      return best;
-    }
-    function looksLikeMojibake(value) {
-      const text = String(value || "");
-      if (!text) {
-        return false;
-      }
-      if (text.includes("�")) {
-        return true;
-      }
-      return mojibakeScore(text) / Math.max(text.length, 1) > 0.08;
-    }
-    function mojibakeScore(value) {
-      const text = String(value || "");
-      if (!text) {
-        return 0;
-      }
-      return (text.match(/[�ÂÃìíëê¼½¾]/g) || []).length;
-    }
-    function formatDate(value) {
-      if (!value) {
-        return "";
-      }
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) {
-        return String(value);
-      }
-      return date.toISOString().slice(0, 10);
-    }
-    function escapeHtml(value) {
-      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    }
-    module2.exports = {
-      buildPagesUrl: buildPagesUrl2,
-      buildPublishPath: buildPublishPath2,
-      buildShareHomeUrl: buildShareHomeUrl2,
-      buildShortPagesUrl: buildShortPagesUrl2,
-      inferPagesBaseUrl: inferPagesBaseUrl3,
-      mimeTypeForPath,
-      normalizePublishPath,
-      parseRepo: parseRepo2,
-      repairShareIndex: repairShareIndex2,
-      renderShareIndexHtml: renderShareIndexHtml2,
-      updateShareIndex: updateShareIndex2
-    };
-  }
-});
-
-// src/core/setup-guidance.js
-var require_setup_guidance = __commonJS({
-  "src/core/setup-guidance.js"(exports2, module2) {
-    "use strict";
-    function buildPagesSetupChecklist2(settings = {}) {
-      const repo = String(settings.githubRepo || "owner/repo").trim() || "owner/repo";
-      const branch = String(settings.githubBranch || "main").trim() || "main";
-      const baseUrl = String(settings.githubPagesBaseUrl || "").trim() || "https://owner.github.io/repo";
-      const publishPath = String(settings.githubPublishPath || "marktl").trim() || "marktl";
-      return [
-        "MarkTL GitHub Pages setup checklist",
-        "",
-        `1. GitHub repository: ${repo}`,
-        `2. Enable GitHub Pages for branch "${branch}" in GitHub repository Settings > Pages.`,
-        "3. Pages source should publish from the same branch/folder that receives MarkTL files.",
-        `4. GitHub Pages base URL: ${baseUrl}`,
-        `5. Publish path: ${publishPath}`,
-        `6. Expected export URL: ${baseUrl.replace(/\/+$/g, "")}/${publishPath.replace(/^\/+|\/+$/g, "")}/<slug>/`,
-        "7. Open https://github.com/settings/personal-access-tokens/new and create a fine-grained token.",
-        `8. Limit repository access to ${repo}.`,
-        "9. Grant Contents read/write permission. No broader permissions are required for publishing files.",
-        "10. Paste the token into MarkTL settings, then export one test note with Share target = GitHub Pages link."
-      ].join("\n");
-    }
-    function buildGiscusSetupChecklist2(settings = {}) {
-      const repo = String(settings.giscusRepo || settings.githubRepo || "owner/repo").trim() || "owner/repo";
-      const category = String(settings.giscusCategory || "Announcements").trim() || "Announcements";
-      return [
-        "MarkTL Giscus setup checklist",
-        "",
-        `1. Use repository: ${repo}`,
-        "2. Install the Giscus GitHub App from https://github.com/apps/giscus for this repository.",
-        "3. In GitHub repository Settings, enable Discussions.",
-        "4. Create or choose a discussion category, for example General or Announcements.",
-        "5. Open https://giscus.app and enter the repository.",
-        `6. Choose category: ${category}`,
-        "7. Choose mapping: pathname",
-        "8. Choose theme: preferred_color_scheme",
-        "9. Copy data-repo-id and data-category-id from the generated Giscus script.",
-        "10. Paste those IDs into MarkTL settings.",
-        "11. Export with Preview/export = Trusted interactive preview and Reader feedback = Giscus GitHub comments."
-      ].join("\n");
-    }
-    module2.exports = {
-      buildGiscusSetupChecklist: buildGiscusSetupChecklist2,
-      buildPagesSetupChecklist: buildPagesSetupChecklist2
-    };
-  }
-});
-
-// src/core/provider-doctor.js
-var require_provider_doctor = __commonJS({
-  "src/core/provider-doctor.js"(exports2, module2) {
-    "use strict";
-    var { spawn } = require("node:child_process");
-    var { mergePath } = require_ai();
-    async function checkClaudeProvider2(options = {}) {
-      return checkTextProvider({
-        ...options,
-        command: options.command || "claude",
-        name: "Claude Code CLI",
-        versionArgs: ["--version"],
-        probeArgs: ["-p", "Return only this exact text: MARKTL_OK"],
-        readyMessage: "Claude Code CLI is installed, logged in, and ready.",
-        missingMessage: "Claude Code CLI was not found or did not start.",
-        failedMessage: "Claude Code CLI is installed, but the login probe failed."
-      });
-    }
-    async function checkCodexProvider2(options = {}) {
-      return checkTextProvider({
-        ...options,
-        command: options.command || "codex",
-        name: "Codex CLI",
-        versionArgs: ["--version"],
-        probeArgs: ["exec", "--json", "--sandbox", "read-only", "--skip-git-repo-check", "-"],
-        probeInput: "Return only this exact text: MARKTL_OK",
-        readyMessage: "Codex CLI is installed, logged in, and ready.",
-        missingMessage: "Codex CLI was not found or did not start.",
-        failedMessage: "Codex CLI is installed, but the probe failed."
-      });
-    }
-    async function checkTextProvider(options = {}) {
-      const command = options.command || "claude";
-      const timeoutMs = Number(options.timeoutMs || 15e3);
-      const runner = options.runCommand || runCommand;
-      const version = await runner(command, options.versionArgs || ["--version"], timeoutMs);
-      if (version.code !== 0) {
-        return {
-          ok: false,
-          status: "missing",
-          message: cleanDoctorOutput(version.output) || options.missingMessage || `${options.name || "Provider"} was not found or did not start.`,
-          version: ""
-        };
-      }
-      const probe = await runner(command, options.probeArgs, timeoutMs, options.probeInput);
-      if (probe.code !== 0) {
-        const output = cleanDoctorOutput(probe.output);
-        return {
-          ok: false,
-          status: output.toLowerCase().includes("not logged in") ? "not-logged-in" : "probe-failed",
-          message: output || options.failedMessage || `${options.name || "Provider"} is installed, but the probe failed.`,
-          version: cleanDoctorOutput(version.output)
-        };
-      }
-      return {
-        ok: /MARKTL_OK/i.test(probe.output),
-        status: /MARKTL_OK/i.test(probe.output) ? "ready" : "unexpected-output",
-        message: /MARKTL_OK/i.test(probe.output) ? options.readyMessage || `${options.name || "Provider"} is installed, logged in, and ready.` : cleanDoctorOutput(probe.output) || `${options.name || "Provider"} responded, but not with the expected probe text.`,
-        version: cleanDoctorOutput(version.output)
-      };
-    }
-    function runCommand(command, args, timeoutMs, input = "") {
-      return new Promise((resolve) => {
-        const child = spawn(command, args, {
-          env: {
-            ...process.env,
-            PATH: mergePath(process.env.PATH)
-          },
-          stdio: ["pipe", "pipe", "pipe"]
-        });
-        let output = "";
-        let settled = false;
-        const timeout = setTimeout(() => {
-          if (settled) {
-            return;
-          }
-          settled = true;
-          child.kill("SIGTERM");
-          resolve({ code: -1, output: `Provider doctor timed out after ${timeoutMs}ms.` });
-        }, timeoutMs);
-        child.stdout.on("data", (chunk) => {
-          output += chunk;
-        });
-        child.stderr.on("data", (chunk) => {
-          output += chunk;
-        });
-        if (input) {
-          child.stdin.write(input);
-        }
-        child.stdin.end();
-        child.on("error", (error) => {
-          if (settled) {
-            return;
-          }
-          settled = true;
-          clearTimeout(timeout);
-          resolve({ code: -1, output: error.message });
-        });
-        child.on("close", (code) => {
-          if (settled) {
-            return;
-          }
-          settled = true;
-          clearTimeout(timeout);
-          resolve({ code: code || 0, output });
-        });
-      });
-    }
-    function cleanDoctorOutput(value = "") {
-      return String(value || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 6).join("\n");
-    }
-    module2.exports = {
-      checkCodexProvider: checkCodexProvider2,
-      checkClaudeProvider: checkClaudeProvider2,
-      cleanDoctorOutput,
-      runCommand
-    };
-  }
-});
-
-// src/core/context-pack.js
-var require_context_pack = __commonJS({
-  "src/core/context-pack.js"(exports2, module2) {
-    "use strict";
-    var { escapeHtml } = require_html();
-    var MAX_CONTEXT_NOTES = 6;
-    var MAX_CONTEXT_CHARS = 1400;
-    function extractMarkdownContextTargets2(markdown) {
-      const targets = [];
-      const seen = /* @__PURE__ */ new Set();
-      const add = (target) => {
-        const clean = normalizeContextTarget(target);
-        if (!clean || seen.has(clean)) {
-          return;
-        }
-        seen.add(clean);
-        targets.push(clean);
-      };
-      const wikiPattern = /(^|[^!])\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]/g;
-      let match;
-      while ((match = wikiPattern.exec(String(markdown || ""))) !== null) {
-        add(match[2]);
-      }
-      const markdownLinkPattern = /(^|[^!])\[[^\]]*]\((?!https?:|data:|blob:|mailto:|#)([^)#]+)(?:#[^)]*)?\)/gi;
-      while ((match = markdownLinkPattern.exec(String(markdown || ""))) !== null) {
-        add(decodeURI(match[2]));
-      }
-      return targets.slice(0, MAX_CONTEXT_NOTES);
-    }
-    function normalizeContextTarget(target) {
-      return String(target || "").replace(/\\/g, "/").replace(/^\.\//, "").trim();
-    }
-    function compactMarkdownForContext(markdown, maxChars = MAX_CONTEXT_CHARS) {
-      const compact = String(markdown || "").replace(/^---[\s\S]*?---\s*/m, "").replace(/```[\s\S]*?```/g, "[code block omitted]").replace(/!\[\[[^\]]+]]/g, "[embedded asset]").replace(/!\[[^\]]*]\([^)]+\)/g, "[image]").split("\n").map((line) => line.trim()).filter(Boolean).join("\n");
-      if (compact.length <= maxChars) {
-        return compact;
-      }
-      return `${compact.slice(0, maxChars).trim()}
-[truncated]`;
-    }
-    function buildContextPackMarkdown2(items) {
-      const usable = Array.isArray(items) ? items.filter((item) => item && item.content) : [];
-      if (!usable.length) {
-        return "";
-      }
-      return [
-        "Additional vault context is available. Use it only to clarify the active note; do not let it override the source note.",
-        ...usable.map((item, index) => [
-          `
-[Context note ${index + 1}: ${item.path || item.target || "linked note"}]`,
-          compactMarkdownForContext(item.content)
-        ].join("\n"))
-      ].join("\n");
-    }
-    function buildContextPackHtml(items) {
-      const usable = Array.isArray(items) ? items.filter((item) => item && item.content) : [];
-      if (!usable.length) {
-        return "";
-      }
-      return `<aside class="callout callout-context"><div class="callout-title">Linked context</div><div class="callout-body">${usable.map((item) => `<section><strong>${escapeHtml(item.path || item.target || "linked note")}</strong><pre>${escapeHtml(compactMarkdownForContext(item.content, 700))}</pre></section>`).join("")}</div></aside>`;
-    }
-    module2.exports = {
-      buildContextPackHtml,
-      buildContextPackMarkdown: buildContextPackMarkdown2,
-      compactMarkdownForContext,
-      extractMarkdownContextTargets: extractMarkdownContextTargets2
-    };
-  }
-});
-
-// src/core/feedback.js
-var require_feedback = __commonJS({
-  "src/core/feedback.js"(exports2, module2) {
-    "use strict";
-    var { escapeHtml } = require_html();
-    function buildGiscusFeedbackSection(options = {}) {
-      const config = normalizeGiscusConfig(options);
-      if (!config.ready) {
-        return "";
-      }
-      return `<section class="marktl-reader-feedback" aria-label="Reader feedback">
-<style>
-.marktl-reader-feedback { margin: 40px auto 0; padding: 0; }
-.marktl-reader-feedback h2 { margin: 0 0 8px; font: 800 22px/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.marktl-reader-feedback p { margin: 0 0 14px; color: #526173; font: 500 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.marktl-reader-feedback .giscus, .marktl-reader-feedback .giscus-frame { width: 100%; }
-</style>
-<h2>Reader feedback</h2>
-<p>Leave a public GitHub comment or reaction below.</p>
-<script src="https://giscus.app/client.js"
-        data-repo="${escapeAttr(config.repo)}"
-        data-repo-id="${escapeAttr(config.repoId)}"
-        data-category="${escapeAttr(config.category)}"
-        data-category-id="${escapeAttr(config.categoryId)}"
-        data-mapping="${escapeAttr(config.mapping)}"
-        data-strict="0"
-        data-reactions-enabled="1"
-        data-emit-metadata="0"
-        data-input-position="bottom"
-        data-theme="${escapeAttr(config.theme)}"
-        data-lang="${escapeAttr(config.lang)}"
-        crossorigin="anonymous"
-        async>
-</script>
-</section>`;
-    }
-    function injectReaderFeedback2(html, options = {}) {
-      const section = buildGiscusFeedbackSection(options);
-      if (!section) {
-        return String(html || "");
-      }
-      const value = String(html || "");
-      if (/<\/main>/i.test(value)) {
-        return value.replace(/<\/main>/i, `${section}
-</main>`);
-      }
-      if (/<\/body>/i.test(value)) {
-        return value.replace(/<\/body>/i, `${section}
-</body>`);
-      }
-      return `${value}
-${section}`;
-    }
-    function validateGiscusConfig2(options = {}) {
-      const config = normalizeGiscusConfig(options);
-      const warnings = [];
-      if (!config.repo) warnings.push("Giscus 댓글 저장소가 설정되지 않았습니다.");
-      if (!config.repoId) warnings.push("Giscus 저장소 ID가 설정되지 않았습니다.");
-      if (!config.category) warnings.push("Giscus discussion category가 설정되지 않았습니다.");
-      if (!config.categoryId) warnings.push("Giscus category ID가 설정되지 않았습니다.");
-      return warnings;
-    }
-    function shouldAttachReaderFeedback2(options = {}) {
-      return options.readerFeedbackMode === "giscus" && options.shareTarget !== "local-link";
-    }
-    function normalizeGiscusConfig(options = {}) {
-      const config = {
-        repo: String(options.repo || "").trim(),
-        repoId: String(options.repoId || "").trim(),
-        category: String(options.category || "").trim(),
-        categoryId: String(options.categoryId || "").trim(),
-        mapping: String(options.mapping || "pathname").trim() || "pathname",
-        theme: String(options.theme || "preferred_color_scheme").trim() || "preferred_color_scheme",
-        lang: String(options.lang || "ko").trim() || "ko"
-      };
-      return {
-        ...config,
-        ready: Boolean(config.repo && config.repoId && config.category && config.categoryId)
-      };
-    }
-    function escapeAttr(value) {
-      return escapeHtml(String(value || "")).replace(/"/g, "&quot;");
-    }
-    module2.exports = {
-      buildGiscusFeedbackSection,
-      injectReaderFeedback: injectReaderFeedback2,
-      shouldAttachReaderFeedback: shouldAttachReaderFeedback2,
-      validateGiscusConfig: validateGiscusConfig2
-    };
-  }
-});
-
-// src/core/html-qa.js
-var require_html_qa = __commonJS({
-  "src/core/html-qa.js"(exports2, module2) {
-    "use strict";
-    function validateHtmlArtifact2(html, options = {}) {
-      const warnings = [];
-      const value = String(html || "");
-      if (!/<!doctype\s+html/i.test(value)) {
-        warnings.push("참고: HTML doctype이 없습니다.");
-      }
-      if (!/<meta\s+name=["']viewport["']/i.test(value)) {
-        warnings.push("참고: responsive viewport meta가 없습니다.");
-      }
-      if (!/<style\b/i.test(value)) {
-        warnings.push("참고: 내장 CSS가 없어 산출물이 단조로울 수 있습니다.");
-      }
-      if (!/<h1\b/i.test(value)) {
-        warnings.push("참고: H1 제목을 찾지 못했습니다.");
-      }
-      const trusted = Boolean(options.trusted);
-      const artifactGoal = String(options.artifactGoal || "");
-      if (trusted && !/<script\b/i.test(value)) {
-        warnings.push("참고: 신뢰 인터랙티브 모드이지만 스크립트가 없어 정적 산출물일 수 있습니다.");
-      }
-      if (!trusted && /<script\b|<iframe\b|\son[a-z]+\s*=/i.test(value)) {
-        warnings.push("배포 차단: 정적 안전 모드 산출물에 동적 마크업이 남아 있습니다.");
-      }
-      if (trusted && ["review", "compare", "tune"].includes(artifactGoal) && !/<button\b|<input\b|<select\b|<textarea\b|contenteditable=/i.test(value)) {
-        warnings.push(`주의: ${artifactGoal} 산출물에 명확한 복사/인터랙션 컨트롤이 없습니다.`);
-      }
-      const expectedAssets = Array.isArray(options.assetMappings) ? options.assetMappings.map((mapping) => mapping.relativeSrc).filter(Boolean) : [];
-      for (const src of expectedAssets) {
-        if (!value.includes(src)) {
-          warnings.push(`주의: 포함한 이미지가 최종 HTML에서 참조되지 않습니다: ${src}`);
-        }
-      }
-      if (/<img\b/i.test(value) && !/<img\b[^>]*\balt\s*=/i.test(value)) {
-        warnings.push("주의: alt 텍스트가 없는 이미지가 있습니다.");
-      }
-      return warnings;
-    }
-    module2.exports = {
-      validateHtmlArtifact: validateHtmlArtifact2
-    };
-  }
-});
-
-// src/core/settings.js
-var require_settings = __commonJS({
-  "src/core/settings.js"(exports2, module2) {
-    "use strict";
-    function firstString(...values) {
-      for (const value of values) {
-        if (typeof value === "string" && value.trim()) {
-          return value.trim();
-        }
-      }
-      return "";
-    }
-    function migrateSettings2(defaultSettings, rawSettings) {
-      const raw = rawSettings && typeof rawSettings === "object" ? rawSettings : {};
-      const settings = Object.assign({}, defaultSettings, raw);
-      let migrated = false;
-      const legacyRepo = firstString(raw.githubRepository, raw.repository);
-      if (!firstString(settings.githubRepo) && legacyRepo) {
-        settings.githubRepo = legacyRepo;
-        migrated = true;
-      }
-      const legacyPublishPath = firstString(raw.publishPath, raw.githubPath);
-      if ((!firstString(settings.githubPublishPath) || settings.githubPublishPath === defaultSettings.githubPublishPath) && legacyPublishPath) {
-        settings.githubPublishPath = legacyPublishPath;
-        migrated = true;
-      }
-      const legacyShareHomeTitle = firstString(raw.shareHomeTitle);
-      if ((!firstString(settings.githubShareHomeTitle) || settings.githubShareHomeTitle === defaultSettings.githubShareHomeTitle) && legacyShareHomeTitle) {
-        settings.githubShareHomeTitle = legacyShareHomeTitle;
-        migrated = true;
-      }
-      return { settings, migrated };
-    }
-    module2.exports = {
-      migrateSettings: migrateSettings2
-    };
-  }
-});
-
-// src/core/social.js
-var require_social = __commonJS({
-  "src/core/social.js"(exports2, module2) {
-    "use strict";
-    var { escapeHtml } = require_html();
-    function buildShortId2(value) {
-      let hash = 2166136261;
-      for (const char of String(value || "")) {
-        hash ^= char.codePointAt(0) || 0;
-        hash = Math.imul(hash, 16777619);
-      }
-      return Math.abs(hash >>> 0).toString(36).slice(0, 7) || "doc";
-    }
-    function injectSocialMeta2(html, options = {}) {
-      const title = options.title || "MarkTL HTML artifact";
-      const description = options.description || "A shared HTML document generated with MarkTL.";
-      const url = options.url || "";
-      const image = options.image || "";
-      const tags = [
-        `<meta property="og:type" content="article">`,
-        `<meta property="og:title" content="${escapeAttr(title)}">`,
-        `<meta property="og:description" content="${escapeAttr(description)}">`,
-        url ? `<meta property="og:url" content="${escapeAttr(url)}">` : "",
-        image ? `<meta property="og:image" content="${escapeAttr(image)}">` : "",
-        `<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}">`,
-        `<meta name="twitter:title" content="${escapeAttr(title)}">`,
-        `<meta name="twitter:description" content="${escapeAttr(description)}">`,
-        image ? `<meta name="twitter:image" content="${escapeAttr(image)}">` : "",
-        url ? `<link rel="canonical" href="${escapeAttr(url)}">` : ""
-      ].filter(Boolean).join("\n");
-      const value = String(html || "");
-      if (/<\/head>/i.test(value)) {
-        return value.replace(/<\/head>/i, `${tags}
-</head>`);
-      }
-      return `${tags}
-${value}`;
-    }
-    function escapeAttr(value) {
-      return escapeHtml(String(value || "")).replace(/"/g, "&quot;");
-    }
-    module2.exports = {
-      buildShortId: buildShortId2,
-      injectSocialMeta: injectSocialMeta2
+      findExportPreset,
+      findPresetForOptions,
+      listExportPresets
     };
   }
 });
@@ -2255,28 +2811,51 @@ __export(main_exports, {
   default: () => MarktlPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian7 = require("obsidian");
-var import_node_fs = require("node:fs");
 var import_node_child_process = require("node:child_process");
+var import_node_fs = require("node:fs");
+var import_obsidian8 = require("obsidian");
 
 // src/export-modal.ts
 var import_obsidian = require("obsidian");
 var import_artifact_goals = __toESM(require_artifact_goals());
 var import_ai = __toESM(require_ai());
-var import_presets = __toESM(require_presets());
+var import_export_profiles = __toESM(require_export_profiles());
 var import_templates = __toESM(require_templates());
+var { describeShareHomeProfile, normalizeShareHomeProfiles, resolveShareHomeProfile } = require_share_home_profiles();
+var ReferenceNoteSuggestModal = class extends import_obsidian.FuzzySuggestModal {
+  constructor(app, onChoose) {
+    super(app);
+    this.onChoose = onChoose;
+    this.setPlaceholder("\uAE30\uC900 \uB9E5\uB77D\uC73C\uB85C \uC0AC\uC6A9\uD560 Markdown \uB178\uD2B8\uB97C \uC120\uD0DD\uD558\uC138\uC694");
+    this.emptyStateText = "\uC120\uD0DD\uD560 Markdown \uB178\uD2B8\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.";
+  }
+  getItems() {
+    return this.app.vault.getMarkdownFiles().slice().sort((left, right) => left.path.localeCompare(right.path));
+  }
+  getItemText(item) {
+    return item.path;
+  }
+  onChooseItem(item) {
+    this.onChoose(item);
+  }
+};
 var MarktlExportModal = class extends import_obsidian.Modal {
   constructor(app, plugin, onSubmit) {
     super(app);
-    this.selectedPreset = "custom";
     this.showAdvanced = false;
     this.plugin = plugin;
     this.onSubmit = onSubmit;
-    this.options = {
+    this.modalEl.addClass("marktl-export-modal");
+    const baseOptions = {
       presetId: "custom",
+      shareHomeProfileId: plugin.settings.activeShareHomeProfileId,
       template: plugin.settings.template,
       artifactGoal: plugin.settings.artifactGoal,
       artifactType: plugin.settings.artifactType,
+      exportGenre: plugin.settings.exportGenre,
+      exportDepth: plugin.settings.exportDepth,
+      exportPurpose: plugin.settings.exportPurpose,
+      referenceContextNotePath: plugin.settings.referenceContextNotePath,
       aiProvider: plugin.settings.aiProvider,
       conversionMode: plugin.settings.conversionMode,
       failurePolicy: plugin.settings.failurePolicy,
@@ -2286,84 +2865,212 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       shareTarget: plugin.settings.shareTarget,
       copyShareLinkAfterExport: plugin.settings.copyShareLinkAfterExport
     };
-    this.selectedPreset = (0, import_presets.findPresetForOptions)(this.options);
-    this.options.presetId = this.selectedPreset;
+    this.options = (0, import_export_profiles.applySelectionProfile)(baseOptions, baseOptions);
+    this.options.presetId = "custom";
+    this.options.referenceContextNotePath = baseOptions.referenceContextNotePath;
+    this.options.contextPackMode = baseOptions.contextPackMode === "reference-note" && baseOptions.referenceContextNotePath ? "reference-note" : baseOptions.contextPackMode === "linked-notes" ? "linked-notes" : "none";
   }
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle("노트를 HTML로 내보내기");
+    this.setTitle("\uB178\uD2B8\uB97C HTML\uB85C \uB0B4\uBCF4\uB0B4\uAE30");
     contentEl.createEl("p", {
       cls: "marktl-modal-intro",
-      text: "HTML 문서의 목적과 시각 스타일을 선택하세요. MarkTL은 업무노트를 공유 가능한 HTML 문서로 변환합니다."
+      text: "HTML \uD488\uC9C8\uC5D0 \uC9C1\uC811 \uC601\uD5A5\uC744 \uC8FC\uB294 \uC120\uD0DD\uB9CC \uBA3C\uC800 \uC815\uD569\uB2C8\uB2E4. \uC138\uBD80 \uC2E4\uD589\xB7\uACF5\uC720 \uC635\uC158\uC740 \uAE30\uD0C0 \uC124\uC815\uC5D0\uC11C \uC870\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     });
-    this.renderPresetCards(contentEl);
-    new import_obsidian.Setting(contentEl).setName("고급 설정").setDesc("AI CLI, 보안, 공유, 산출물 세부 설정을 조정합니다.").addButton((button) => button.setButtonText(this.showAdvanced ? "고급 설정 숨기기" : "고급 설정 보기").onClick(() => {
+    this.renderShareHomeSelector(contentEl);
+    this.renderDecisionRail(contentEl);
+    this.renderContextSelector(contentEl);
+    this.renderExecutionSummary(contentEl);
+    new import_obsidian.Setting(contentEl).setName("\uAE30\uD0C0 \uC124\uC815").setDesc("AI CLI, \uC2E4\uD328 \uCC98\uB9AC, \uBCF4\uC548, \uB313\uAE00, \uACF5\uC720 \uB300\uC0C1\uCC98\uB7FC \uC790\uC8FC \uBC14\uAFB8\uC9C0 \uC54A\uB294 \uC2E4\uD589 \uC635\uC158\uC785\uB2C8\uB2E4.").addButton((button) => button.setButtonText(this.showAdvanced ? "\uAE30\uD0C0 \uC124\uC815 \uC228\uAE30\uAE30" : "\uAE30\uD0C0 \uC124\uC815 \uC5F4\uAE30").onClick(() => {
       this.showAdvanced = !this.showAdvanced;
       this.onOpen();
     }));
-    if (!this.showAdvanced) {
-      this.renderActions(contentEl);
-      return;
+    if (this.showAdvanced) {
+      this.renderAdvanced(contentEl);
     }
-    new import_obsidian.Setting(contentEl).setName("HTML 프리셋").setDesc("목적에 맞는 기본값을 적용합니다. 아래에서 개별 설정을 계속 조정할 수 있습니다.").addDropdown((dropdown) => {
-      dropdown.addOption("custom", "직접 설정");
-      for (const preset of (0, import_presets.listExportPresets)()) {
-        dropdown.addOption(preset.id, preset.name);
-      }
-      dropdown.setValue(this.selectedPreset).onChange((value) => {
-        this.applyPreset(value);
-      });
+    this.renderActions(contentEl);
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+  renderDecisionRail(container) {
+    const rail = container.createDiv({ cls: "marktl-decision-rail" });
+    this.renderChoiceGroup(rail, "1", "\uBB38\uC11C \uC7A5\uB974", "\uB178\uD2B8\uC758 \uD070 \uC131\uACA9\uC744 \uC815\uD569\uB2C8\uB2E4.", (0, import_export_profiles.listExportGenres)(), this.options.exportGenre, (value) => {
+      this.applyPrimarySelection({ exportGenre: value });
     });
-    new import_obsidian.Setting(contentEl).setName("HTML 목적").setDesc("읽기, 발표, 검토, 비교, 공유 등 HTML 문서의 역할을 정합니다.").addDropdown((dropdown) => {
+    this.renderChoiceGroup(rail, "2", "\uC791\uC131 \uAE4A\uC774", "\uACB0\uACFC\uBB3C\uC758 \uBC00\uB3C4\uC640 \uD544\uC218 \uC139\uC158\uC744 \uC815\uD569\uB2C8\uB2E4.", (0, import_export_profiles.listExportDepths)(), this.options.exportDepth, (value) => {
+      this.applyPrimarySelection({ exportDepth: value });
+    });
+    this.renderChoiceGroup(rail, "3", "\uC0AC\uC6A9 \uBAA9\uC801", "\uB3C5\uC790\uC640 \uBB38\uCCB4, \uB2E4\uC74C \uD589\uB3D9\uC744 \uC815\uD569\uB2C8\uB2E4.", (0, import_export_profiles.listExportPurposes)(), this.options.exportPurpose, (value) => {
+      this.applyPrimarySelection({ exportPurpose: value });
+    });
+  }
+  renderShareHomeSelector(container) {
+    const profiles = normalizeShareHomeProfiles(this.plugin.settings.shareHomeProfiles, this.plugin.settings);
+    const selectedProfile = resolveShareHomeProfile({
+      ...this.plugin.settings,
+      shareHomeProfiles: profiles,
+      activeShareHomeProfileId: this.options.shareHomeProfileId
+    }, this.options.shareHomeProfileId);
+    this.options.shareHomeProfileId = selectedProfile.id;
+    const section = container.createDiv({ cls: "marktl-choice-section marktl-hub-section" });
+    const header = section.createDiv({ cls: "marktl-choice-header" });
+    header.createEl("span", { cls: "marktl-choice-step marktl-choice-step-hub", text: "\uD5C8\uBE0C" });
+    const copy = header.createDiv();
+    copy.createEl("h3", { text: "\uACF5\uC720 \uD5C8\uBE0C" });
+    copy.createEl("p", { text: "\uC774\uBC88 HTML\uC774 \uC5B4\uB290 \uBA54\uC778\uD398\uC774\uC9C0\uC758 \uC11C\uBE0C\uD398\uC774\uC9C0\uB85C \uB4E4\uC5B4\uAC08\uC9C0 \uBA3C\uC800 \uC815\uD569\uB2C8\uB2E4." });
+    const grid = section.createDiv({ cls: "marktl-choice-grid marktl-hub-grid" });
+    for (const profile of profiles) {
+      const isSelected = selectedProfile.id === profile.id;
+      const description2 = describeShareHomeProfile(profile, this.plugin.settings);
+      const button = grid.createEl("button", {
+        cls: `marktl-choice-card marktl-hub-card${isSelected ? " is-selected" : ""}`,
+        type: "button"
+      });
+      button.setAttr("aria-pressed", String(isSelected));
+      button.setAttr("title", `${profile.title}: ${description2.pathLabel}`);
+      button.createEl("strong", { text: profile.title });
+      button.createEl("span", { text: `${description2.pathLabel} \xB7 ${profile.description}` });
+      button.addEventListener("click", () => {
+        this.options.shareHomeProfileId = profile.id;
+        this.onOpen();
+      });
+    }
+    const selected = section.createDiv({ cls: "marktl-reference-row marktl-hub-summary" });
+    const description = describeShareHomeProfile(selectedProfile, this.plugin.settings);
+    selected.createEl("span", {
+      text: description.homeUrl ? `\uC120\uD0DD\uB41C \uD5C8\uBE0C: ${selectedProfile.title} \xB7 ${description.homeUrl}` : `\uC120\uD0DD\uB41C \uD5C8\uBE0C: ${selectedProfile.title} \xB7 \uAC8C\uC2DC \uACBD\uB85C ${description.pathLabel}`
+    });
+  }
+  renderChoiceGroup(container, step, title, desc, choices, selected, onChoose) {
+    const section = container.createDiv({ cls: "marktl-choice-section" });
+    const header = section.createDiv({ cls: "marktl-choice-header" });
+    header.createEl("span", { cls: "marktl-choice-step", text: step });
+    const copy = header.createDiv();
+    copy.createEl("h3", { text: title });
+    copy.createEl("p", { text: desc });
+    const grid = section.createDiv({ cls: "marktl-choice-grid" });
+    for (const choice of choices) {
+      const isSelected = selected === choice.id;
+      const button = grid.createEl("button", {
+        cls: `marktl-choice-card${isSelected ? " is-selected" : ""}`,
+        type: "button"
+      });
+      button.setAttr("aria-pressed", String(isSelected));
+      button.setAttr("title", `${choice.label}: ${choice.description}`);
+      button.createEl("strong", { text: choice.label });
+      button.createEl("span", { text: choice.description });
+      button.addEventListener("click", () => onChoose(choice.id));
+    }
+  }
+  renderContextSelector(container) {
+    const section = container.createDiv({ cls: "marktl-choice-section marktl-context-section" });
+    const header = section.createDiv({ cls: "marktl-choice-header" });
+    header.createEl("span", { cls: "marktl-choice-step", text: "4" });
+    const copy = header.createDiv();
+    copy.createEl("h3", { text: "\uAE30\uC900 \uB9E5\uB77D \uB178\uD2B8" });
+    copy.createEl("p", { text: "\uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9\uD560\uC9C0, \uC0AC\uC6A9\uC790\uAC00 \uC9C0\uC815\uD55C \uAE30\uC900 \uB178\uD2B8\uC758 \uC77C\uC815\xB7\uACF5\uC815 \uB9E5\uB77D\uC744 \uD568\uAED8 \uC0AC\uC6A9\uD560\uC9C0 \uC815\uD569\uB2C8\uB2E4." });
+    const modeGrid = section.createDiv({ cls: "marktl-choice-grid marktl-context-grid" });
+    const activeOnly = modeGrid.createEl("button", {
+      cls: `marktl-choice-card${this.options.contextPackMode !== "reference-note" ? " is-selected" : ""}`,
+      type: "button"
+    });
+    activeOnly.setAttr("aria-pressed", String(this.options.contextPackMode !== "reference-note"));
+    activeOnly.setAttr("title", "\uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9: \uB2F9\uC77C \uB178\uD2B8\uC758 \uB0B4\uC6A9\uB9CC\uC73C\uB85C HTML\uC744 \uB9CC\uB4ED\uB2C8\uB2E4.");
+    activeOnly.createEl("strong", { text: "\uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9" });
+    activeOnly.createEl("span", { text: "\uB2F9\uC77C \uB178\uD2B8\uC758 \uB0B4\uC6A9\uB9CC\uC73C\uB85C HTML\uC744 \uB9CC\uB4ED\uB2C8\uB2E4." });
+    activeOnly.addEventListener("click", () => {
+      this.options.contextPackMode = "none";
+      this.onOpen();
+    });
+    const reference = modeGrid.createEl("button", {
+      cls: `marktl-choice-card${this.options.contextPackMode === "reference-note" ? " is-selected" : ""}`,
+      type: "button"
+    });
+    reference.setAttr("aria-pressed", String(this.options.contextPackMode === "reference-note"));
+    reference.setAttr("title", "\uC9C0\uC815 \uAE30\uC900 \uB178\uD2B8 \uC0AC\uC6A9: \uC120\uD0DD\uD55C \uC885\uD569/\uB9C8\uC77C\uC2A4\uD1A4 \uB178\uD2B8\uC758 \uC77C\uC815, \uAC04\uD2B8, \uACF5\uC815 \uB9E5\uB77D\uC744 \uCC38\uACE0\uD569\uB2C8\uB2E4.");
+    reference.createEl("strong", { text: "\uC9C0\uC815 \uAE30\uC900 \uB178\uD2B8 \uC0AC\uC6A9" });
+    reference.createEl("span", { text: "\uC120\uD0DD\uD55C \uC885\uD569/\uB9C8\uC77C\uC2A4\uD1A4 \uB178\uD2B8\uC758 \uC77C\uC815, \uAC04\uD2B8, \uACF5\uC815 \uB9E5\uB77D\uC744 \uCC38\uACE0\uD569\uB2C8\uB2E4." });
+    reference.addEventListener("click", () => {
+      this.options.contextPackMode = "reference-note";
+      if (!this.options.referenceContextNotePath) {
+        this.openReferencePicker();
+        return;
+      }
+      this.onOpen();
+    });
+    const selected = section.createDiv({ cls: "marktl-reference-row" });
+    selected.createEl("span", {
+      text: this.options.referenceContextNotePath ? `\uC120\uD0DD\uB41C \uAE30\uC900 \uB178\uD2B8: ${this.options.referenceContextNotePath}` : "\uC120\uD0DD\uB41C \uAE30\uC900 \uB178\uD2B8\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
+    });
+    selected.createEl("button", { text: this.options.referenceContextNotePath ? "\uAE30\uC900 \uB178\uD2B8 \uBCC0\uACBD" : "\uAE30\uC900 \uB178\uD2B8 \uC120\uD0DD", type: "button" }).addEventListener("click", () => this.openReferencePicker());
+    if (this.options.referenceContextNotePath) {
+      selected.createEl("button", { text: "\uD574\uC81C", type: "button" }).addEventListener("click", () => {
+        this.options.referenceContextNotePath = "";
+        this.options.contextPackMode = "none";
+        this.onOpen();
+      });
+    }
+  }
+  renderExecutionSummary(container) {
+    const summary = container.createDiv({ cls: "marktl-execution-summary" });
+    summary.createEl("strong", { text: (0, import_export_profiles.describeExecutionProfile)(this.options) });
+    summary.createEl("span", {
+      text: [
+        `\uC2E4\uD589 \uD504\uB85C\uD544: ${this.options.artifactGoal}`,
+        this.options.artifactType,
+        this.options.template,
+        this.options.conversionMode,
+        this.options.previewSecurity
+      ].join(" \xB7 ")
+    });
+  }
+  renderAdvanced(container) {
+    new import_obsidian.Setting(container).setName("\uB3C5\uC790 \uC791\uC5C5").setDesc("\uB0B4\uBD80 \uC2E4\uD589 \uD504\uB85C\uD544\uC785\uB2C8\uB2E4. \uC77C\uBC18\uC801\uC73C\uB85C \uC704 1-3\uB2E8\uACC4 \uC120\uD0DD\uB9CC \uC0AC\uC6A9\uD558\uC138\uC694.").addDropdown((dropdown) => {
       for (const goal of (0, import_artifact_goals.listArtifactGoals)()) {
         dropdown.addOption(goal.id, goal.name);
       }
       dropdown.setValue(this.options.artifactGoal).onChange((value) => {
-        this.selectedPreset = "custom";
         this.options.presetId = "custom";
         this.options.artifactGoal = value;
       });
     });
-    new import_obsidian.Setting(contentEl).setName("문서 유형").setDesc("단순 스타일이 아니라 정보 구조를 정합니다.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "원문 충실 노트").addOption("strategy-brief", "전략 브리프").addOption("research-report", "리서치 보고서").addOption("decision-memo", "의사결정 메모").addOption("interactive-explainer", "인터랙티브 설명서").addOption("slide-deck", "슬라이드형 문서").setValue(this.options.artifactType).onChange((value) => {
-      this.selectedPreset = "custom";
+    new import_obsidian.Setting(container).setName("\uB0B4\uC6A9 \uAD6C\uC870").setDesc("\uC815\uBCF4 \uBC30\uC5F4 \uBC29\uC2DD\uC785\uB2C8\uB2E4.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "\uC6D0\uBB38 \uCDA9\uC2E4 \uB178\uD2B8").addOption("strategy-brief", "\uC804\uB7B5 \uBE0C\uB9AC\uD504").addOption("research-report", "\uB9AC\uD3EC\uD2B8").addOption("decision-memo", "\uC758\uC0AC\uACB0\uC815 \uBA54\uBAA8").addOption("interactive-explainer", "\uC778\uD130\uB799\uD2F0\uBE0C \uC124\uBA85\uC11C").addOption("slide-deck", "\uBC1C\uD45C \uC2AC\uB77C\uC774\uB4DC").setValue(this.options.artifactType).onChange((value) => {
       this.options.presetId = "custom";
       this.options.artifactType = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("템플릿").setDesc("시각 방향과 로컬 fallback 스타일을 정합니다.").addDropdown((dropdown) => {
+    new import_obsidian.Setting(container).setName("\uD654\uBA74 \uC2A4\uD0C0\uC77C").setDesc("\uC2DC\uAC01 \uBC29\uD5A5\uACFC \uB85C\uCEEC fallback \uC2A4\uD0C0\uC77C\uC785\uB2C8\uB2E4.").addDropdown((dropdown) => {
       for (const template of (0, import_templates.listTemplates)()) {
         dropdown.addOption(template.id, template.name);
       }
       dropdown.setValue(this.options.template).onChange((value) => {
-        this.selectedPreset = "custom";
         this.options.presetId = "custom";
         this.options.template = value;
       });
     });
-    new import_obsidian.Setting(contentEl).setName("AI CLI").setDesc((0, import_ai.getProviderPrivacyNote)(this.options.aiProvider) || "실행 검증을 통과한 provider만 표시합니다.").addDropdown((dropdown) => dropdown.addOption("none", "사용 안 함 / 로컬 변환").addOption("claude", "Claude Code CLI").addOption("codex", "Codex CLI").setValue(this.options.aiProvider).onChange((value) => {
+    new import_obsidian.Setting(container).setName("AI CLI").setDesc((0, import_ai.getProviderPrivacyNote)(this.options.aiProvider) || "\uAC80\uC99D\uB41C provider\uB9CC \uD45C\uC2DC\uD569\uB2C8\uB2E4.").addDropdown((dropdown) => dropdown.addOption("none", "\uC0AC\uC6A9 \uC548 \uD568 / \uB85C\uCEEC \uBCC0\uD658").addOption("claude", "Claude Code CLI").addOption("codex", "Codex CLI").setValue(this.options.aiProvider).onChange((value) => {
       this.options.aiProvider = value;
       this.onOpen();
     }));
-    new import_obsidian.Setting(contentEl).setName("변환 모드").setDesc("보존 모드는 원문에 충실하고, 다른 모드는 AI가 구조를 재배치할 수 있습니다.").addDropdown((dropdown) => dropdown.addOption("preserve", "내용 보존").addOption("presentation", "발표형").addOption("blog", "블로그 글").addOption("landing", "랜딩 페이지").setValue(this.options.conversionMode).onChange((value) => {
-      this.selectedPreset = "custom";
+    new import_obsidian.Setting(container).setName("\uC7AC\uAD6C\uC131 \uAC15\uB3C4").setDesc("\uBCF4\uC874\uC740 \uC6D0\uBB38\uC5D0 \uCDA9\uC2E4\uD558\uACE0, \uBC1C\uD45C/\uAE30\uC0AC\uD615\uC740 AI\uAC00 \uAD6C\uC870\uB97C \uB354 \uC7AC\uBC30\uCE58\uD569\uB2C8\uB2E4.").addDropdown((dropdown) => dropdown.addOption("preserve", "\uC6D0\uBB38 \uBCF4\uC874").addOption("presentation", "\uBC1C\uD45C\uD615 \uC7AC\uAD6C\uC131").addOption("blog", "\uAE30\uC0AC\uD615 \uC7AC\uAD6C\uC131").addOption("landing", "\uB79C\uB529\uD615 \uC7AC\uAD6C\uC131").setValue(this.options.conversionMode).onChange((value) => {
       this.options.presetId = "custom";
       this.options.conversionMode = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("미리보기 보안").setDesc("신뢰 모드는 인터랙티브 HTML용 inline JavaScript를 허용합니다.").addDropdown((dropdown) => dropdown.addOption("sanitized", "정적 안전 미리보기").addOption("trusted", "신뢰 인터랙티브 미리보기").setValue(this.options.previewSecurity).onChange((value) => {
-      this.selectedPreset = "custom";
+    new import_obsidian.Setting(container).setName("\uC778\uD130\uB799\uC158 \uD5C8\uC6A9").setDesc("\uC2E0\uB8B0 \uBAA8\uB4DC\uB294 HTML \uC548\uC758 \uB85C\uCEEC JavaScript\uB97C \uD5C8\uC6A9\uD569\uB2C8\uB2E4.").addDropdown((dropdown) => dropdown.addOption("sanitized", "\uC548\uC804\uD55C \uC815\uC801 \uBBF8\uB9AC\uBCF4\uAE30").addOption("trusted", "\uC2E0\uB8B0 \uC778\uD130\uB799\uD2F0\uBE0C \uBBF8\uB9AC\uBCF4\uAE30").setValue(this.options.previewSecurity).onChange((value) => {
       this.options.presetId = "custom";
       this.options.previewSecurity = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("컨텍스트 묶음").setDesc("필요하면 AI가 연결된 Markdown 노트를 참고 자료로 읽습니다.").addDropdown((dropdown) => dropdown.addOption("none", "현재 노트만").addOption("linked-notes", "연결 노트 포함").setValue(this.options.contextPackMode).onChange((value) => {
+    new import_obsidian.Setting(container).setName("\uB9E5\uB77D \uCC98\uB9AC").setDesc("\uAE30\uBCF8 \uD654\uBA74\uC758 \uAE30\uC900 \uB178\uD2B8 \uC120\uD0DD\uC744 \uC6B0\uC120 \uC0AC\uC6A9\uD569\uB2C8\uB2E4. \uC5F0\uACB0 \uB178\uD2B8 \uD3EC\uD568\uC740 \uAE30\uC874 \uD638\uD658 \uC635\uC158\uC785\uB2C8\uB2E4.").addDropdown((dropdown) => dropdown.addOption("none", "\uD604\uC7AC \uB178\uD2B8\uB9CC").addOption("reference-note", "\uC9C0\uC815 \uAE30\uC900 \uB178\uD2B8").addOption("linked-notes", "\uC5F0\uACB0 \uB178\uD2B8 \uD3EC\uD568").setValue(this.options.contextPackMode).onChange((value) => {
       this.options.contextPackMode = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("독자 피드백").setDesc("Giscus는 신뢰 모드 export에 GitHub 댓글/반응을 붙입니다.").addDropdown((dropdown) => dropdown.addOption("none", "댓글 없음").addOption("giscus", "Giscus GitHub 댓글").setValue(this.options.readerFeedbackMode).onChange((value) => {
+    new import_obsidian.Setting(container).setName("\uB3C5\uC790 \uD53C\uB4DC\uBC31").setDesc("Giscus\uB294 GitHub \uB313\uAE00/\uBC18\uC751\uC744 \uBD99\uC785\uB2C8\uB2E4.").addDropdown((dropdown) => dropdown.addOption("none", "\uB313\uAE00 \uC5C6\uC74C").addOption("giscus", "Giscus GitHub \uB313\uAE00").setValue(this.options.readerFeedbackMode).onChange((value) => {
       this.options.readerFeedbackMode = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("AI 실패 처리").setDesc("Fallback은 계속 내보내고, strict는 CLI 실패 시 중단합니다.").addDropdown((dropdown) => dropdown.addOption("fallback", "경고 후 fallback").addOption("strict", "AI 실패 시 중단").setValue(this.options.failurePolicy).onChange((value) => {
+    new import_obsidian.Setting(container).setName("AI \uC2E4\uD328 \uCC98\uB9AC").setDesc("GitHub Pages \uAC8C\uC2DC\uC5D0\uC11C\uB294 strict\uAC00 \uAC15\uC81C\uB429\uB2C8\uB2E4.").addDropdown((dropdown) => dropdown.addOption("fallback", "\uACBD\uACE0 \uD6C4 \uB85C\uCEEC fallback").addOption("strict", "\uC2E4\uD328 \uC2DC \uC911\uB2E8").setValue(this.options.failurePolicy).onChange((value) => {
       this.options.failurePolicy = value;
     }));
-    new import_obsidian.Setting(contentEl).setName("공유 대상").setDesc("GitHub Pages는 share/<slug>/index.html로 배포하고 공개 URL을 복사합니다.").addDropdown((dropdown) => dropdown.addOption("local-link", "로컬 파일 링크").addOption("static-bundle", "정적 호스팅 번들").addOption("github-pages", "GitHub Pages 링크").setValue(this.options.shareTarget).onChange((value) => {
+    new import_obsidian.Setting(container).setName("\uACF5\uC720 \uB300\uC0C1").setDesc("GitHub Pages\uB294 \uC131\uACF5\uD55C AI HTML\uB9CC \uAC8C\uC2DC\uD569\uB2C8\uB2E4.").addDropdown((dropdown) => dropdown.addOption("local-link", "\uB85C\uCEEC \uD30C\uC77C \uB9C1\uD06C").addOption("static-bundle", "\uC815\uC801 \uD638\uC2A4\uD305 \uBC88\uB4E4").addOption("github-pages", "GitHub Pages \uB9C1\uD06C").setValue(this.options.shareTarget).onChange((value) => {
       this.options.shareTarget = value;
       if (value === "github-pages") {
         this.options.previewSecurity = "trusted";
@@ -2371,76 +3078,34 @@ var MarktlExportModal = class extends import_obsidian.Modal {
         this.options.copyShareLinkAfterExport = true;
       }
     }));
-    new import_obsidian.Setting(contentEl).setName("공유 링크 복사").setDesc("배포 후 공개 Pages URL 또는 로컬 file:// 링크를 복사합니다.").addToggle((toggle) => toggle.setValue(this.options.copyShareLinkAfterExport).onChange((value) => {
+    new import_obsidian.Setting(container).setName("\uACF5\uC720 \uB9C1\uD06C \uBCF5\uC0AC").setDesc("\uB0B4\uBCF4\uB0B4\uAE30 \uD6C4 \uACF5\uAC1C URL \uB610\uB294 \uB85C\uCEEC \uB9C1\uD06C\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD569\uB2C8\uB2E4.").addToggle((toggle) => toggle.setValue(this.options.copyShareLinkAfterExport).onChange((value) => {
       this.options.copyShareLinkAfterExport = value;
     }));
-    this.renderActions(contentEl);
   }
-  onClose() {
-    this.contentEl.empty();
-  }
-  renderPresetCards(container) {
-    const cards = container.createDiv({ cls: "marktl-purpose-cards" });
-    const labels = {
-      "readable-note": "읽기 좋게",
-      presentation: "발표하기",
-      "interactive-report": "검토하기",
-      "construction-daily-report": "공사일보",
-      "compare-options": "옵션 비교",
-      "shareable-article": "게시/공유",
-      playground: "AI로 다시 작업"
+  applyPrimarySelection(partial) {
+    const next = {
+      ...this.options,
+      ...partial
     };
-    const descriptions = {
-      "readable-note": "더 나은 타이포그래피로 원문을 충실하고 깔끔하게 보여줍니다.",
-      presentation: "노트를 발표나 리뷰에 맞는 섹션형 HTML로 구성합니다.",
-      "interactive-report": "목차, 접힘 섹션, 복사 버튼을 포함한 HTML 검토 화면입니다.",
-      "construction-daily-report": "대표 인포그래픽, 현장 흐름도, 실행 게이트 간트를 포함한 공사일보 HTML입니다.",
-      "compare-options": "선택지, 점수표, 필터, 비교 요약에 적합합니다.",
-      "shareable-article": "이미지를 묶어 정적 호스팅에 바로 올릴 수 있는 기사형 레이아웃입니다.",
-      playground: "슬라이더와 복사 가능한 상태를 가진 재작업용 인터랙티브 화면입니다."
-    };
-    const order = ["readable-note", "presentation", "interactive-report", "construction-daily-report", "compare-options", "shareable-article", "playground"];
-    for (const id of order) {
-      const preset = (0, import_presets.findExportPreset)(id);
-      if (!preset) {
-        continue;
-      }
-      const card = cards.createDiv({
-        cls: `marktl-purpose-card${this.selectedPreset === id ? " is-selected" : ""}`
-      });
-      card.createEl("h3", { text: labels[id] || preset.name });
-      card.createEl("p", { text: descriptions[id] || preset.description });
-      card.createEl("span", {
-        cls: "marktl-purpose-meta",
-        text: preset.previewSecurity === "trusted" ? "인터랙티브 HTML" : "안전한 정적 HTML"
-      });
-      card.addEventListener("click", () => this.applyPreset(id));
-    }
-  }
-  applyPreset(id) {
-    const preset = (0, import_presets.findExportPreset)(id);
-    if (!preset) {
-      this.selectedPreset = "custom";
-      this.options.presetId = "custom";
-      this.onOpen();
-      return;
-    }
-    this.selectedPreset = preset.id;
-    this.options.presetId = preset.id;
-    this.options.artifactGoal = preset.artifactGoal;
-    this.options.artifactType = preset.artifactType;
-    this.options.template = preset.template;
-    this.options.conversionMode = preset.mode;
-    this.options.previewSecurity = preset.previewSecurity;
+    this.options = (0, import_export_profiles.applySelectionProfile)(next, next);
+    this.options.presetId = "custom";
     this.onOpen();
   }
+  openReferencePicker() {
+    new ReferenceNoteSuggestModal(this.app, (file) => {
+      this.options.referenceContextNotePath = file.path;
+      this.options.contextPackMode = "reference-note";
+      this.onOpen();
+    }).open();
+  }
   renderActions(container) {
-    new import_obsidian.Setting(container).addButton((button) => button.setButtonText("내보내기").setCta().onClick(() => {
+    new import_obsidian.Setting(container).addButton((button) => button.setButtonText("\uB0B4\uBCF4\uB0B4\uAE30").setCta().onClick(() => {
       this.close();
       this.onSubmit(this.options);
-    })).addButton((button) => button.setButtonText("기본값으로 저장").onClick(async () => {
-      const { presetId: _presetId, ...settings } = this.options;
+    })).addButton((button) => button.setButtonText("\uAE30\uBCF8\uAC12\uC73C\uB85C \uC800\uC7A5").onClick(async () => {
+      const { presetId: _presetId, shareHomeProfileId, ...settings } = this.options;
       Object.assign(this.plugin.settings, settings);
+      this.plugin.settings.activeShareHomeProfileId = shareHomeProfileId;
       await this.plugin.saveSettings();
       this.close();
       this.onSubmit(this.options);
@@ -2448,9 +3113,91 @@ var MarktlExportModal = class extends import_obsidian.Modal {
   }
 };
 
-// src/progress-modal.ts
+// src/published-html-modal.ts
 var import_obsidian2 = require("obsidian");
-var MarktlProgressModal = class extends import_obsidian2.Modal {
+var MarktlPublishedHtmlModal = class extends import_obsidian2.Modal {
+  constructor(app, plugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+  onOpen() {
+    void this.render();
+  }
+  async render() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h2", { text: "\uAC8C\uC2DC\uB41C MarkTL HTML" });
+    const description = contentEl.createEl("p", {
+      text: "GitHub Pages \uC778\uB371\uC2A4 \uBA54\uD0C0\uB370\uC774\uD130\uB97C \uC5EC\uAE30\uC11C \uBCF5\uAD6C\uD569\uB2C8\uB2E4. \uC911\uBCF5 \uCE74\uB4DC\uB294 \uACF5\uAC1C \uC544\uCE74\uC774\uBE0C\uC640 \uB0B4\uBCF4\uB0B8 \uD3F4\uB354\uC5D0\uC11C \uD568\uAED8 \uC81C\uAC70\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    });
+    description.addClass("setting-item-description");
+    const statusEl = contentEl.createEl("div");
+    const controls = contentEl.createDiv();
+    new import_obsidian2.Setting(controls).addButton((button) => button.setButtonText("\uC0C8\uB85C\uACE0\uCE68").onClick(() => void this.render())).addButton((button) => button.setButtonText("\uC778\uB371\uC2A4 \uBA54\uD0C0\uB370\uC774\uD130 \uBCF5\uAD6C").setCta().onClick(async () => {
+      statusEl.setText("\uACF5\uAC1C \uC778\uB371\uC2A4\uB97C \uBCF5\uAD6C\uD558\uB294 \uC911...");
+      try {
+        const index = await this.plugin.repairPublishedShareIndex();
+        new import_obsidian2.Notice(`MarkTL \uC778\uB371\uC2A4\uB97C \uBCF5\uAD6C\uD588\uC2B5\uB2C8\uB2E4: ${index.items.length}\uAC1C \uD56D\uBAA9.`);
+        await this.render();
+      } catch (error) {
+        statusEl.setText(error instanceof Error ? error.message : String(error));
+      }
+    }));
+    const listEl = contentEl.createDiv();
+    statusEl.setText("\uAC8C\uC2DC \uC778\uB371\uC2A4\uB97C \uBD88\uB7EC\uC624\uB294 \uC911...");
+    try {
+      const { index } = await this.plugin.loadPublishedShareIndex();
+      statusEl.setText(`\uAC8C\uC2DC \uD56D\uBAA9 ${index.items.length}\uAC1C.`);
+      if (!index.items.length) {
+        listEl.createEl("p", { text: "\uAC8C\uC2DC\uB41C \uBB38\uC11C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4." });
+        return;
+      }
+      for (const item of index.items) {
+        this.renderItem(listEl, item);
+      }
+    } catch (error) {
+      statusEl.setText(error instanceof Error ? error.message : String(error));
+    }
+  }
+  renderItem(container, item) {
+    const card = container.createDiv({ cls: "marktl-published-item" });
+    const title = String(item.title || item.slug || "\uC81C\uBAA9 \uC5C6\uB294 HTML \uC0B0\uCD9C\uBB3C");
+    const url = String(item.url || item.canonicalUrl || "");
+    new import_obsidian2.Setting(card).setName(title).setDesc([
+      item.updatedAt ? `\uAC31\uC2E0\uC77C: ${String(item.updatedAt).slice(0, 10)}` : "",
+      item.sourcePath || "",
+      item.shortId ? `shortId: ${item.shortId}` : "",
+      url
+    ].filter(Boolean).join("\n")).addButton((button) => button.setButtonText("\uC5F4\uAE30").onClick(() => {
+      if (url) {
+        window.open(url);
+      }
+    })).addButton((button) => button.setButtonText("URL \uBCF5\uC0AC").onClick(async () => {
+      if (url) {
+        await navigator.clipboard.writeText(url);
+        new import_obsidian2.Notice("MarkTL URL\uC744 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4.");
+      }
+    })).addButton((button) => button.setButtonText("\uC644\uC804 \uC0AD\uC81C").setWarning().onClick(async () => {
+      const confirmed = window.confirm(`\uAC8C\uC2DC\uB41C MarkTL \uC0B0\uCD9C\uBB3C\uC744 \uC0AD\uC81C\uD558\uACE0 \uC544\uCE74\uC774\uBE0C\uC5D0\uC11C\uB3C4 \uC81C\uAC70\uD560\uAE4C\uC694?
+
+${title}`);
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const result = await this.plugin.deletePublishedShareItem(item);
+        new import_obsidian2.Notice(`\uC544\uCE74\uC774\uBE0C \uD56D\uBAA9 ${result.removedCount}\uAC1C\uB97C \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4.`);
+        await this.render();
+      } catch (error) {
+        new import_obsidian2.Notice(error instanceof Error ? error.message : String(error));
+      }
+    }));
+  }
+};
+
+// src/progress-modal.ts
+var import_obsidian3 = require("obsidian");
+var MarktlProgressModal = class extends import_obsidian3.Modal {
   constructor(app) {
     super(app);
     this.listEl = null;
@@ -2460,15 +3207,15 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
   }
   onOpen() {
     this.contentEl.empty();
-    this.setTitle("내보내기 진행 상황");
+    this.setTitle("Export progress");
     this.contentEl.createEl("p", {
       cls: "marktl-modal-intro",
-      text: "MarkTL이 현재 노트를 HTML로 변환하고 있습니다."
+      text: "MarkTL is converting this note to HTML."
     });
     const visualEl = this.contentEl.createDiv({ cls: "marktl-progress-visual" });
     this.statusEl = visualEl.createDiv({
       cls: "marktl-progress-status",
-      text: "내보내기 준비 중..."
+      text: "Preparing export..."
     });
     const trackEl = visualEl.createDiv({ cls: "marktl-progress-track" });
     this.barEl = trackEl.createDiv({ cls: "marktl-progress-bar" });
@@ -2499,7 +3246,7 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
       current.addClass("marktl-progress-step-done");
     }
     if (this.statusEl) {
-      this.statusEl.setText("내보내기 완료.");
+      this.statusEl.setText("Export complete.");
       this.statusEl.removeClass("marktl-progress-status-error");
       this.statusEl.addClass("marktl-progress-status-done");
     }
@@ -2508,7 +3255,7 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
     }
     this.contentEl.createEl("p", {
       cls: "marktl-progress-done",
-      text: "이 창을 닫아도 됩니다."
+      text: "You can close this window."
     });
   }
   fail(text) {
@@ -2519,7 +3266,7 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
       current.addClass("marktl-progress-step-error");
     }
     if (this.statusEl) {
-      this.statusEl.setText(`내보내기 중단: ${text}`);
+      this.statusEl.setText(`Export stopped: ${text}`);
       this.statusEl.removeClass("marktl-progress-status-done");
       this.statusEl.addClass("marktl-progress-status-error");
     }
@@ -2552,7 +3299,7 @@ var MarktlProgressModal = class extends import_obsidian2.Modal {
 };
 
 // src/preview-view.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 var VIEW_TYPE_MARKTL_PREVIEW = "marktl-html-preview";
 var emptyState = {
   html: "<!doctype html><html><body><p>No preview loaded.</p></body></html>",
@@ -2561,7 +3308,7 @@ var emptyState = {
   trusted: false,
   previewSecurity: "sanitized"
 };
-var MarktlPreviewView = class extends import_obsidian3.ItemView {
+var MarktlPreviewView = class extends import_obsidian4.ItemView {
   constructor(leaf) {
     super(leaf);
     this.state = emptyState;
@@ -2570,7 +3317,7 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
     return VIEW_TYPE_MARKTL_PREVIEW;
   }
   getDisplayText() {
-    return "HTML 미리보기";
+    return "HTML Preview";
   }
   getIcon() {
     return "file-code-2";
@@ -2590,22 +3337,21 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
     container.empty();
     container.addClass("marktl-preview-container");
     const header = container.createDiv({ cls: "marktl-preview-header" });
-    header.createEl("strong", { text: this.state.filePath || "HTML 미리보기" });
+    header.createEl("strong", { text: this.state.filePath || "HTML Preview" });
     header.createSpan({
       cls: this.state.trusted ? "marktl-preview-trusted" : "marktl-preview-sanitized",
-      text: this.state.trusted ? "신뢰 인터랙티브" : "정적 안전"
+      text: this.state.trusted ? "Trusted interactive" : "Sanitized static"
     });
     let frame;
     const tools = container.createDiv({ cls: "marktl-preview-tools" });
-    this.addToolButton(tools, "프롬프트로 복사", () => this.copyPrompt(frame));
-    this.addToolButton(tools, "목차 복사", () => this.copyOutline(frame));
-    this.addToolButton(tools, "섹션 피드백 복사", () => this.copySectionFeedback(frame));
-    this.addToolButton(tools, "생성 파일 열기", () => this.openGeneratedFile());
+    this.addToolButton(tools, "Copy as prompt", () => this.copyPrompt(frame));
+    this.addToolButton(tools, "Copy outline", () => this.copyOutline(frame));
+    this.addToolButton(tools, "Copy section feedback", () => this.copySectionFeedback(frame));
+    this.addToolButton(tools, "Open generated file", () => this.openGeneratedFile());
     for (const warning of this.state.warnings) {
-      const severity = this.classifyPreviewWarning(warning);
-      container.createDiv({ cls: `marktl-preview-warning marktl-preview-warning-${severity}`, text: this.formatPreviewWarning(warning) });
+      container.createDiv({ cls: "marktl-preview-warning", text: warning });
     }
-    const renderQa = container.createDiv({ cls: "marktl-preview-render-qa", text: "렌더 QA: 미리보기 대기 중..." });
+    const renderQa = container.createDiv({ cls: "marktl-preview-render-qa", text: "Render QA: waiting for preview..." });
     frame = container.createEl("iframe", {
       cls: "marktl-preview-frame",
       attr: {
@@ -2617,20 +3363,6 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
     });
     frame.srcdoc = this.state.html;
   }
-  classifyPreviewWarning(warning) {
-    const value = String(warning || "");
-    if (/배포 차단|failed|blocked|sanitized mode output still contains|AI conversion failed/i.test(value)) {
-      return "fatal";
-    }
-    if (/참고|건너뜀|skipped|Context note not found|Reader comments disabled|Giscus feedback requires|trusted interactive mode produced no script|no H1 heading|missing responsive viewport|no inline CSS/i.test(value)) {
-      return "info";
-    }
-    return "warning";
-  }
-  formatPreviewWarning(warning) {
-    const value = String(warning || "");
-    return value.replace(/^Context note not found:\s*/i, "참고 링크 건너뜀: ").replace(/^Context note unreadable:\s*/i, "참고 링크를 읽지 못함: ").replace(/^HTML QA: missing <!doctype html>\.$/i, "참고: HTML doctype이 자동 보정되었습니다.").replace(/^HTML QA: missing responsive viewport meta tag\.$/i, "참고: viewport meta가 자동 보정되었습니다.").replace(/^HTML QA: no H1 heading found\.$/i, "참고: H1 제목을 찾지 못했습니다.").replace(/^HTML QA: no inline CSS found; output may be too plain\.$/i, "참고: 내장 CSS를 찾지 못했습니다.").replace(/^Giscus feedback requires Trusted preview\/export because it loads an external comments script\.$/i, "참고: 정적 안전 모드에서는 Giscus 댓글을 제외했습니다.");
-  }
   addToolButton(container, label, onClick) {
     const button = container.createEl("button", { text: label });
     button.type = "button";
@@ -2641,43 +3373,43 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
   async copyPrompt(frame) {
     const text = this.getFrameText(frame) || this.stripHtml(this.state.html);
     await navigator.clipboard.writeText([
-      "다음 MarkTL HTML 개선 작업의 참고자료로 이 산출물을 사용하세요.",
+      "Use this MarkTL HTML artifact as context for the next iteration.",
       "",
-      `Artifact: ${this.state.title || this.state.filePath || "HTML 미리보기"}`,
+      `Artifact: ${this.state.title || this.state.filePath || "HTML Preview"}`,
       `Preview security: ${this.state.previewSecurity}`,
       "",
       text
     ].join("\n"));
-    new import_obsidian3.Notice("미리보기 프롬프트를 복사했습니다.");
+    new import_obsidian4.Notice("Copied preview prompt.");
   }
   async copyOutline(frame) {
     const outline = this.getOutline(frame);
     if (!outline) {
-      await navigator.clipboard.writeText(this.state.title || this.state.filePath || "HTML 미리보기");
-      new import_obsidian3.Notice("제목 구조를 찾지 못해 문서 제목을 복사했습니다.");
+      await navigator.clipboard.writeText(this.state.title || this.state.filePath || "HTML Preview");
+      new import_obsidian4.Notice("No headings found; copied artifact title.");
       return;
     }
     await navigator.clipboard.writeText(outline);
-    new import_obsidian3.Notice("미리보기 목차를 복사했습니다.");
+    new import_obsidian4.Notice("Copied preview outline.");
   }
   async copySectionFeedback(frame) {
     const section = this.getFirstSection(frame);
     const fallback = this.getFrameText(frame) || this.stripHtml(this.state.html);
     await navigator.clipboard.writeText([
-      "이 MarkTL HTML 산출물의 섹션 개선 피드백을 작성하세요.",
+      "Give feedback on this MarkTL HTML artifact section.",
       "",
-      `Artifact: ${this.state.title || this.state.filePath || "HTML 미리보기"}`,
-      `Section: ${section.heading || "전체 문서"}`,
+      `Artifact: ${this.state.title || this.state.filePath || "HTML Preview"}`,
+      `Section: ${section.heading || "Whole document fallback"}`,
       "",
       section.text || fallback,
       "",
-      "더 명확하게, 더 시각적으로, 더 공유하기 좋게 만들 부분에 집중하세요."
+      "Focus on what should be clearer, more visual, or more interactive."
     ].join("\n"));
-    new import_obsidian3.Notice(section.heading ? "섹션 피드백 프롬프트를 복사했습니다." : "전체 문서 피드백 프롬프트를 복사했습니다.");
+    new import_obsidian4.Notice(section.heading ? "Copied section feedback prompt." : "Copied whole-document feedback prompt.");
   }
   openGeneratedFile() {
     if (!this.state.filePath) {
-      new import_obsidian3.Notice("생성된 파일 경로가 없습니다.");
+      new import_obsidian4.Notice("No generated file path is available.");
       return;
     }
     const adapter = this.app.vault.adapter;
@@ -2690,33 +3422,33 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
     try {
       const doc = frame.contentDocument;
       if (!doc) {
-        statusEl.setText("렌더 QA: 미리보기 문서를 검사할 수 없습니다.");
+        statusEl.setText("Render QA: unable to inspect preview document.");
         statusEl.addClass("marktl-preview-render-qa-warning");
         return;
       }
       const warnings = [];
       const bodyText = ((_b = (_a = doc.body) == null ? void 0 : _a.innerText) == null ? void 0 : _b.trim()) || "";
       if (bodyText.length < 20) {
-        warnings.push("미리보기 내용이 거의 비어 있음");
+        warnings.push("preview appears nearly empty");
       }
       if (!doc.querySelector("h1")) {
-        warnings.push("보이는 H1 제목 없음");
+        warnings.push("no visible H1");
       }
       const brokenImages = Array.from(doc.images).filter((image) => image.complete && image.naturalWidth === 0);
       if (brokenImages.length > 0) {
-        warnings.push(`깨진 이미지 ${brokenImages.length}개`);
+        warnings.push(`${brokenImages.length} broken image(s)`);
       }
       if (this.state.trusted && !doc.querySelector('button,input,select,textarea,[contenteditable="true"]') && !doc.querySelector('script[src*="giscus.app/client.js"]')) {
-        warnings.push("신뢰 미리보기에 인터랙티브 컨트롤 없음");
+        warnings.push("trusted preview has no interactive controls");
       }
       const scrollHeight = ((_c = doc.scrollingElement) == null ? void 0 : _c.scrollHeight) || ((_d = doc.body) == null ? void 0 : _d.scrollHeight) || 0;
       if (scrollHeight > 0 && scrollHeight < 120) {
-        warnings.push("렌더링된 내용이 비정상적으로 짧음");
+        warnings.push("rendered content is unusually short");
       }
-      statusEl.setText(warnings.length > 0 ? `렌더 QA: ${warnings.join("; ")}.` : "렌더 QA: 미리보기, 본문, 에셋이 정상적으로 로드되었습니다.");
+      statusEl.setText(warnings.length > 0 ? `Render QA: ${warnings.join("; ")}.` : "Render QA: preview loaded, content and assets look reachable.");
       statusEl.toggleClass("marktl-preview-render-qa-warning", warnings.length > 0);
     } catch (error) {
-      statusEl.setText("렌더 QA: iframe 보안으로 미리보기 검사가 차단되었습니다.");
+      statusEl.setText("Render QA: preview inspection was blocked by iframe security.");
       statusEl.addClass("marktl-preview-render-qa-warning");
     }
   }
@@ -2768,8 +3500,8 @@ var MarktlPreviewView = class extends import_obsidian3.ItemView {
 };
 
 // src/result-modal.ts
-var import_obsidian4 = require("obsidian");
-var MarktlResultModal = class extends import_obsidian4.Modal {
+var import_obsidian5 = require("obsidian");
+var MarktlResultModal = class extends import_obsidian5.Modal {
   constructor(app, summary, copyLink, regenerate) {
     super(app);
     this.summary = summary;
@@ -2779,10 +3511,10 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle("HTML 내보내기 완료");
+    this.setTitle("HTML export ready");
     if (this.summary.publicUrl) {
       const shareCard = contentEl.createDiv({ cls: "marktl-share-card" });
-      shareCard.createEl("span", { cls: "marktl-share-eyebrow", text: "이 페이지 공유" });
+      shareCard.createEl("span", { cls: "marktl-share-eyebrow", text: "Share this page" });
       const link = shareCard.createEl("a", {
         cls: "marktl-share-link",
         href: this.summary.publicUrl,
@@ -2791,24 +3523,27 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
       link.setAttr("target", "_blank");
       link.setAttr("rel", "noopener noreferrer");
       shareCard.createEl("p", {
-        text: this.summary.commentsEnabled ? "독자는 이 링크를 열고 Giscus GitHub 댓글을 남길 수 있습니다." : "독자는 이 링크를 열 수 있습니다. 댓글은 Giscus 설정이 완료된 뒤 표시됩니다."
+        text: this.summary.commentsEnabled ? "Readers can open this link and comment with GitHub through Giscus." : "Readers can open this link. Comments need Giscus settings before they appear."
       });
     }
     const facts = contentEl.createDiv({ cls: "marktl-summary-grid" });
-    this.addFact(facts, "출력", this.summary.outputPath);
-    this.addFact(facts, "미리보기", this.summary.previewSecurity === "trusted" ? "신뢰 인터랙티브" : "정적 안전");
-    this.addFact(facts, "AI", this.summary.aiProvider === "none" ? "로컬 변환" : this.summary.usedFallback ? `${this.summary.aiProvider} 실패, 로컬 변환 사용` : `${this.summary.aiProvider} HTML 생성`);
-    this.addFact(facts, "이미지", `로컬 이미지 ${this.summary.assetCount}개 포함`);
-    this.addFact(facts, "공유 대상", this.describeShareTarget());
-    this.addFact(facts, "댓글", this.summary.commentsStatus);
+    this.addFact(facts, "Output", this.summary.outputPath);
+    this.addFact(facts, "Preview", this.summary.previewSecurity === "trusted" ? "Trusted interactive" : "Sanitized static");
+    this.addFact(facts, "AI", this.summary.aiProvider === "none" ? "Local converter" : this.summary.usedFallback ? `${this.summary.aiProvider} failed; local fallback used` : `${this.summary.aiProvider} generated HTML`);
+    this.addFact(facts, "Images", `${this.summary.assetCount} bundled local image(s)`);
+    this.addFact(facts, "Share target", this.describeShareTarget());
+    if (this.summary.shareHomeTitle) {
+      this.addFact(facts, "Share hub", this.summary.shareHomeTitle);
+    }
+    this.addFact(facts, "Comments", this.summary.commentsStatus);
     if (this.summary.publicUrl) {
-      this.addFact(facts, "공개 URL", this.summary.publicUrl);
+      this.addFact(facts, "Public URL", this.summary.publicUrl);
     }
     if (this.summary.shareHomeUrl) {
-      this.addFact(facts, "공유 홈", this.summary.shareHomeUrl);
+      this.addFact(facts, "Share home", this.summary.shareHomeUrl);
     }
     if (this.summary.warnings.length > 0) {
-      contentEl.createEl("h3", { text: "주의 및 참고" });
+      contentEl.createEl("h3", { text: "Warnings" });
       const list = contentEl.createEl("ul", { cls: "marktl-summary-warnings" });
       for (const warning of this.summary.warnings) {
         list.createEl("li", { text: warning });
@@ -2816,41 +3551,41 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
     }
     contentEl.createEl("p", {
       cls: "marktl-modal-intro",
-      text: this.summary.publicUrl ? "이 공개 URL은 바로 공유할 수 있습니다." : this.summary.shareTarget === "static-bundle" ? "이 폴더는 정적 호스팅에 올릴 준비가 되어 있습니다. 공개 업로드는 별도 단계로 남겨둡니다." : "이 링크는 현재 컴퓨터의 생성 파일을 엽니다. 공개 공유 링크는 정적 호스팅이 필요합니다."
+      text: this.summary.publicUrl ? "This public URL is ready to share with other people." : this.summary.shareTarget === "static-bundle" ? "This folder is ready for a static host. Public upload is intentionally a separate step." : "This link opens the generated file on this computer. Public share links require a static host."
     });
     const actions = contentEl.createDiv({ cls: "marktl-result-actions" });
-    this.addActionButton(actions, this.summary.publicUrl ? "공개 링크 복사" : "로컬 링크 복사", async () => {
+    this.addActionButton(actions, this.summary.publicUrl ? "Copy public link" : "Copy local link", async () => {
       const link = await this.copyLink(this.summary.outputPath, this.summary.publicUrl);
-      new import_obsidian4.Notice(`복사됨: ${link}`);
+      new import_obsidian5.Notice(`Copied: ${link}`);
     });
     if (this.summary.publicUrl) {
-      this.addActionButton(actions, "공유 문구 복사", async () => {
+      this.addActionButton(actions, "Copy share text", async () => {
         const text = [this.summary.shareTitle, this.summary.publicUrl].filter(Boolean).join("\n");
         await navigator.clipboard.writeText(text);
-        new import_obsidian4.Notice("공유 문구를 복사했습니다.");
+        new import_obsidian5.Notice("Copied share text.");
       });
-      this.addActionButton(actions, "페이지 열기", () => {
+      this.addActionButton(actions, "Open page", () => {
         window.open(this.summary.publicUrl, "_blank", "noopener,noreferrer");
       });
     }
     if (this.summary.shareHomeUrl) {
-      this.addActionButton(actions, "아카이브 열기", () => {
+      this.addActionButton(actions, "Open archive", () => {
         window.open(this.summary.shareHomeUrl, "_blank", "noopener,noreferrer");
       });
     }
-    this.addActionButton(actions, "AI 전달문 복사", async () => {
+    this.addActionButton(actions, "Copy AI handoff", async () => {
       await navigator.clipboard.writeText(this.buildAiHandoffPrompt());
-      new import_obsidian4.Notice("AI 전달 프롬프트를 복사했습니다.");
+      new import_obsidian5.Notice("Copied AI handoff prompt.");
     });
-    this.addActionButton(actions, "발표형으로 다시 생성", () => {
+    this.addActionButton(actions, "Regenerate slides", () => {
       this.close();
       this.regenerate("presentation");
     });
-    this.addActionButton(actions, "검토형으로 다시 생성", () => {
+    this.addActionButton(actions, "Regenerate interactive", () => {
       this.close();
       this.regenerate("interactive-report");
     });
-    this.addActionButton(actions, "닫기", () => this.close(), true);
+    this.addActionButton(actions, "Close", () => this.close(), true);
   }
   onClose() {
     this.contentEl.empty();
@@ -2871,35 +3606,37 @@ var MarktlResultModal = class extends import_obsidian4.Modal {
   }
   describeShareTarget() {
     if (this.summary.shareTarget === "github-pages") {
-      return "GitHub Pages 링크";
+      return "GitHub Pages link";
     }
-    return this.summary.shareTarget === "static-bundle" ? "정적 호스팅 번들" : "로컬 파일 링크";
+    return this.summary.shareTarget === "static-bundle" ? "Static hosting bundle" : "Local file link";
   }
   buildAiHandoffPrompt() {
     return [
-      "이 MarkTL HTML 산출물을 다음 개선 작업의 맥락으로 사용해 주세요.",
+      "Use this MarkTL HTML artifact as context for the next iteration.",
       "",
-      `원본 노트: ${this.summary.sourcePath || this.summary.sourceTitle || "알 수 없는 원본 노트"}`,
-      `HTML 출력: ${this.summary.publicUrl || this.summary.localPath || this.summary.outputPath}`,
-      `미리보기 보안: ${this.summary.previewSecurity}`,
-      `공유 대상: ${this.describeShareTarget()}`,
-      this.summary.publicUrl ? `공개 URL: ${this.summary.publicUrl}` : "",
+      `Source note: ${this.summary.sourcePath || this.summary.sourceTitle || "Unknown source note"}`,
+      `HTML output: ${this.summary.publicUrl || this.summary.localPath || this.summary.outputPath}`,
+      `Preview security: ${this.summary.previewSecurity}`,
+      `Share target: ${this.describeShareTarget()}`,
+      this.summary.publicUrl ? `Public URL: ${this.summary.publicUrl}` : "",
       "",
-      "작업:",
-      "- Markdown 텍스트가 아니라 시각 HTML 산출물로 검토해 주세요.",
-      "- 더 명확하거나 시각적이거나 인터랙티브해야 할 부분을 찾아 주세요.",
-      "- 다음에 적용할 구체적인 수정안을 제안해 주세요."
+      "Task:",
+      "- Review the artifact as a visual HTML output, not just as Markdown text.",
+      "- Identify what should be clearer, more visual, or more interactive.",
+      "- Suggest the next concrete revision."
     ].filter(Boolean).join("\n");
   }
 };
 
 // src/settings-tab.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 var import_artifact_goals2 = __toESM(require_artifact_goals());
+var import_export_profiles2 = __toESM(require_export_profiles());
 var import_templates2 = __toESM(require_templates());
 var { inferPagesBaseUrl } = require_github_pages();
 var { buildGiscusSetupChecklist, buildPagesSetupChecklist } = require_setup_guidance();
-var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
+var { createShareHomeProfile, describeShareHomeProfile: describeShareHomeProfile2, normalizeShareHomeProfiles: normalizeShareHomeProfiles2, resolveShareHomeProfile: resolveShareHomeProfile2 } = require_share_home_profiles();
+var MarktlSettingTab = class extends import_obsidian6.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -2908,14 +3645,49 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Flytothesky MarkTL HTML Exporter" });
-    new import_obsidian5.Setting(containerEl).setName("Setup wizard").setDesc("Guided setup for local export, Claude AI conversion, and share-ready bundles.").addButton((button) => button.setButtonText("Open setup").setCta().onClick(() => {
+    new import_obsidian6.Setting(containerEl).setName("Setup wizard").setDesc("Guided setup for local export, Claude AI conversion, and share-ready bundles.").addButton((button) => button.setButtonText("Open setup").setCta().onClick(() => {
       this.plugin.openSetupWizard();
     }));
-    new import_obsidian5.Setting(containerEl).setName("Export folder").setDesc("Vault-relative folder for generated HTML files.").addText((text) => text.setPlaceholder("html-exports").setValue(this.plugin.settings.exportFolder).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Export folder").setDesc("Vault-relative folder for generated HTML files.").addText((text) => text.setPlaceholder("html-exports").setValue(this.plugin.settings.exportFolder).onChange(async (value) => {
       this.plugin.settings.exportFolder = value.trim() || "html-exports";
       await this.plugin.saveSettings();
     }));
-    new import_obsidian5.Setting(containerEl).setName("Artifact goal").setDesc("Default job for the HTML artifact: read, decide, review, compare, tune, explain code, or publish.").addDropdown((dropdown) => {
+    this.renderShareHomeSettings(containerEl);
+    containerEl.createEl("h3", { text: "Note to HTML \uAE30\uBCF8 \uC120\uD0DD" });
+    containerEl.createEl("p", {
+      cls: "marktl-modal-intro",
+      text: "Export modal \uCCAB \uD654\uBA74\uC758 \uC7A5\uB974, \uAE4A\uC774, \uBAA9\uC801, \uAE30\uC900 \uB9E5\uB77D \uB178\uD2B8 \uAE30\uBCF8\uAC12\uC785\uB2C8\uB2E4."
+    });
+    new import_obsidian6.Setting(containerEl).setName("\uBB38\uC11C \uC7A5\uB974").setDesc("\uAE30\uBCF8 HTML \uC7A5\uB974\uC785\uB2C8\uB2E4.").addDropdown((dropdown) => {
+      for (const genre of (0, import_export_profiles2.listExportGenres)()) {
+        dropdown.addOption(genre.id, genre.label);
+      }
+      dropdown.setValue(this.plugin.settings.exportGenre).onChange(async (value) => {
+        await this.applyDefaultSelection({ exportGenre: value });
+      });
+    });
+    new import_obsidian6.Setting(containerEl).setName("\uC791\uC131 \uAE4A\uC774").setDesc("\uACF5\uC0AC\uC77C\uBCF4\uB294 \uAC04\uB2E8 \uAE30\uB85D, \uD45C\uC900 \uC77C\uBCF4, \uC885\uD569\xB7\uB9C8\uC77C\uC2A4\uD1A4 3\uB2E8\uACC4\uB97C \uC0AC\uC6A9\uD569\uB2C8\uB2E4.").addDropdown((dropdown) => {
+      for (const depth of (0, import_export_profiles2.listExportDepths)()) {
+        dropdown.addOption(depth.id, depth.label);
+      }
+      dropdown.setValue(this.plugin.settings.exportDepth).onChange(async (value) => {
+        await this.applyDefaultSelection({ exportDepth: value });
+      });
+    });
+    new import_obsidian6.Setting(containerEl).setName("\uC0AC\uC6A9 \uBAA9\uC801").setDesc("\uB3C5\uC790\uC640 \uBB38\uCCB4, \uB2E4\uC74C \uD589\uB3D9\uC744 \uC815\uD569\uB2C8\uB2E4.").addDropdown((dropdown) => {
+      for (const purpose of (0, import_export_profiles2.listExportPurposes)()) {
+        dropdown.addOption(purpose.id, purpose.label);
+      }
+      dropdown.setValue(this.plugin.settings.exportPurpose).onChange(async (value) => {
+        await this.applyDefaultSelection({ exportPurpose: value });
+      });
+    });
+    new import_obsidian6.Setting(containerEl).setName("\uAE30\uC900 \uB9E5\uB77D \uB178\uD2B8 \uACBD\uB85C").setDesc("\uC120\uD0DD \uC0AC\uD56D\uC785\uB2C8\uB2E4. \uBE44\uC6CC\uB450\uBA74 \uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9\uD569\uB2C8\uB2E4.").addText((text) => text.setPlaceholder("\uC608: \uD504\uB85C\uC81D\uD2B8/2026-06-11 \uC9C0\uC218\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uACF5\uC0AC\uC77C\uBCF4.md").setValue(this.plugin.settings.referenceContextNotePath).onChange(async (value) => {
+      this.plugin.settings.referenceContextNotePath = value.trim();
+      this.plugin.settings.contextPackMode = this.plugin.settings.referenceContextNotePath ? "reference-note" : "none";
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian6.Setting(containerEl).setName("Artifact goal").setDesc("Default job for the HTML artifact: read, decide, review, compare, tune, explain code, or publish.").addDropdown((dropdown) => {
       for (const goal of (0, import_artifact_goals2.listArtifactGoals)()) {
         dropdown.addOption(goal.id, goal.name);
       }
@@ -2924,11 +3696,11 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian5.Setting(containerEl).setName("Artifact type").setDesc("Default information architecture for AI exports.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "Faithful Note").addOption("strategy-brief", "Strategy Brief").addOption("research-report", "Research Report").addOption("decision-memo", "Decision Memo").addOption("interactive-explainer", "Interactive Explainer").addOption("slide-deck", "Slide Deck").setValue(this.plugin.settings.artifactType).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Artifact type").setDesc("Default information architecture for AI exports.").addDropdown((dropdown) => dropdown.addOption("faithful-note", "Faithful Note").addOption("strategy-brief", "Strategy Brief").addOption("research-report", "Research Report").addOption("decision-memo", "Decision Memo").addOption("interactive-explainer", "Interactive Explainer").addOption("slide-deck", "Slide Deck").setValue(this.plugin.settings.artifactType).onChange(async (value) => {
       this.plugin.settings.artifactType = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian5.Setting(containerEl).setName("Template").setDesc("Default HTML style template.").addDropdown((dropdown) => {
+    new import_obsidian6.Setting(containerEl).setName("Template").setDesc("Default HTML style template.").addDropdown((dropdown) => {
       for (const template of (0, import_templates2.listTemplates)()) {
         dropdown.addOption(template.id, template.name);
       }
@@ -2937,42 +3709,42 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian5.Setting(containerEl).setName("AI provider").setDesc("Optional CLI provider for high-quality AI conversion.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("claude", "Claude Code CLI").addOption("codex", "Codex CLI").setValue(this.plugin.settings.aiProvider).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("AI provider").setDesc("Optional CLI provider for high-quality AI conversion.").addDropdown((dropdown) => dropdown.addOption("none", "None / local fallback").addOption("claude", "Claude Code CLI").addOption("codex", "Codex CLI").setValue(this.plugin.settings.aiProvider).onChange(async (value) => {
       this.plugin.settings.aiProvider = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian5.Setting(containerEl).setName("Conversion mode").setDesc("Preserve mode keeps the note faithful. Other modes allow AI restructuring.").addDropdown((dropdown) => dropdown.addOption("preserve", "Preserve content").addOption("presentation", "Presentation").addOption("blog", "Blog article").addOption("landing", "Landing page").setValue(this.plugin.settings.conversionMode).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Conversion mode").setDesc("Preserve mode keeps the note faithful. Other modes allow AI restructuring.").addDropdown((dropdown) => dropdown.addOption("preserve", "Preserve content").addOption("presentation", "Presentation").addOption("blog", "Blog article").addOption("landing", "Landing page").setValue(this.plugin.settings.conversionMode).onChange(async (value) => {
       this.plugin.settings.conversionMode = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian5.Setting(containerEl).setName("Preview security").setDesc("Sanitized mode blocks scripts, iframes, external assets, and event handlers.").addDropdown((dropdown) => dropdown.addOption("sanitized", "Sanitized static preview").addOption("trusted", "Trusted preview/export").setValue(this.plugin.settings.previewSecurity).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Preview security").setDesc("Sanitized mode blocks scripts, iframes, external assets, and event handlers.").addDropdown((dropdown) => dropdown.addOption("sanitized", "Sanitized static preview").addOption("trusted", "Trusted preview/export").setValue(this.plugin.settings.previewSecurity).onChange(async (value) => {
       this.plugin.settings.previewSecurity = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian5.Setting(containerEl).setName("Context pack").setDesc("Linked notes mode gives AI extra vault context from Markdown links and wikilinks.").addDropdown((dropdown) => dropdown.addOption("none", "Active note only").addOption("linked-notes", "Include linked notes").setValue(this.plugin.settings.contextPackMode).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Context pack").setDesc("Reference note mode gives AI the user-selected baseline context. Linked notes remains for compatibility.").addDropdown((dropdown) => dropdown.addOption("none", "Active note only").addOption("reference-note", "Use selected reference note").addOption("linked-notes", "Include linked notes").setValue(this.plugin.settings.contextPackMode).onChange(async (value) => {
       this.plugin.settings.contextPackMode = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian5.Setting(containerEl).setName("AI failure policy").setDesc("Fallback creates local HTML with a warning. Strict stops generation. GitHub Pages always requires strict AI success.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.plugin.settings.failurePolicy).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("AI failure policy").setDesc("Fallback creates local HTML with a warning. Strict stops generation. GitHub Pages always requires strict AI success.").addDropdown((dropdown) => dropdown.addOption("fallback", "Fallback with warning").addOption("strict", "Stop on AI failure").setValue(this.plugin.settings.failurePolicy).onChange(async (value) => {
       this.plugin.settings.failurePolicy = this.plugin.settings.shareTarget === "github-pages" && value === "fallback" ? "strict" : value;
       await this.plugin.saveSettings();
       if (this.plugin.settings.shareTarget === "github-pages" && value === "fallback") {
-        new import_obsidian5.Notice("GitHub Pages export requires strict AI success. Fallback was not enabled.");
+        new import_obsidian6.Notice("GitHub Pages export requires strict AI success. Fallback was not enabled.");
         this.display();
       }
     }));
-    new import_obsidian5.Setting(containerEl).setName("CLI timeout").setDesc("Maximum AI CLI runtime in milliseconds. Rich HTML artifacts can take 5-15 minutes on long notes.").addText((text) => text.setPlaceholder("900000").setValue(String(this.plugin.settings.timeoutMs)).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("CLI timeout").setDesc("Maximum AI CLI runtime in milliseconds. Rich HTML artifacts can take 5-15 minutes on long notes.").addText((text) => text.setPlaceholder("900000").setValue(String(this.plugin.settings.timeoutMs)).onChange(async (value) => {
       const parsed = Number(value);
       this.plugin.settings.timeoutMs = Number.isFinite(parsed) && parsed > 0 ? parsed : 9e5;
       await this.plugin.saveSettings();
     }));
     this.addCliPathSetting(containerEl, "Claude Code CLI path", "claudePath", "claude");
     this.addCliPathSetting(containerEl, "Codex CLI path", "codexPath", "codex");
-    new import_obsidian5.Setting(containerEl).setName("Share target").setDesc("GitHub Pages publishes only after successful AI conversion. Fallback HTML is never published.").addDropdown((dropdown) => dropdown.addOption("local-link", "Local file link").addOption("static-bundle", "Static hosting bundle").addOption("github-pages", "GitHub Pages link").setValue(this.plugin.settings.shareTarget).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Share target").setDesc("GitHub Pages publishes only after successful AI conversion. Fallback HTML is never published.").addDropdown((dropdown) => dropdown.addOption("local-link", "Local file link").addOption("static-bundle", "Static hosting bundle").addOption("github-pages", "GitHub Pages link").setValue(this.plugin.settings.shareTarget).onChange(async (value) => {
       this.plugin.settings.shareTarget = value;
       if (value === "github-pages" && this.plugin.settings.failurePolicy !== "strict") {
         this.plugin.settings.failurePolicy = "strict";
-        new import_obsidian5.Notice("GitHub Pages export now uses strict AI failure policy.");
+        new import_obsidian6.Notice("GitHub Pages export now uses strict AI failure policy.");
       }
       await this.plugin.saveSettings();
       if (value === "github-pages") {
@@ -2984,15 +3756,15 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       cls: "marktl-modal-intro",
       text: "Giscus uses GitHub Discussions for public comments. It requires trusted exports because it loads the Giscus script."
     });
-    new import_obsidian5.Setting(containerEl).setName("Giscus setup helper").setDesc("Install the Giscus GitHub App first, then use giscus.app to get repository ID and category ID.").addButton((button) => button.setButtonText("Install Giscus app").onClick(() => {
+    new import_obsidian6.Setting(containerEl).setName("Giscus setup helper").setDesc("Install the Giscus GitHub App first, then use giscus.app to get repository ID and category ID.").addButton((button) => button.setButtonText("Install Giscus app").onClick(() => {
       window.open("https://github.com/apps/giscus", "_blank", "noopener,noreferrer");
     })).addButton((button) => button.setButtonText("Open giscus.app").onClick(() => {
       window.open("https://giscus.app", "_blank", "noopener,noreferrer");
     })).addButton((button) => button.setButtonText("Copy checklist").onClick(async () => {
       await navigator.clipboard.writeText(buildGiscusSetupChecklist(this.plugin.settings));
-      new import_obsidian5.Notice("Giscus setup checklist copied.");
+      new import_obsidian6.Notice("Giscus setup checklist copied.");
     }));
-    new import_obsidian5.Setting(containerEl).setName("Reader feedback mode").setDesc("Adds a GitHub login/comment box to exported HTML when configured.").addDropdown((dropdown) => dropdown.addOption("none", "None").addOption("giscus", "Giscus GitHub comments").setValue(this.plugin.settings.readerFeedbackMode).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Reader feedback mode").setDesc("Adds a GitHub login/comment box to exported HTML when configured.").addDropdown((dropdown) => dropdown.addOption("none", "None").addOption("giscus", "Giscus GitHub comments").setValue(this.plugin.settings.readerFeedbackMode).onChange(async (value) => {
       this.plugin.settings.readerFeedbackMode = value;
       await this.plugin.saveSettings();
     }));
@@ -3007,54 +3779,146 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
       cls: "marktl-modal-intro",
       text: "Used only when Share target is GitHub Pages link. Tokens are stored in this plugin data file, so use a fine-grained token limited to the share repository."
     });
-    new import_obsidian5.Setting(containerEl).setName("GitHub Pages setup helper").setDesc("For owner/repo, the usual Pages URL is https://owner.github.io/repo. The final page becomes <base>/<publish path>/<slug>/.").addButton((button) => button.setButtonText("Create token").onClick(() => {
+    new import_obsidian6.Setting(containerEl).setName("GitHub Pages setup helper").setDesc("For owner/repo, the usual Pages URL is https://owner.github.io/repo. The final page becomes <base>/<publish path>/<slug>/.").addButton((button) => button.setButtonText("Create token").onClick(() => {
       window.open("https://github.com/settings/personal-access-tokens/new", "_blank", "noopener,noreferrer");
     })).addButton((button) => button.setButtonText("Fill base URL").onClick(async () => {
       const inferred = inferPagesBaseUrl(this.plugin.settings.githubRepo);
       if (!inferred) {
-        new import_obsidian5.Notice("Enter GitHub repository as owner/repo first.");
+        new import_obsidian6.Notice("Enter GitHub repository as owner/repo first.");
         return;
       }
       this.plugin.settings.githubPagesBaseUrl = inferred;
       await this.plugin.saveSettings();
       this.display();
-      new import_obsidian5.Notice(`GitHub Pages base URL set to ${inferred}`);
+      new import_obsidian6.Notice(`GitHub Pages base URL set to ${inferred}`);
     })).addButton((button) => button.setButtonText("Copy checklist").onClick(async () => {
       await navigator.clipboard.writeText(buildPagesSetupChecklist(this.plugin.settings));
-      new import_obsidian5.Notice("GitHub Pages setup checklist copied.");
+      new import_obsidian6.Notice("GitHub Pages setup checklist copied.");
     }));
     this.addTextSetting(containerEl, "GitHub repository", "owner/repo for the Pages repository.", "githubRepo", "reallygood83/marktl-shares");
     this.addTextSetting(containerEl, "GitHub branch", "Branch to write files to.", "githubBranch", "main");
     this.addTextSetting(containerEl, "GitHub Pages base URL", "Public Pages root URL. Leave blank to infer https://owner.github.io/repo.", "githubPagesBaseUrl", "https://reallygood83.github.io/marktl-shares");
-    this.addTextSetting(containerEl, "Publish path", "Folder path inside the repository. Exports go to <path>/<slug>/index.html.", "githubPublishPath", "marktl");
-    this.addTextSetting(containerEl, "Share home title", "Title for the generated index page that lists published exports.", "githubShareHomeTitle", "유네코 지수 통합선별공장 프로젝트");
     this.addTextSetting(containerEl, "GitHub token", "Fine-grained token with Contents read/write permission for the repository.", "githubToken", "github_pat_...", true);
-    new import_obsidian5.Setting(containerEl).setName("Copy share link by default").setDesc("Copies the public GitHub Pages URL after publish, or a local file:// link for local exports.").addToggle((toggle) => toggle.setValue(this.plugin.settings.copyShareLinkAfterExport).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("Copy share link by default").setDesc("Copies the public GitHub Pages URL after publish, or a local file:// link for local exports.").addToggle((toggle) => toggle.setValue(this.plugin.settings.copyShareLinkAfterExport).onChange(async (value) => {
       this.plugin.settings.copyShareLinkAfterExport = value;
       await this.plugin.saveSettings();
     }));
   }
+  renderShareHomeSettings(containerEl) {
+    containerEl.createEl("h3", { text: "\uACF5\uC720 \uD5C8\uBE0C" });
+    containerEl.createEl("p", {
+      cls: "marktl-modal-intro",
+      text: "\uD5C8\uBE0C\uB294 \uACF5\uC720 \uBA54\uC778\uD398\uC774\uC9C0\uC785\uB2C8\uB2E4. \uB0B4\uBCF4\uB0B4\uAE30 \uCCAB \uD654\uBA74\uC5D0\uC11C \uD5C8\uBE0C\uB97C \uBA3C\uC800 \uACE0\uB974\uBA74, \uC0DD\uC131\uB41C HTML\uC740 \uC120\uD0DD\uD55C \uD5C8\uBE0C\uC758 \uC11C\uBE0C\uD398\uC774\uC9C0\uC640 \uC778\uB371\uC2A4\uC5D0 \uB4F1\uB85D\uB429\uB2C8\uB2E4."
+    });
+    const profiles = normalizeShareHomeProfiles2(this.plugin.settings.shareHomeProfiles, this.plugin.settings);
+    const activeProfile = resolveShareHomeProfile2(this.plugin.settings, this.plugin.settings.activeShareHomeProfileId);
+    this.plugin.settings.shareHomeProfiles = profiles;
+    this.plugin.settings.activeShareHomeProfileId = activeProfile.id;
+    new import_obsidian6.Setting(containerEl).setName("\uAE30\uBCF8 \uACF5\uC720 \uD5C8\uBE0C").setDesc("Export modal\uC5D0\uC11C \uCC98\uC74C \uC120\uD0DD\uB418\uC5B4 \uC788\uC744 \uD5C8\uBE0C\uC785\uB2C8\uB2E4.").addDropdown((dropdown) => {
+      for (const profile of profiles) {
+        dropdown.addOption(profile.id, profile.title);
+      }
+      dropdown.setValue(activeProfile.id).onChange(async (value) => {
+        await this.setActiveShareHomeProfile(value);
+      });
+    }).addButton((button) => button.setButtonText("\uC0C8 \uD5C8\uBE0C \uCD94\uAC00").onClick(async () => {
+      const next = createShareHomeProfile(profiles);
+      this.plugin.settings.shareHomeProfiles = [...profiles, next];
+      await this.setActiveShareHomeProfile(next.id);
+      new import_obsidian6.Notice("\uC0C8 \uACF5\uC720 \uD5C8\uBE0C\uB97C \uCD94\uAC00\uD588\uC2B5\uB2C8\uB2E4. \uBA85\uCE6D\uACFC \uAC8C\uC2DC \uACBD\uB85C\uB97C \uC218\uC815\uD558\uC138\uC694.");
+    }));
+    const description = describeShareHomeProfile2(activeProfile, this.plugin.settings);
+    const card = containerEl.createDiv({ cls: "marktl-settings-card" });
+    card.createEl("h4", { text: `\uC120\uD0DD \uD5C8\uBE0C: ${activeProfile.title}` });
+    card.createEl("p", {
+      cls: "marktl-settings-muted",
+      text: description.homeUrl ? `\uAC8C\uC2DC \uD648: ${description.homeUrl}` : `\uAC8C\uC2DC \uACBD\uB85C: ${description.pathLabel}`
+    });
+    this.addShareHomeProfileText(card, "\uD5C8\uBE0C \uBA85\uCE6D", "\uBA54\uC778\uD398\uC774\uC9C0 H1\uACFC \uC120\uD0DD \uCE74\uB4DC\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4.", "title", activeProfile);
+    this.addShareHomeProfileText(card, "\uAC8C\uC2DC \uACBD\uB85C", "GitHub Pages \uC800\uC7A5\uC18C \uC548\uC758 \uD3F4\uB354\uC785\uB2C8\uB2E4. \uC608: marktl/jisu, marktl/work, marktl/research", "basePath", activeProfile);
+    this.addShareHomeProfileText(card, "\uC0C1\uB2E8 \uBC30\uC9C0", "\uBA54\uC778\uD398\uC774\uC9C0 \uC67C\uCABD \uC704 \uC791\uC740 \uBD84\uB958\uBA85\uC785\uB2C8\uB2E4.", "eyebrow", activeProfile);
+    this.addShareHomeProfileText(card, "\uD5C8\uBE0C \uC124\uBA85", "\uBA54\uC778\uD398\uC774\uC9C0 H1 \uC544\uB798 \uC124\uBA85\uBB38\uC785\uB2C8\uB2E4.", "description", activeProfile);
+    new import_obsidian6.Setting(card).setName("\uC120\uD0DD \uD5C8\uBE0C \uC0AD\uC81C").setDesc("\uCD5C\uC18C \uD558\uB098\uC758 \uD5C8\uBE0C\uB294 \uB0A8\uACA8\uC57C \uD569\uB2C8\uB2E4. \uC0AD\uC81C\uD574\uB3C4 \uC774\uBBF8 GitHub Pages\uC5D0 \uC62C\uB77C\uAC04 \uD30C\uC77C\uC740 \uC790\uB3D9 \uC0AD\uC81C\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.").addButton((button) => {
+      button.setButtonText("\uC0AD\uC81C");
+      if (profiles.length <= 1) {
+        button.setDisabled(true);
+      }
+      button.onClick(async () => {
+        var _a;
+        if (profiles.length <= 1) {
+          return;
+        }
+        const remaining = profiles.filter((profile) => profile.id !== activeProfile.id);
+        this.plugin.settings.shareHomeProfiles = remaining;
+        this.plugin.settings.activeShareHomeProfileId = ((_a = remaining[0]) == null ? void 0 : _a.id) || "";
+        await this.plugin.saveSettings();
+        this.display();
+        new import_obsidian6.Notice("\uACF5\uC720 \uD5C8\uBE0C\uB97C \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4.");
+      });
+    });
+  }
+  async setActiveShareHomeProfile(profileId, refresh = true) {
+    const profiles = normalizeShareHomeProfiles2(this.plugin.settings.shareHomeProfiles, this.plugin.settings);
+    const active = profiles.find((profile) => profile.id === profileId) || profiles[0];
+    this.plugin.settings.shareHomeProfiles = profiles;
+    this.plugin.settings.activeShareHomeProfileId = (active == null ? void 0 : active.id) || "";
+    if (active) {
+      this.plugin.settings.githubPublishPath = active.basePath;
+      this.plugin.settings.githubShareHomeTitle = active.title;
+    }
+    await this.plugin.saveSettings();
+    if (refresh) {
+      this.display();
+    }
+  }
+  addShareHomeProfileText(containerEl, name, description, key, activeProfile) {
+    new import_obsidian6.Setting(containerEl).setName(name).setDesc(description).addText((text) => text.setValue(activeProfile[key]).onChange(async (value) => {
+      await this.patchActiveShareHomeProfile({ [key]: value.trim() });
+    }));
+  }
+  async patchActiveShareHomeProfile(patch) {
+    var _a;
+    const profiles = normalizeShareHomeProfiles2(this.plugin.settings.shareHomeProfiles, this.plugin.settings);
+    const activeId = this.plugin.settings.activeShareHomeProfileId || ((_a = profiles[0]) == null ? void 0 : _a.id) || "";
+    const index = profiles.findIndex((profile) => profile.id === activeId);
+    if (index < 0) {
+      return;
+    }
+    const nextProfiles = profiles.slice();
+    nextProfiles[index] = {
+      ...nextProfiles[index],
+      ...patch
+    };
+    const normalized = normalizeShareHomeProfiles2(nextProfiles, this.plugin.settings);
+    const active = normalized.find((profile) => profile.id === activeId) || normalized[index] || normalized[0];
+    this.plugin.settings.shareHomeProfiles = normalized;
+    this.plugin.settings.activeShareHomeProfileId = (active == null ? void 0 : active.id) || "";
+    if (active) {
+      this.plugin.settings.githubPublishPath = active.basePath;
+      this.plugin.settings.githubShareHomeTitle = active.title;
+    }
+    await this.plugin.saveSettings();
+  }
+  async applyDefaultSelection(partial) {
+    const next = (0, import_export_profiles2.applySelectionProfile)({
+      ...this.plugin.settings,
+      ...partial
+    }, {
+      ...this.plugin.settings,
+      ...partial
+    });
+    Object.assign(this.plugin.settings, next);
+    await this.plugin.saveSettings();
+    this.display();
+  }
   addCliPathSetting(containerEl, name, key, placeholder) {
-    const setting = new import_obsidian5.Setting(containerEl).setName(name).setDesc("Leave blank to use the command from PATH.").addText((text) => text.setPlaceholder(placeholder).setValue(this.plugin.settings[key]).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName(name).setDesc("Leave blank to use the command from PATH.").addText((text) => text.setPlaceholder(placeholder).setValue(this.plugin.settings[key]).onChange(async (value) => {
       this.plugin.settings[key] = value.trim();
       await this.plugin.saveSettings();
     }));
-    if (key === "codexPath") {
-      setting.addButton((button) => button.setButtonText("Detect MarkTL Codex").onClick(async () => {
-        const detected = detectCodexCliPath(this.plugin.settings.codexPath);
-        if (!detected) {
-          new import_obsidian5.Notice("MarkTL Codex wrapper was not found. Create ~/.local/bin/marktl-codex on this Mac.");
-          return;
-        }
-        this.plugin.settings.codexPath = detected;
-        await this.plugin.saveSettings();
-        this.display();
-        new import_obsidian5.Notice(`Codex CLI path set to ${detected}`);
-      }));
-    }
   }
   addTextSetting(containerEl, name, description, key, placeholder, password = false) {
-    new import_obsidian5.Setting(containerEl).setName(name).setDesc(description).addText((text) => {
+    new import_obsidian6.Setting(containerEl).setName(name).setDesc(description).addText((text) => {
       text.setPlaceholder(placeholder).setValue(this.plugin.settings[key]).onChange(async (value) => {
         this.plugin.settings[key] = value.trim();
         await this.plugin.saveSettings();
@@ -3067,9 +3931,9 @@ var MarktlSettingTab = class extends import_obsidian5.PluginSettingTab {
 };
 
 // src/setup-modal.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 var { checkClaudeProvider, checkCodexProvider } = require_provider_doctor();
-var MarktlSetupModal = class extends import_obsidian6.Modal {
+var MarktlSetupModal = class extends import_obsidian7.Modal {
   constructor(app, plugin) {
     super(app);
     this.doctorEl = null;
@@ -3115,8 +3979,8 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
     agentBox.createEl("p", {
       text: "If you use Codex or Claude Code, copy a setup prompt and let your coding agent configure BRAT, MarkTL, GitHub Pages, and Giscus with you."
     });
-    new import_obsidian6.Setting(agentBox).addButton((button) => button.setButtonText("Copy Codex setup prompt").onClick(() => this.copyAgentPrompt("codex"))).addButton((button) => button.setButtonText("Copy Claude setup prompt").onClick(() => this.copyAgentPrompt("claude")));
-    new import_obsidian6.Setting(contentEl).addButton((button) => button.setButtonText("Check Claude CLI").onClick(() => {
+    new import_obsidian7.Setting(agentBox).addButton((button) => button.setButtonText("Copy Codex setup prompt").onClick(() => this.copyAgentPrompt("codex"))).addButton((button) => button.setButtonText("Copy Claude setup prompt").onClick(() => this.copyAgentPrompt("claude")));
+    new import_obsidian7.Setting(contentEl).addButton((button) => button.setButtonText("Check Claude CLI").onClick(() => {
       void this.runDoctor("claude");
     })).addButton((button) => button.setButtonText("Check Codex CLI").onClick(() => {
       void this.runDoctor("codex");
@@ -3124,7 +3988,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
       this.plugin.settings.setupCompleted = true;
       await this.plugin.saveSettings();
       this.close();
-      new import_obsidian6.Notice("Flytothesky MarkTL setup saved.");
+      new import_obsidian7.Notice("Flytothesky MarkTL setup saved.");
     }));
   }
   onClose() {
@@ -3135,9 +3999,9 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
     const card = container.createDiv({ cls: "marktl-setup-card" });
     card.createEl("h3", { text: options.title });
     card.createEl("p", { text: options.body });
-    new import_obsidian6.Setting(card).addButton((button) => button.setButtonText(options.button).onClick(async () => {
+    new import_obsidian7.Setting(card).addButton((button) => button.setButtonText(options.button).onClick(async () => {
       await options.apply();
-      new import_obsidian6.Notice(`${options.title} defaults applied.`);
+      new import_obsidian7.Notice(`${options.title} defaults applied.`);
     }));
   }
   async applySimpleDefaults() {
@@ -3200,7 +4064,7 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
   async copyAgentPrompt(agent) {
     const prompt = buildAgentSetupPrompt(agent);
     await navigator.clipboard.writeText(prompt);
-    new import_obsidian6.Notice(`${agent === "codex" ? "Codex" : "Claude"} setup prompt copied.`);
+    new import_obsidian7.Notice(`${agent === "codex" ? "Codex" : "Claude"} setup prompt copied.`);
   }
   renderDoctorIdle() {
     if (!this.doctorEl) {
@@ -3219,35 +4083,13 @@ var MarktlSetupModal = class extends import_obsidian6.Modal {
     const label = provider === "codex" ? "Codex CLI" : "Claude CLI";
     this.doctorEl.empty();
     this.doctorEl.createEl("strong", { text: `Checking ${label}...` });
-    let result;
-    if (provider === "codex") {
-      const currentPath = String(this.plugin.settings.codexPath || "").trim();
-      const detectedPath = detectCodexCliPath(currentPath);
-      const shouldRepairPath = !currentPath || currentPath === "codex" || isStaleCliPath(currentPath) || currentPath.startsWith("/") && !isManagedMarktlCodexPath(currentPath);
-      if (shouldRepairPath && detectedPath) {
-        this.plugin.settings.codexPath = detectedPath;
-        await this.plugin.saveSettings();
-      }
-      const command = this.plugin.settings.codexPath || "codex";
-      if (isStaleCliPath(command) || isManagedMarktlCodexPath(command) && !isExecutableFile(command) || command.startsWith("/") && !isManagedMarktlCodexPath(command)) {
-        result = {
-          ok: false,
-          status: "missing",
-          message: `MarkTL Codex wrapper is missing or invalid: ${command}. Create ~/.local/bin/marktl-codex on this Mac instead of saving /opt/homebrew/bin/codex in shared settings.`,
-          version: ""
-        };
-      } else {
-        result = await checkCodexProvider({
-          command: resolveHomePath(command),
-          timeoutMs: 15e3
-        });
-      }
-    } else {
-      result = await checkClaudeProvider({
+    const result = provider === "codex" ? await checkCodexProvider({
+      command: this.plugin.settings.codexPath || "codex",
+      timeoutMs: 15e3
+    }) : await checkClaudeProvider({
       command: this.plugin.settings.claudePath || "claude",
       timeoutMs: 15e3
-      });
-    }
+    });
     this.doctorEl.empty();
     this.doctorEl.toggleClass("marktl-doctor-ok", result.ok);
     this.doctorEl.toggleClass("marktl-doctor-error", !result.ok);
@@ -3303,13 +4145,55 @@ function buildAgentSetupPrompt(agent) {
 var { convertWithAiFallback, getProviderPrivacyNote: getProviderPrivacyNote2 } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
+var { normalizeExportSelection } = require_export_profiles();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
 var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
 var { migrateSettings } = require_settings();
+var { DEFAULT_SHARE_HOME_PROFILE_ID, buildDefaultShareHomeProfile, normalizeShareHomeProfiles: normalizeShareHomeProfiles3, resolveShareHomeProfile: resolveShareHomeProfile3 } = require_share_home_profiles();
 var { buildShortId, injectSocialMeta } = require_social();
 var { applyPresetToOptions } = require_presets();
+var DEFAULT_SETTINGS = {
+  exportFolder: "html-exports",
+  setupCompleted: false,
+  activeShareHomeProfileId: DEFAULT_SHARE_HOME_PROFILE_ID,
+  shareHomeProfiles: [buildDefaultShareHomeProfile({
+    githubPublishPath: "marktl",
+    githubShareHomeTitle: "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8"
+  })],
+  artifactGoal: "read",
+  artifactType: "faithful-note",
+  template: "minimal",
+  exportGenre: "construction-daily",
+  exportDepth: "standard",
+  exportPurpose: "field-review",
+  referenceContextNotePath: "",
+  aiProvider: "none",
+  conversionMode: "preserve",
+  failurePolicy: "strict",
+  previewSecurity: "sanitized",
+  contextPackMode: "none",
+  readerFeedbackMode: "none",
+  shareTarget: "local-link",
+  githubRepo: "",
+  githubBranch: "main",
+  githubToken: "",
+  githubPagesBaseUrl: "",
+  githubPublishPath: "marktl",
+  githubShareHomeTitle: "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8",
+  giscusRepo: "",
+  giscusRepoId: "",
+  giscusCategory: "Announcements",
+  giscusCategoryId: "",
+  giscusMapping: "pathname",
+  giscusTheme: "preferred_color_scheme",
+  timeoutMs: 9e5,
+  claudePath: "",
+  codexPath: "",
+  geminiPath: "",
+  copyShareLinkAfterExport: false
+};
 function resolveHomePath(command) {
   const value = String(command || "").trim();
   if (!value) {
@@ -3327,9 +4211,9 @@ function resolveHomePath(command) {
 function isExecutableFile(filePath) {
   const resolvedPath = resolveHomePath(filePath);
   try {
-    const stat = import_node_fs.statSync(resolvedPath);
+    const stat = (0, import_node_fs.statSync)(resolvedPath);
     return stat.isFile() && Boolean(stat.mode & 73);
-  } catch (error) {
+  } catch (e) {
     return false;
   }
 }
@@ -3387,10 +4271,10 @@ function runCliPreflight(command, args, timeoutMs = 15e3) {
       resolve({ code: -1, output: `Timed out after ${timeoutMs}ms.` });
     }, timeoutMs);
     child.stdout.on("data", (chunk) => {
-      output += chunk;
+      output += String(chunk);
     });
     child.stderr.on("data", (chunk) => {
-      output += chunk;
+      output += String(chunk);
     });
     child.on("error", (error) => {
       if (settled) {
@@ -3410,115 +4294,7 @@ function runCliPreflight(command, args, timeoutMs = 15e3) {
     });
   });
 }
-var DEFAULT_SETTINGS = {
-  exportFolder: "html-exports",
-  setupCompleted: false,
-  artifactGoal: "read",
-  artifactType: "faithful-note",
-  template: "minimal",
-  aiProvider: "none",
-  conversionMode: "preserve",
-  failurePolicy: "strict",
-  previewSecurity: "sanitized",
-  contextPackMode: "none",
-  readerFeedbackMode: "none",
-  shareTarget: "local-link",
-  githubRepo: "",
-  githubBranch: "main",
-  githubToken: "",
-  githubPagesBaseUrl: "",
-  githubPublishPath: "marktl",
-  githubShareHomeTitle: "유네코 지수 통합선별공장 프로젝트",
-  giscusRepo: "",
-  giscusRepoId: "",
-  giscusCategory: "Announcements",
-  giscusCategoryId: "",
-  giscusMapping: "pathname",
-  giscusTheme: "preferred_color_scheme",
-  timeoutMs: 9e5,
-  claudePath: "",
-  codexPath: "",
-  geminiPath: "",
-  copyShareLinkAfterExport: false
-};
-var MarktlPublishedHtmlModal = class extends import_obsidian7.Modal {
-  constructor(app, plugin) {
-    super(app);
-    this.plugin = plugin;
-  }
-  onOpen() {
-    void this.render();
-  }
-  async render() {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.createEl("h2", { text: "게시된 MarkTL HTML" });
-    const description = contentEl.createEl("p", {
-      text: "GitHub Pages 인덱스 메타데이터를 여기서 복구합니다. 중복 카드는 공개 아카이브와 내보낸 폴더에서 함께 제거할 수 있습니다."
-    });
-    description.addClass("setting-item-description");
-    const statusEl = contentEl.createEl("div");
-    const controls = contentEl.createDiv();
-    new import_obsidian7.Setting(controls).addButton((button) => button.setButtonText("새로고침").onClick(() => void this.render())).addButton((button) => button.setButtonText("인덱스 메타데이터 복구").setCta().onClick(async () => {
-      statusEl.setText("공개 인덱스를 복구하는 중...");
-      try {
-        const index = await this.plugin.repairPublishedShareIndex();
-        new import_obsidian7.Notice(`MarkTL 인덱스를 복구했습니다: ${index.items.length}개 항목.`);
-        await this.render();
-      } catch (error) {
-        statusEl.setText(error instanceof Error ? error.message : String(error));
-      }
-    }));
-    const listEl = contentEl.createDiv();
-    statusEl.setText("게시 인덱스를 불러오는 중...");
-    try {
-      const { index } = await this.plugin.loadPublishedShareIndex();
-      statusEl.setText(`게시 항목 ${index.items.length}개.`);
-      if (!index.items.length) {
-        listEl.createEl("p", { text: "게시된 문서가 없습니다." });
-        return;
-      }
-      for (const item of index.items) {
-        this.renderItem(listEl, item);
-      }
-    } catch (error) {
-      statusEl.setText(error instanceof Error ? error.message : String(error));
-    }
-  }
-  renderItem(container, item) {
-    const card = container.createDiv({ cls: "marktl-published-item" });
-    const title = String(item.title || item.slug || "제목 없는 HTML 산출물");
-    const url = String(item.url || item.canonicalUrl || "");
-    new import_obsidian7.Setting(card).setName(title).setDesc([
-      item.updatedAt ? `갱신일: ${String(item.updatedAt).slice(0, 10)}` : "",
-      item.sourcePath || "",
-      item.shortId ? `shortId: ${item.shortId}` : "",
-      url
-    ].filter(Boolean).join("\n")).addButton((button) => button.setButtonText("열기").onClick(() => {
-      if (url) {
-        window.open(url);
-      }
-    })).addButton((button) => button.setButtonText("URL 복사").onClick(async () => {
-      if (url) {
-        await navigator.clipboard.writeText(url);
-        new import_obsidian7.Notice("MarkTL URL을 복사했습니다.");
-      }
-    })).addButton((button) => button.setButtonText("완전 삭제").setWarning().onClick(async () => {
-      const confirmed = window.confirm(`게시된 MarkTL 산출물을 삭제하고 아카이브에서도 제거할까요?\n\n${title}`);
-      if (!confirmed) {
-        return;
-      }
-      try {
-        const result = await this.plugin.deletePublishedShareItem(item);
-        new import_obsidian7.Notice(`아카이브 항목 ${result.removedCount}개를 삭제했습니다.`);
-        await this.render();
-      } catch (error) {
-        new import_obsidian7.Notice(error instanceof Error ? error.message : String(error));
-      }
-    }));
-  }
-};
-var MarktlPlugin = class extends import_obsidian7.Plugin {
+var MarktlPlugin = class extends import_obsidian8.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
@@ -3537,7 +4313,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       name: "Export active note to HTML...",
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
-        const canRun = file instanceof import_obsidian7.TFile && file.extension === "md";
+        const canRun = file instanceof import_obsidian8.TFile && file.extension === "md";
         if (canRun && !checking) {
           this.openExportModal();
         }
@@ -3549,7 +4325,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       name: "Quick export active note to HTML",
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
-        const canRun = file instanceof import_obsidian7.TFile && file.extension === "md";
+        const canRun = file instanceof import_obsidian8.TFile && file.extension === "md";
         if (canRun && !checking) {
           void this.exportActiveNote();
         }
@@ -3586,6 +4362,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_MARKTL_PREVIEW);
   }
   async loadSettings() {
+    var _a;
     const migratedSettings = migrateSettings(DEFAULT_SETTINGS, await this.loadData());
     this.settings = migratedSettings.settings;
     let shouldSave = migratedSettings.migrated;
@@ -3601,7 +4378,24 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
       this.settings.timeoutMs = DEFAULT_SETTINGS.timeoutMs;
       shouldSave = true;
     }
-    if (!["none", "linked-notes"].includes(this.settings.contextPackMode)) {
+    const normalizedSelection = normalizeExportSelection(this.settings);
+    if (this.settings.exportGenre !== normalizedSelection.exportGenre) {
+      this.settings.exportGenre = normalizedSelection.exportGenre;
+      shouldSave = true;
+    }
+    if (this.settings.exportDepth !== normalizedSelection.exportDepth) {
+      this.settings.exportDepth = normalizedSelection.exportDepth;
+      shouldSave = true;
+    }
+    if (this.settings.exportPurpose !== normalizedSelection.exportPurpose) {
+      this.settings.exportPurpose = normalizedSelection.exportPurpose;
+      shouldSave = true;
+    }
+    if (typeof this.settings.referenceContextNotePath !== "string") {
+      this.settings.referenceContextNotePath = "";
+      shouldSave = true;
+    }
+    if (!["none", "linked-notes", "reference-note"].includes(this.settings.contextPackMode)) {
       this.settings.contextPackMode = DEFAULT_SETTINGS.contextPackMode;
       shouldSave = true;
     }
@@ -3619,6 +4413,15 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
     }
     if (!String(this.settings.githubShareHomeTitle || "").trim() || this.settings.githubShareHomeTitle === "MarkTL Shared HTML") {
       this.settings.githubShareHomeTitle = DEFAULT_SETTINGS.githubShareHomeTitle;
+      shouldSave = true;
+    }
+    const shareHomeProfiles = normalizeShareHomeProfiles3(this.settings.shareHomeProfiles, this.settings);
+    if (JSON.stringify(this.settings.shareHomeProfiles) !== JSON.stringify(shareHomeProfiles)) {
+      this.settings.shareHomeProfiles = shareHomeProfiles;
+      shouldSave = true;
+    }
+    if (!shareHomeProfiles.some((profile) => profile.id === this.settings.activeShareHomeProfileId)) {
+      this.settings.activeShareHomeProfileId = ((_a = shareHomeProfiles[0]) == null ? void 0 : _a.id) || DEFAULT_SHARE_HOME_PROFILE_ID;
       shouldSave = true;
     }
     if (this.settings.aiProvider === "codex") {
@@ -3639,7 +4442,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
   async refreshSettingsFromDisk() {
     const previousSettings = this.settings;
     await this.loadSettings();
-    if (!String(this.settings.githubToken || "").trim() && String(previousSettings == null ? void 0 : previousSettings.githubToken || "").trim()) {
+    if (!String(this.settings.githubToken || "").trim() && String((previousSettings == null ? void 0 : previousSettings.githubToken) || "").trim()) {
       this.settings.githubToken = previousSettings.githubToken;
     }
   }
@@ -3648,8 +4451,8 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
   }
   openExportModal() {
     const file = this.app.workspace.getActiveFile();
-    if (!(file instanceof import_obsidian7.TFile) || file.extension !== "md") {
-      new import_obsidian7.Notice("HTML로 내보낼 Markdown 노트를 먼저 여세요.");
+    if (!(file instanceof import_obsidian8.TFile) || file.extension !== "md") {
+      new import_obsidian8.Notice("Open a Markdown note before exporting HTML.");
       return;
     }
     new MarktlExportModal(this.app, this, (options) => {
@@ -3659,7 +4462,7 @@ var MarktlPlugin = class extends import_obsidian7.Plugin {
   repairHtmlHead(html) {
     let value = String(html || "").trim();
     if (!value) {
-      return "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>MarkTL Export</title>\n</head>\n<body></body>\n</html>";
+      return '<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>MarkTL Export</title>\n</head>\n<body></body>\n</html>';
     }
     if (!/<html\b/i.test(value)) {
       value = `<!doctype html>
@@ -3674,24 +4477,28 @@ ${value}
 </html>`;
     }
     if (!/<!doctype\s+html/i.test(value)) {
-      value = `<!doctype html>\n${value}`;
+      value = `<!doctype html>
+${value}`;
     }
-    value = value.replace(/<html\b([^>]*)>/i, (match, attrs) => {
+    value = value.replace(/<html\b([^>]*)>/i, (_match, attrs) => {
       const cleanAttrs = String(attrs || "").replace(/\s+lang=(["']).*?\1/i, "").trim();
       return `<html${cleanAttrs ? ` ${cleanAttrs}` : ""} lang="ko">`;
     });
     if (!/<head\b/i.test(value)) {
-      value = value.replace(/<html\b[^>]*>/i, (match) => `${match}\n<head></head>`);
+      value = value.replace(/<html\b[^>]*>/i, (match) => `${match}
+<head></head>`);
     }
     if (!/<meta\s+charset=/i.test(value)) {
-      value = value.replace(/<head\b[^>]*>/i, (match) => `${match}\n<meta charset="utf-8">`);
+      value = value.replace(/<head\b[^>]*>/i, (match) => `${match}
+<meta charset="utf-8">`);
     }
     if (!/<meta\s+name=(["'])viewport\1/i.test(value)) {
-      value = value.replace(/<head\b[^>]*>/i, (match) => `${match}\n<meta name="viewport" content="width=device-width, initial-scale=1">`);
+      value = value.replace(/<head\b[^>]*>/i, (match) => `${match}
+<meta name="viewport" content="width=device-width, initial-scale=1">`);
     }
     return value;
   }
-  async renderMermaidBlocksToStaticHtml(html, sourcePath, options = {}) {
+  async renderMermaidBlocksToStaticHtml(html, sourcePath) {
     let value = String(html || "");
     value = value.replace(/```mermaid\s*\n([\s\S]*?)```/gi, (_match, code) => `<pre class="marktl-mermaid-source"><code class="language-mermaid" data-marktl-mermaid="true">${this.escapeHtmlValue(code)}</code></pre>`);
     value = this.normalizeMermaidSourceBlocks(value);
@@ -3718,8 +4525,8 @@ ${value}
         rendered += 1;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        warnings.push(`참고: Mermaid 다이어그램 렌더링 실패, 원문 코드로 대체했습니다. ${message}`);
-        output += `<details class="marktl-mermaid-source"><summary>다이어그램 원문</summary><pre><code class="language-mermaid">${this.escapeHtmlValue(source)}</code></pre></details>`;
+        warnings.push(`\uCC38\uACE0: Mermaid \uB2E4\uC774\uC5B4\uADF8\uB7A8 \uB80C\uB354\uB9C1 \uC2E4\uD328, \uC6D0\uBB38 \uCF54\uB4DC\uB85C \uB300\uCCB4\uD588\uC2B5\uB2C8\uB2E4. ${message}`);
+        output += `<details class="marktl-mermaid-source"><summary>\uB2E4\uC774\uC5B4\uADF8\uB7A8 \uC6D0\uBB38</summary><pre><code class="language-mermaid">${this.escapeHtmlValue(source)}</code></pre></details>`;
       }
     }
     if (lastIndex === 0) {
@@ -3744,7 +4551,7 @@ ${value}
       }
       return toMermaidPre(pre[1]) || match;
     });
-    value = value.replace(/<pre\b(?![^>]*marktl-mermaid-source)([^>]*)>([\s\S]*?)<\/pre>/gi, (match, attrs, code) => {
+    value = value.replace(/<pre\b(?![^>]*marktl-mermaid-source)([^>]*)>([\s\S]*?)<\/pre>/gi, (match, _attrs, code) => {
       if (/<code\b/i.test(code)) {
         return match;
       }
@@ -3753,27 +4560,29 @@ ${value}
     return value;
   }
   async renderMermaidSvgFromMarkdown(source, sourcePath) {
-    const renderer = import_obsidian7.MarkdownRenderer;
+    const renderer = import_obsidian8.MarkdownRenderer;
     if (!renderer) {
-      throw new Error("Obsidian MarkdownRenderer를 찾을 수 없습니다.");
+      throw new Error("Obsidian MarkdownRenderer\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     }
     const container = document.createElement("div");
     container.classList.add("marktl-mermaid-render-host");
     container.setAttribute("style", "position:fixed;left:-10000px;top:0;width:1200px;max-width:1200px;opacity:0;pointer-events:none;");
     document.body.appendChild(container);
     try {
-      const markdown = `\`\`\`mermaid\n${source}\n\`\`\``;
+      const markdown = `\`\`\`mermaid
+${source}
+\`\`\``;
       if (typeof renderer.render === "function") {
         await renderer.render(this.app, markdown, container, sourcePath, this);
       } else if (typeof renderer.renderMarkdown === "function") {
         await renderer.renderMarkdown(markdown, container, sourcePath, this);
       } else {
-        throw new Error("지원되는 MarkdownRenderer API가 없습니다.");
+        throw new Error("\uC9C0\uC6D0\uB418\uB294 MarkdownRenderer API\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
       }
       await new Promise((resolve) => window.setTimeout(resolve, 700));
       const svg = container.querySelector("svg");
       if (!svg) {
-        throw new Error("렌더링된 SVG를 찾지 못했습니다.");
+        throw new Error("\uB80C\uB354\uB9C1\uB41C SVG\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
       }
       this.sanitizeRenderedSvg(svg);
       svg.setAttribute("role", "img");
@@ -3806,30 +4615,30 @@ ${value}
   }
   async ensureAiExportReady(options, progress) {
     if (options.shareTarget === "github-pages" && options.aiProvider === "none") {
-      throw new Error("GitHub Pages 게시에는 작동 중인 AI provider가 필요합니다. Codex CLI를 선택하거나 공유 대상을 로컬 파일 링크로 바꾸세요.");
+      throw new Error("GitHub Pages \uAC8C\uC2DC\uC5D0\uB294 \uC791\uB3D9 \uC911\uC778 AI provider\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4. Codex CLI\uB97C \uC120\uD0DD\uD558\uAC70\uB098 \uACF5\uC720 \uB300\uC0C1\uC744 \uB85C\uCEEC \uD30C\uC77C \uB9C1\uD06C\uB85C \uBC14\uAFB8\uC138\uC694.");
     }
     if (options.shareTarget === "github-pages" && options.failurePolicy !== "strict") {
       options.failurePolicy = "strict";
       this.settings.failurePolicy = "strict";
       await this.saveSettings();
-      progress.addStep("GitHub Pages 게시를 위해 AI 실패 정책을 strict로 고정했습니다.");
+      progress.addStep("GitHub Pages \uAC8C\uC2DC\uB97C \uC704\uD574 AI \uC2E4\uD328 \uC815\uCC45\uC744 strict\uB85C \uACE0\uC815\uD588\uC2B5\uB2C8\uB2E4.");
     }
     if (options.aiProvider !== "codex") {
       return;
     }
     const currentPath = String(this.settings.codexPath || "").trim();
     if (isManagedMarktlCodexPath(currentPath) && !isExecutableFile(currentPath)) {
-      throw new Error(`MarkTL Codex wrapper가 없습니다: ${currentPath}. 공유 설정을 /opt/homebrew/bin/codex로 바꾸지 말고 이 Mac에 wrapper를 생성하세요.`);
+      throw new Error(`MarkTL Codex wrapper\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4: ${currentPath}. \uACF5\uC720 \uC124\uC815\uC744 /opt/homebrew/bin/codex\uB85C \uBC14\uAFB8\uC9C0 \uB9D0\uACE0 \uC774 Mac\uC5D0 wrapper\uB97C \uC0DD\uC131\uD558\uC138\uC694.`);
     }
     const detectedPath = detectCodexCliPath(currentPath);
     const shouldRepairPath = !currentPath || currentPath === "codex" || isStaleCliPath(currentPath) || currentPath.startsWith("/") && !isManagedMarktlCodexPath(currentPath);
     if (shouldRepairPath) {
       if (!detectedPath) {
-        throw new Error(`Codex CLI 경로가 유효하지 않습니다: ${currentPath || "(empty)"}. 공유 설정에 /opt/homebrew/bin/codex를 저장하지 말고 이 Mac에 ~/.local/bin/marktl-codex wrapper를 생성하세요.`);
+        throw new Error(`Codex CLI \uACBD\uB85C\uAC00 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4: ${currentPath || "(empty)"}. \uACF5\uC720 \uC124\uC815\uC5D0 /opt/homebrew/bin/codex\uB97C \uC800\uC7A5\uD558\uC9C0 \uB9D0\uACE0 \uC774 Mac\uC5D0 ~/.local/bin/marktl-codex wrapper\uB97C \uC0DD\uC131\uD558\uC138\uC694.`);
       }
       this.settings.codexPath = detectedPath;
       await this.saveSettings();
-      progress.addStep(`Codex 경로 자동 복구: ${detectedPath}`);
+      progress.addStep(`Codex \uACBD\uB85C \uC790\uB3D9 \uBCF5\uAD6C: ${detectedPath}`);
     }
     const command = String(this.settings.codexPath || "codex").trim();
     let version = await runCliPreflight(command, ["--version"], 15e3);
@@ -3840,54 +4649,60 @@ ${value}
         await this.saveSettings();
         version = await runCliPreflight(fallbackPath, ["--version"], 15e3);
         if (version.code === 0) {
-          progress.addStep(`Codex 경로 자동 복구: ${fallbackPath}`);
-          progress.addStep(`Codex 사전 점검 통과: ${cleanPreflightOutput(version.output) || fallbackPath}`);
+          progress.addStep(`Codex \uACBD\uB85C \uC790\uB3D9 \uBCF5\uAD6C: ${fallbackPath}`);
+          progress.addStep(`Codex \uC0AC\uC804 \uC810\uAC80 \uD1B5\uACFC: ${cleanPreflightOutput(version.output) || fallbackPath}`);
           return;
         }
       }
-      throw new Error(`Codex CLI 사전 점검 실패: ${command}: ${cleanPreflightOutput(version.output) || "실행할 수 없음"}`);
+      throw new Error(`Codex CLI \uC0AC\uC804 \uC810\uAC80 \uC2E4\uD328: ${command}: ${cleanPreflightOutput(version.output) || "\uC2E4\uD589\uD560 \uC218 \uC5C6\uC74C"}`);
     }
-    progress.addStep(`Codex 사전 점검 통과: ${cleanPreflightOutput(version.output) || command}`);
+    progress.addStep(`Codex \uC0AC\uC804 \uC810\uAC80 \uD1B5\uACFC: ${cleanPreflightOutput(version.output) || command}`);
   }
   async exportActiveNote(overrides = {}) {
     const file = this.app.workspace.getActiveFile();
-    if (!(file instanceof import_obsidian7.TFile) || file.extension !== "md") {
-      new import_obsidian7.Notice("HTML로 내보낼 Markdown 노트를 먼저 여세요.");
+    if (!(file instanceof import_obsidian8.TFile) || file.extension !== "md") {
+      new import_obsidian8.Notice("Open a Markdown note before exporting HTML.");
       return;
     }
     const options = this.resolveExportOptions(overrides);
+    const shareHomeProfile = resolveShareHomeProfile3(this.settings, options.shareHomeProfileId);
     const progress = new MarktlProgressModal(this.app);
     progress.open();
-    progress.addStep(`목적: ${options.artifactGoal}`);
-    progress.addStep(`산출물: ${options.artifactType}`);
-    progress.addStep(`템플릿: ${options.template}`);
-    progress.addStep(`AI CLI: ${options.aiProvider === "none" ? "로컬 변환" : options.aiProvider}`);
+    progress.addStep(`Share hub: ${shareHomeProfile.title} (${shareHomeProfile.basePath || "/"})`);
+    progress.addStep(`Goal: ${options.artifactGoal}`);
+    progress.addStep(`Artifact: ${options.artifactType}`);
+    progress.addStep(`Template: ${options.template}`);
+    progress.addStep(`AI CLI: ${options.aiProvider === "none" ? "local fallback" : options.aiProvider}`);
     const privacyNote = getProviderPrivacyNote2(options.aiProvider);
     if (privacyNote) {
-      progress.addStep(`개인정보 안내: ${privacyNote}`);
+      progress.addStep(`Privacy note: ${privacyNote}`);
     }
-    progress.addStep(`모드: ${options.conversionMode}; 미리보기: ${options.previewSecurity}`);
-    progress.addStep(`제한시간: ${Math.round(this.settings.timeoutMs / 1e3)}초`);
+    progress.addStep(`Mode: ${options.conversionMode}; preview: ${options.previewSecurity}`);
+    progress.addStep(`Timeout: ${Math.round(this.settings.timeoutMs / 1e3)}s`);
     try {
       await this.ensureAiExportReady(options, progress);
-      progress.addStep("현재 Markdown 노트를 읽는 중...");
+      progress.addStep("Reading active Markdown note...");
       const markdown = await this.app.vault.read(file);
       const outputPlan = await this.prepareOutputPlan(file, options);
       const assetResult = await this.resolveImageAssets(markdown, file, outputPlan);
-      progress.addStep(assetResult.mappings.length > 0 ? `로컬 이미지 ${assetResult.mappings.length}개를 연결했습니다.` : "연결할 로컬 이미지가 없습니다.");
+      progress.addStep(assetResult.mappings.length > 0 ? `Resolved ${assetResult.mappings.length} local image asset(s).` : "No local image assets found.");
       const contextResult = await this.resolveContextPack(markdown, file, options);
       if (contextResult.count > 0) {
-        progress.addStep(`연결 컨텍스트 노트 ${contextResult.count}개를 읽었습니다.`);
+        progress.addStep(options.contextPackMode === "reference-note" ? `Loaded reference context note: ${options.referenceContextNotePath}` : `Loaded ${contextResult.count} linked context note(s).`);
       } else if (options.contextPackMode !== "none") {
-        progress.addStep("읽을 수 있는 연결 컨텍스트 노트가 없습니다.");
+        progress.addStep(options.contextPackMode === "reference-note" ? "No reference context note loaded." : "No linked context notes found.");
       }
-      progress.addStep(options.aiProvider === "none" ? "로컬 변환기를 실행하는 중..." : `${options.aiProvider} CLI를 실행하는 중...`);
+      progress.addStep(options.aiProvider === "none" ? "Running local converter..." : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
         provider: options.aiProvider,
         artifactGoal: options.artifactGoal,
         artifactType: options.artifactType,
         mode: options.conversionMode,
         template: options.template,
+        exportGenre: options.exportGenre,
+        exportDepth: options.exportDepth,
+        exportPurpose: options.exportPurpose,
+        referenceContextNotePath: options.referenceContextNotePath,
         trusted: options.previewSecurity === "trusted",
         strictAiFailures: options.failurePolicy === "strict" || options.shareTarget === "github-pages",
         timeoutMs: this.settings.timeoutMs,
@@ -3902,10 +4717,10 @@ ${value}
       if (options.shareTarget === "github-pages" && result.usedFallback) {
         throw new Error("GitHub Pages publishing blocked because AI conversion used local fallback.");
       }
-      progress.addStep(result.usedFallback ? "로컬 fallback HTML을 생성했습니다." : "AI HTML을 생성했습니다.");
+      progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
       const shareMetadata = this.extractShareMetadata(markdown, outputPlan.basename);
       const shortId = buildShortId(outputPlan.basename);
-      const socialUrl = options.shareTarget === "github-pages" ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo), this.settings.githubPublishPath, shortId) : "";
+      const socialUrl = options.shareTarget === "github-pages" ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo), shareHomeProfile.basePath, shortId) : "";
       const socialImage = options.shareTarget === "github-pages" && assetResult.mappings[0] ? `${socialUrl}assets/${assetResult.mappings[0].destinationPath.split("/").pop() || ""}` : "";
       const socialHtml = injectSocialMeta(result.html, {
         title: shareMetadata.title,
@@ -3917,37 +4732,43 @@ ${value}
       const feedbackResult = this.applyReaderFeedback(imageRewrittenHtml, options);
       let html = this.repairHtmlHead(feedbackResult.html);
       if (feedbackResult.injected) {
-        progress.addStep("Giscus 독자 피드백을 추가했습니다.");
+        progress.addStep("Added Giscus reader feedback.");
       }
-      const mermaidResult = await this.renderMermaidBlocksToStaticHtml(html, file.path, options);
+      const mermaidResult = await this.renderMermaidBlocksToStaticHtml(html, file.path);
       html = this.repairHtmlHead(mermaidResult.html);
       if (mermaidResult.rendered > 0) {
-        progress.addStep(`Mermaid 다이어그램 ${mermaidResult.rendered}개를 정적 HTML/SVG로 렌더링했습니다.`);
+        progress.addStep(`Rendered ${mermaidResult.rendered} Mermaid diagram(s) to static HTML/SVG.`);
       }
       const qaWarnings = validateHtmlArtifact(html, {
         trusted: options.previewSecurity === "trusted",
         artifactGoal: options.artifactGoal,
+        exportGenre: options.exportGenre,
+        exportDepth: options.exportDepth,
         assetMappings: assetResult.mappings
       });
+      const fatalQaWarnings = qaWarnings.filter((warning) => /^HTML QA fatal:/i.test(warning));
+      if (options.shareTarget === "github-pages" && fatalQaWarnings.length > 0) {
+        throw new Error(`GitHub Pages publishing blocked by HTML QA: ${fatalQaWarnings[0]}`);
+      }
       if (qaWarnings.length > 0) {
-        progress.addStep(`HTML QA 참고사항 ${qaWarnings.length}개를 확인했습니다.`);
+        progress.addStep(`HTML QA produced ${qaWarnings.length} warning(s).`);
       } else {
-        progress.addStep("HTML QA 기본 검사를 통과했습니다.");
+        progress.addStep("HTML QA passed basic checks.");
       }
       const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...feedbackResult.warnings, ...mermaidResult.warnings, ...qaWarnings];
       let publicUrl = "";
       let shareHomeUrl = "";
-      progress.addStep("HTML 파일을 vault에 저장하는 중...");
+      progress.addStep("Writing HTML file to vault...");
       await this.copyImageAssets(assetResult.mappings);
       const outputPath = await this.writeHtmlFile(outputPlan, html, options, file.path);
       if (options.shareTarget === "github-pages") {
-        progress.addStep("GitHub Pages 번들을 게시하는 중...");
+        progress.addStep("Publishing GitHub Pages bundle...");
         const publishResult = await this.publishGithubPages(outputPlan, assetResult.mappings, file.path, markdown, options, shortId, shareMetadata);
         publicUrl = publishResult.publicUrl;
         shareHomeUrl = publishResult.shareHomeUrl;
-        progress.addStep(`게시 완료: ${publicUrl}`);
+        progress.addStep(`Published: ${publicUrl}`);
       }
-      progress.addStep("내부 미리보기 패널을 여는 중...");
+      progress.addStep("Opening internal preview pane...");
       await this.openPreview({
         html,
         filePath: outputPath,
@@ -3958,10 +4779,10 @@ ${value}
         previewSecurity: options.previewSecurity
       });
       if (options.copyShareLinkAfterExport) {
-        progress.addStep(publicUrl ? "공개 공유 링크를 복사하는 중..." : "로컬 공유 링크를 복사하는 중...");
+        progress.addStep(publicUrl ? "Copying public share link..." : "Copying local share link...");
         await this.copyShareLink(outputPath, publicUrl);
       }
-      progress.complete(`완료: ${outputPath}`);
+      progress.complete(`Done: ${outputPath}`);
       this.openResultSummary({
         options,
         sourcePath: file.path,
@@ -3979,29 +4800,30 @@ ${value}
         commentsEnabled: feedbackResult.injected,
         commentsStatus: this.describeReaderFeedback(options, feedbackResult),
         shareTitle: shareMetadata.title,
+        shareHomeTitle: shareHomeProfile.title,
         publicUrl,
         shareHomeUrl
       });
       if (result.usedFallback && options.aiProvider !== "none") {
-        new import_obsidian7.Notice("AI 변환에 실패해 로컬 fallback HTML을 생성했습니다.");
+        new import_obsidian8.Notice("AI conversion failed; local fallback HTML was generated.");
       } else {
-        new import_obsidian7.Notice(`HTML 내보내기 완료: ${outputPath}`);
+        new import_obsidian8.Notice(`HTML exported to ${outputPath}`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       progress.fail(message);
-      new import_obsidian7.Notice(`HTML 내보내기 실패: ${message}`);
+      new import_obsidian8.Notice(`HTML export failed: ${message}`);
     }
   }
   async prepareOutputPlan(source, options) {
-    const folder = (0, import_obsidian7.normalizePath)(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
+    const folder = (0, import_obsidian8.normalizePath)(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
     if (!await this.app.vault.adapter.exists(folder)) {
       await this.app.vault.createFolder(folder);
     }
     const basename = slugify(source.basename);
     const bundled = options.shareTarget === "static-bundle" || options.shareTarget === "github-pages";
-    const outputPath = bundled ? (0, import_obsidian7.normalizePath)(`${folder}/share/${basename}/index.html`) : (0, import_obsidian7.normalizePath)(`${folder}/${basename}.html`);
-    const assetFolder = bundled ? (0, import_obsidian7.normalizePath)(`${folder}/share/${basename}/assets`) : (0, import_obsidian7.normalizePath)(`${folder}/${basename}-assets`);
+    const outputPath = bundled ? (0, import_obsidian8.normalizePath)(`${folder}/share/${basename}/index.html`) : (0, import_obsidian8.normalizePath)(`${folder}/${basename}.html`);
+    const assetFolder = bundled ? (0, import_obsidian8.normalizePath)(`${folder}/share/${basename}/assets`) : (0, import_obsidian8.normalizePath)(`${folder}/${basename}-assets`);
     const assetRelativePrefix = bundled ? "assets" : `${basename}-assets`;
     return { folder, basename, outputPath, assetFolder, assetRelativePrefix };
   }
@@ -4026,7 +4848,7 @@ ${value}
         continue;
       }
       const assetFileName = buildAssetFileName(imageFile.path, mappings.length + 1, usedNames);
-      const destinationPath = (0, import_obsidian7.normalizePath)(`${plan.assetFolder}/${assetFileName}`);
+      const destinationPath = (0, import_obsidian8.normalizePath)(`${plan.assetFolder}/${assetFileName}`);
       const relativeSrc = encodeURI(`${plan.assetRelativePrefix}/${assetFileName}`);
       mappings.push({
         original: target,
@@ -4038,7 +4860,7 @@ ${value}
           String(reference.raw || ""),
           imageFile.path,
           imageFile.name,
-          (0, import_obsidian7.normalizePath)(target)
+          (0, import_obsidian8.normalizePath)(target)
         ]
       });
     }
@@ -4047,22 +4869,22 @@ ${value}
   resolveImageFile(target, source) {
     var _a;
     const linked = this.app.metadataCache.getFirstLinkpathDest(target, source.path);
-    if (linked instanceof import_obsidian7.TFile) {
+    if (linked instanceof import_obsidian8.TFile) {
       return linked;
     }
-    const normalized = (0, import_obsidian7.normalizePath)(target);
+    const normalized = (0, import_obsidian8.normalizePath)(target);
     const direct = this.app.vault.getAbstractFileByPath(normalized);
-    if (direct instanceof import_obsidian7.TFile) {
+    if (direct instanceof import_obsidian8.TFile) {
       return direct;
     }
     if ((_a = source.parent) == null ? void 0 : _a.path) {
-      const relative = this.app.vault.getAbstractFileByPath((0, import_obsidian7.normalizePath)(`${source.parent.path}/${target}`));
-      if (relative instanceof import_obsidian7.TFile) {
+      const relative = this.app.vault.getAbstractFileByPath((0, import_obsidian8.normalizePath)(`${source.parent.path}/${target}`));
+      if (relative instanceof import_obsidian8.TFile) {
         return relative;
       }
     }
     const byName = this.app.vault.getFiles().find((file) => file.name === target || file.path.endsWith(`/${target}`));
-    return byName instanceof import_obsidian7.TFile ? byName : null;
+    return byName instanceof import_obsidian8.TFile ? byName : null;
   }
   async copyImageAssets(mappings) {
     const copied = /* @__PURE__ */ new Set();
@@ -4077,12 +4899,17 @@ ${value}
     }
   }
   resolveExportOptions(overrides) {
-    var _a;
+    var _a, _b;
     return {
       template: overrides.template || this.settings.template,
       presetId: overrides.presetId,
+      shareHomeProfileId: overrides.shareHomeProfileId || this.settings.activeShareHomeProfileId,
       artifactGoal: overrides.artifactGoal || this.settings.artifactGoal,
       artifactType: overrides.artifactType || this.settings.artifactType,
+      exportGenre: overrides.exportGenre || this.settings.exportGenre,
+      exportDepth: overrides.exportDepth || this.settings.exportDepth,
+      exportPurpose: overrides.exportPurpose || this.settings.exportPurpose,
+      referenceContextNotePath: (_a = overrides.referenceContextNotePath) != null ? _a : this.settings.referenceContextNotePath,
       aiProvider: overrides.aiProvider || this.settings.aiProvider,
       conversionMode: overrides.conversionMode || this.settings.conversionMode,
       failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
@@ -4090,7 +4917,7 @@ ${value}
       contextPackMode: overrides.contextPackMode || this.settings.contextPackMode,
       readerFeedbackMode: overrides.readerFeedbackMode || this.settings.readerFeedbackMode,
       shareTarget: overrides.shareTarget || this.settings.shareTarget,
-      copyShareLinkAfterExport: (_a = overrides.copyShareLinkAfterExport) != null ? _a : this.settings.copyShareLinkAfterExport
+      copyShareLinkAfterExport: (_b = overrides.copyShareLinkAfterExport) != null ? _b : this.settings.copyShareLinkAfterExport
     };
   }
   applyReaderFeedback(html, options) {
@@ -4100,7 +4927,7 @@ ${value}
     if (options.previewSecurity !== "trusted") {
       return {
         html,
-        warnings: ["참고: 정적 안전 모드에서는 외부 댓글 스크립트를 포함하지 않아 Giscus 댓글을 제외했습니다."],
+        warnings: ["Giscus feedback requires Trusted preview/export because it loads an external comments script."],
         injected: false
       };
     }
@@ -4125,17 +4952,44 @@ ${value}
   }
   describeReaderFeedback(options, feedback) {
     if (options.readerFeedbackMode !== "giscus") {
-      return "독자 댓글 비활성화";
+      return "Reader comments disabled";
     }
     if (!shouldAttachReaderFeedback(options)) {
-      return "로컬 파일 링크에서는 독자 댓글을 건너뜀";
+      return "Reader comments skipped for local file link";
     }
     if (feedback.injected) {
-      return "Giscus GitHub 댓글 활성화";
+      return "Giscus GitHub comments enabled";
     }
-    return feedback.warnings.length > 0 ? `Giscus 설정 확인 필요: ${feedback.warnings[0]}` : "Giscus 댓글이 추가되지 않음";
+    return feedback.warnings.length > 0 ? `Giscus setup needed: ${feedback.warnings[0]}` : "Giscus comments were not added";
   }
   async resolveContextPack(markdown, source, options) {
+    if (options.contextPackMode === "reference-note") {
+      const referencePath = String(options.referenceContextNotePath || "").trim();
+      if (!referencePath) {
+        return { markdown: "", count: 0, warnings: ["Reference context note is not selected."] };
+      }
+      const linked = this.resolveMarkdownContextFile(referencePath, source);
+      if (!linked) {
+        return { markdown: "", count: 0, warnings: [`Reference context note not found: ${referencePath}`] };
+      }
+      if (linked.path === source.path) {
+        return { markdown: "", count: 0, warnings: ["Reference context note is the active note; skipped duplicate context."] };
+      }
+      try {
+        const items2 = [{
+          target: referencePath,
+          path: linked.path,
+          content: await this.app.vault.read(linked)
+        }];
+        return {
+          markdown: buildContextPackMarkdown(items2, { kind: "reference" }),
+          count: 1,
+          warnings: []
+        };
+      } catch (e) {
+        return { markdown: "", count: 0, warnings: [`Reference context note unreadable: ${referencePath}`] };
+      }
+    }
     if (options.contextPackMode !== "linked-notes") {
       return { markdown: "", count: 0, warnings: [] };
     }
@@ -4144,7 +4998,7 @@ ${value}
     for (const target of extractMarkdownContextTargets(markdown)) {
       const linked = this.resolveMarkdownContextFile(target, source);
       if (!linked) {
-        warnings.push(`참고 링크 건너뜀: ${target}`);
+        warnings.push(`Context note not found: ${target}`);
         continue;
       }
       if (linked.path === source.path) {
@@ -4157,7 +5011,7 @@ ${value}
           content: await this.app.vault.read(linked)
         });
       } catch (error) {
-        warnings.push(`참고 링크를 읽지 못함: ${target}`);
+        warnings.push(`Context note unreadable: ${target}`);
       }
     }
     return {
@@ -4171,19 +5025,19 @@ ${value}
     const candidates = this.buildMarkdownContextTargetVariants(target);
     for (const candidate of candidates) {
       const linked = this.app.metadataCache.getFirstLinkpathDest(candidate, source.path);
-      if (linked instanceof import_obsidian7.TFile && linked.extension === "md") {
+      if (linked instanceof import_obsidian8.TFile && linked.extension === "md") {
         return linked;
       }
     }
     for (const candidate of candidates) {
-      const normalized = (0, import_obsidian7.normalizePath)(candidate.endsWith(".md") ? candidate : `${candidate}.md`);
+      const normalized = (0, import_obsidian8.normalizePath)(candidate.endsWith(".md") ? candidate : `${candidate}.md`);
       const direct = this.app.vault.getAbstractFileByPath(normalized);
-      if (direct instanceof import_obsidian7.TFile && direct.extension === "md") {
+      if (direct instanceof import_obsidian8.TFile && direct.extension === "md") {
         return direct;
       }
       if ((_a = source.parent) == null ? void 0 : _a.path) {
-        const relative = this.app.vault.getAbstractFileByPath((0, import_obsidian7.normalizePath)(`${source.parent.path}/${normalized}`));
-        if (relative instanceof import_obsidian7.TFile && relative.extension === "md") {
+        const relative = this.app.vault.getAbstractFileByPath((0, import_obsidian8.normalizePath)(`${source.parent.path}/${normalized}`));
+        if (relative instanceof import_obsidian8.TFile && relative.extension === "md") {
           return relative;
         }
       }
@@ -4198,7 +5052,7 @@ ${value}
         withExt,
         withExt.normalize("NFC"),
         withExt.normalize("NFD")
-      ].map((value) => (0, import_obsidian7.normalizePath)(value));
+      ].map((value) => (0, import_obsidian8.normalizePath)(value));
     }));
     const byName = this.app.vault.getFiles().find((file) => {
       if (file.extension !== "md") {
@@ -4214,10 +5068,10 @@ ${value}
         file.path,
         file.path.normalize("NFC"),
         file.path.normalize("NFD")
-      ].map((value) => (0, import_obsidian7.normalizePath)(value));
+      ].map((value) => (0, import_obsidian8.normalizePath)(value));
       return fileKeys.some((key) => candidateKeys.has(key) || [...candidateKeys].some((candidate) => key.endsWith(`/${candidate}`)));
     });
-    return byName instanceof import_obsidian7.TFile ? byName : null;
+    return byName instanceof import_obsidian8.TFile ? byName : null;
   }
   buildMarkdownContextTargetVariants(target) {
     const raw = String(target || "").replace(/\\/g, "/").replace(/^\.\//, "").trim();
@@ -4238,10 +5092,10 @@ ${value}
       try {
         const decoded = decodeURI(value);
         expanded.push(decoded, decoded.normalize("NFC"), decoded.normalize("NFD"));
-      } catch (error) {
+      } catch (e) {
       }
     }
-    return [...new Set(expanded.map((value) => (0, import_obsidian7.normalizePath)(value)).filter(Boolean))];
+    return [...new Set(expanded.map((value) => (0, import_obsidian8.normalizePath)(value)).filter(Boolean))];
   }
   async ensureParentFolder(filePath) {
     const parts = filePath.split("/");
@@ -4255,7 +5109,7 @@ ${value}
     }
   }
   async writeShareReadme(folder, basename, sourcePath, options) {
-    const readmePath = (0, import_obsidian7.normalizePath)(`${folder}/share/${basename}/README.md`);
+    const readmePath = (0, import_obsidian8.normalizePath)(`${folder}/share/${basename}/README.md`);
     const content = [
       `# ${basename}`,
       "",
@@ -4282,7 +5136,8 @@ ${value}
       throw new Error("GitHub token is not configured. Add a token with Contents write permission in MarkTL settings.");
     }
     const branch = this.settings.githubBranch.trim() || "main";
-    const basePath = this.settings.githubPublishPath;
+    const shareHomeProfile = resolveShareHomeProfile3(this.settings, this.settings.activeShareHomeProfileId);
+    const basePath = shareHomeProfile.basePath;
     const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
     return {
       ...repo,
@@ -4290,7 +5145,8 @@ ${value}
       basePath,
       pagesBaseUrl,
       indexPath: buildPublishPath(basePath, "", "index.json"),
-      indexHtmlPath: buildPublishPath(basePath, "", "index.html")
+      indexHtmlPath: buildPublishPath(basePath, "", "index.html"),
+      shareHomeProfile
     };
   }
   async loadPublishedShareIndex() {
@@ -4309,7 +5165,9 @@ ${value}
   }
   async writePublishedShareIndex(context, index) {
     const html = renderShareIndexHtml(index, {
-      title: this.settings.githubShareHomeTitle || DEFAULT_SETTINGS.githubShareHomeTitle,
+      title: context.shareHomeProfile.title,
+      eyebrow: context.shareHomeProfile.eyebrow,
+      description: context.shareHomeProfile.description,
       baseUrl: buildShareHomeUrl(context.pagesBaseUrl, context.basePath).replace(/\/+$/g, "")
     });
     await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2));
@@ -4350,11 +5208,11 @@ ${value}
   }
   shareDeleteKeys(item) {
     return [
-      item == null ? void 0 : item.shortId ? `short:${item.shortId}` : "",
-      item == null ? void 0 : item.url ? `url:${String(item.url).replace(/\/+$/g, "")}` : "",
-      item == null ? void 0 : item.canonicalUrl ? `canonical:${String(item.canonicalUrl).replace(/\/+$/g, "")}` : "",
-      item == null ? void 0 : item.sourcePathKey ? `source:${item.sourcePathKey}` : "",
-      item == null ? void 0 : item.slug ? `slug:${item.slug}` : ""
+      (item == null ? void 0 : item.shortId) ? `short:${item.shortId}` : "",
+      (item == null ? void 0 : item.url) ? `url:${String(item.url).replace(/\/+$/g, "")}` : "",
+      (item == null ? void 0 : item.canonicalUrl) ? `canonical:${String(item.canonicalUrl).replace(/\/+$/g, "")}` : "",
+      (item == null ? void 0 : item.sourcePathKey) ? `source:${item.sourcePathKey}` : "",
+      (item == null ? void 0 : item.slug) ? `slug:${item.slug}` : ""
     ].filter(Boolean);
   }
   async deleteGithubPathRecursive(owner, repo, branch, publishPath) {
@@ -4365,7 +5223,7 @@ ${value}
     }
     const token = this.settings.githubToken.trim();
     const url = this.githubContentsUrl(owner, repo, cleanPath);
-    const existing = await (0, import_obsidian7.requestUrl)({
+    const existing = await (0, import_obsidian8.requestUrl)({
       url: `${url}?ref=${encodeURIComponent(branch)}`,
       method: "GET",
       headers: this.githubHeaders(token),
@@ -4395,7 +5253,7 @@ ${value}
       return;
     }
     const token = this.settings.githubToken.trim();
-    const response = await (0, import_obsidian7.requestUrl)({
+    const response = await (0, import_obsidian8.requestUrl)({
       url: this.githubContentsUrl(owner, repo, publishPath),
       method: "DELETE",
       headers: {
@@ -4415,6 +5273,7 @@ ${value}
     }
   }
   async publishGithubPages(plan, mappings, sourcePath, markdown, options, shortId = buildShortId(plan.basename), metadata = this.extractShareMetadata(markdown, plan.basename)) {
+    var _a;
     await this.refreshSettingsFromDisk();
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
@@ -4424,16 +5283,17 @@ ${value}
       throw new Error("GitHub token is not configured. Add a token with Contents write permission in MarkTL settings.");
     }
     const branch = this.settings.githubBranch.trim() || "main";
-    const basePath = this.settings.githubPublishPath;
+    const shareHomeProfile = resolveShareHomeProfile3(this.settings, options.shareHomeProfileId);
+    const basePath = shareHomeProfile.basePath;
     const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
     const canonicalUrl = buildPagesUrl(pagesBaseUrl, basePath, plan.basename);
     const publicUrl = buildShortPagesUrl(pagesBaseUrl, basePath, shortId);
     const shareHomeUrl = buildShareHomeUrl(pagesBaseUrl, basePath);
-    const thumbnailAssetName = ((mappings.find((mapping) => /\.(png|jpe?g|webp|gif|avif|svg)$/i.test(mapping.destinationPath)) || {}).destinationPath || "").split("/").pop() || "";
+    const thumbnailAssetName = ((_a = mappings.find((mapping) => /\.(png|jpe?g|webp|gif|avif|svg)$/i.test(mapping.destinationPath))) == null ? void 0 : _a.destinationPath.split("/").pop()) || "";
     const thumbnailUrl = thumbnailAssetName ? `${publicUrl}assets/${encodeURIComponent(thumbnailAssetName)}` : "";
     const canonicalFiles = [
       { localPath: plan.outputPath, publishPath: buildPublishPath(basePath, plan.basename, "index.html") },
-      { localPath: (0, import_obsidian7.normalizePath)(`${plan.folder}/share/${plan.basename}/README.md`), publishPath: buildPublishPath(basePath, plan.basename, "README.md") },
+      { localPath: (0, import_obsidian8.normalizePath)(`${plan.folder}/share/${plan.basename}/README.md`), publishPath: buildPublishPath(basePath, plan.basename, "README.md") },
       ...mappings.map((mapping) => ({
         localPath: mapping.destinationPath,
         publishPath: buildPublishPath(basePath, plan.basename, `assets/${mapping.destinationPath.split("/").pop() || "asset"}`)
@@ -4458,9 +5318,9 @@ ${value}
       artifactType: options.artifactType,
       thumbnailUrl,
       schemaVersion: 2,
-      publishedByHost: String((typeof process !== "undefined" && process.env && process.env.HOSTNAME) || ""),
+      publishedByHost: String(typeof process !== "undefined" && process.env && process.env.HOSTNAME || ""),
       ...metadata
-    }, pagesBaseUrl);
+    }, pagesBaseUrl, shareHomeProfile);
     return { publicUrl, shareHomeUrl };
   }
   extractShareMetadata(markdown, fallbackTitle) {
@@ -4474,24 +5334,24 @@ ${value}
     const tagBlock = /^tags:\s*\n((?:\s+-\s*.+(?:\n|$))*)/m.exec(frontmatter);
     const yamlListTags = tagBlock ? [...tagBlock[1].matchAll(/^\s*-\s*(.+?)\s*$/gm)].map((match) => cleanScalar(match[1])) : [];
     const readerTagMap = {
-      "project/지수통합선별공장": "지수통합선별공장",
-      "topic/지수통합선별공장": "지수통합선별공장",
-      "construction/daily-report": "공사일보",
-      "construction/착공": "착공",
-      "construction/콘크리트철거": "콘크리트철거",
-      "construction/옹벽기초": "옹벽기초",
-      "risk/준공검사": "준공리스크",
-      "risk/방수": "방수배수",
-      "obsidian/project-management": "프로젝트관리",
+      "project/\uC9C0\uC218\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5": "\uC9C0\uC218\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5",
+      "topic/\uC9C0\uC218\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5": "\uC9C0\uC218\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5",
+      "construction/daily-report": "\uACF5\uC0AC\uC77C\uBCF4",
+      "construction/\uCC29\uACF5": "\uCC29\uACF5",
+      "construction/\uCF58\uD06C\uB9AC\uD2B8\uCCA0\uAC70": "\uCF58\uD06C\uB9AC\uD2B8\uCCA0\uAC70",
+      "construction/\uC639\uBCBD\uAE30\uCD08": "\uC639\uBCBD\uAE30\uCD08",
+      "risk/\uC900\uACF5\uAC80\uC0AC": "\uC900\uACF5\uB9AC\uC2A4\uD06C",
+      "risk/\uBC29\uC218": "\uBC29\uC218\uBC30\uC218",
+      "obsidian/project-management": "\uD504\uB85C\uC81D\uD2B8\uAD00\uB9AC",
       "obsidian/dataviewjs": "",
       "obsidian/mermaid": "",
       dataviewjs: "",
-      gantt: "일정관리",
-      budget: "예산",
-      risk: "리스크",
-      "function/ops": "운영관리",
-      "doc/보고서": "보고서",
-      "doc/meeting": "회의록"
+      gantt: "\uC77C\uC815\uAD00\uB9AC",
+      budget: "\uC608\uC0B0",
+      risk: "\uB9AC\uC2A4\uD06C",
+      "function/ops": "\uC6B4\uC601\uAD00\uB9AC",
+      "doc/\uBCF4\uACE0\uC11C": "\uBCF4\uACE0\uC11C",
+      "doc/meeting": "\uD68C\uC758\uB85D"
     };
     const toReaderTag = (tag) => {
       const raw = String(tag || "").replace(/^#/, "").trim();
@@ -4501,7 +5361,7 @@ ${value}
       if (Object.prototype.hasOwnProperty.call(readerTagMap, raw)) {
         return readerTagMap[raw];
       }
-      const last = raw.includes("/") ? raw.split("/").filter(Boolean).pop() : raw;
+      const last = raw.includes("/") ? raw.split("/").filter(Boolean).pop() || "" : raw;
       return /[가-힣]/.test(last) ? last.replace(/^업무\//, "").replace(/^프로젝트\//, "").slice(0, 18) : "";
     };
     const body = value.replace(/^---\n[\s\S]*?\n---\s*/, "").replace(/```(?:dataviewjs|dataview|mermaid|gantt)?[\s\S]*?```/gi, " ").replace(/<!--[\s\S]*?-->/g, " ").replace(/<![^>]*>/g, " ").replace(/^#\s+.+$/m, "").replace(/\[!abstract]\+?/gi, " ").replace(/한 줄\s*(요약|브리프)/g, " ").replace(/!\[\[[^\]]+]]/g, "").replace(/!\[[^\]]*]\([^)]+\)/g, "").replace(/\[([^\]]+)]\([^)]+\)/g, "$1").replace(/[#*_`>~-]/g, "").split("\n").map((line) => line.trim()).filter(Boolean).join(" ");
@@ -4511,12 +5371,14 @@ ${value}
       tags: [...new Set([...inlineTags, ...yamlListTags].map(toReaderTag).filter(Boolean))].slice(0, 8)
     };
   }
-  async publishShareIndex(owner, repo, branch, basePath, entry, pagesBaseUrl) {
+  async publishShareIndex(owner, repo, branch, basePath, entry, pagesBaseUrl, shareHomeProfile) {
     const indexPath = buildPublishPath(basePath, "", "index.json");
     const existing = await this.getGithubJson(owner, repo, branch, indexPath);
     const index = updateShareIndex(existing, entry);
     const html = renderShareIndexHtml(index, {
-      title: this.settings.githubShareHomeTitle || DEFAULT_SETTINGS.githubShareHomeTitle,
+      title: shareHomeProfile.title,
+      eyebrow: shareHomeProfile.eyebrow,
+      description: shareHomeProfile.description,
       baseUrl: buildShareHomeUrl(pagesBaseUrl, basePath).replace(/\/+$/g, "")
     });
     await this.putGithubTextFile(owner, repo, branch, indexPath, JSON.stringify(index, null, 2));
@@ -4526,7 +5388,7 @@ ${value}
     var _a;
     const token = this.settings.githubToken.trim();
     const url = this.githubContentsUrl(owner, repo, publishPath);
-    const response = await (0, import_obsidian7.requestUrl)({
+    const response = await (0, import_obsidian8.requestUrl)({
       url: `${url}?ref=${encodeURIComponent(branch)}`,
       method: "GET",
       headers: this.githubHeaders(token),
@@ -4549,14 +5411,14 @@ ${value}
     var _a;
     const token = this.settings.githubToken.trim();
     const url = this.githubContentsUrl(owner, repo, publishPath);
-    const existing = await (0, import_obsidian7.requestUrl)({
+    const existing = await (0, import_obsidian8.requestUrl)({
       url: `${url}?ref=${encodeURIComponent(branch)}`,
       method: "GET",
       headers: this.githubHeaders(token),
       throw: false
     });
     const existingJson = existing.status >= 200 && existing.status < 300 ? existing.json : null;
-    const response = await (0, import_obsidian7.requestUrl)({
+    const response = await (0, import_obsidian8.requestUrl)({
       url,
       method: "PUT",
       headers: {
@@ -4610,14 +5472,14 @@ ${value}
   async copyShareLink(outputPath, preferredLink = "") {
     if (preferredLink) {
       await navigator.clipboard.writeText(preferredLink);
-      new import_obsidian7.Notice("HTML share link copied.");
+      new import_obsidian8.Notice("HTML share link copied.");
       return preferredLink;
     }
     const adapter = this.app.vault.adapter;
     const fullPath = adapter.getFullPath ? adapter.getFullPath(outputPath) : outputPath;
     const link = fullPath.startsWith("/") ? `file://${encodeURI(fullPath)}` : outputPath;
     await navigator.clipboard.writeText(link);
-    new import_obsidian7.Notice("HTML share link copied.");
+    new import_obsidian8.Notice("HTML share link copied.");
     return link;
   }
   async openPreview(state) {

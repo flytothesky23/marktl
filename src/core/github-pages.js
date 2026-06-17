@@ -90,27 +90,42 @@ function mimeTypeForPath(filePath) {
 }
 
 function updateShareIndex(existingIndex, entry) {
-  const now = entry.updatedAt || new Date().toISOString();
+  const now = entry?.updatedAt || new Date().toISOString();
   const current = Array.isArray(existingIndex?.items) ? existingIndex.items : [];
-  const items = [
-    {
-      ...entry,
-      updatedAt: now,
-    },
-    ...current.filter((item) => item && item.slug !== entry.slug),
-  ].sort((left, right) => String(right.updatedAt || '').localeCompare(String(left.updatedAt || '')));
+  const nextEntry = normalizeShareEntry(entry, now);
+  const merged = nextEntry
+    ? [nextEntry, ...repairShareItems(current).filter((item) => !shareItemsMatch(item, nextEntry))]
+    : repairShareItems(current);
+  const items = dedupeShareItems(merged)
+    .sort(compareShareItems);
 
   return {
-    version: 1,
+    version: 2,
     updatedAt: now,
+    items,
+  };
+}
+
+function repairShareIndex(existingIndex) {
+  const now = new Date().toISOString();
+  const current = Array.isArray(existingIndex?.items) ? existingIndex.items : [];
+  const items = dedupeShareItems(repairShareItems(current))
+    .sort(compareShareItems);
+
+  return {
+    version: 2,
+    updatedAt: existingIndex?.updatedAt || now,
     items,
   };
 }
 
 function renderShareIndexHtml(index, options = {}) {
   const title = cleanArchiveText(options.title || '유네코 지수 통합선별공장 프로젝트', '유네코 지수 통합선별공장 프로젝트');
+  const eyebrow = cleanArchiveText(options.eyebrow || '통합선별공장 Archive', '통합선별공장 Archive');
+  const description = cleanArchiveText(options.description || '공사일보, 회의록, 보고서를 스트리밍 콘텐츠처럼 빠르게 고르고 바로 여는 MarkTL 공유 아카이브.', '공유 HTML을 빠르게 찾고 여는 MarkTL 아카이브.');
   const baseUrl = String(options.baseUrl || '').replace(/\/+$/g, '');
-  const items = (Array.isArray(index?.items) ? index.items : []).map((item, itemIndex) => normalizeArchiveItem(item, itemIndex, baseUrl));
+  const items = repairShareItems(Array.isArray(index?.items) ? index.items : [])
+    .map((item, itemIndex) => normalizeArchiveItem(item, itemIndex, baseUrl));
   const tagCounts = new Map();
   const typeCounts = new Map();
   for (const item of items) {
@@ -131,7 +146,7 @@ function renderShareIndexHtml(index, options = {}) {
     .map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} ${count}</button>`)
     .join('');
   const list = items.map(renderArchiveTile).join('\n');
-  const latestMonth = items.find((item) => item.date)?.date.slice(0, 7) || formatDate(index?.updatedAt).slice(0, 7) || new Date().toISOString().slice(0, 7);
+  const latestMonth = (items.find((item) => item.date)?.date || formatDate(index?.updatedAt)).slice(0, 7) || new Date().toISOString().slice(0, 7);
   const docsJson = safeInlineJson(items.map((item) => ({
     title: item.title,
     type: item.type,
@@ -146,7 +161,7 @@ function renderShareIndexHtml(index, options = {}) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escapeHtml(title)}</title>
-<meta name="description" content="지수 통합선별공장 프로젝트의 공사일보, 회의록, 보고서를 빠르게 탐색하는 MarkTL 아카이브입니다.">
+<meta name="description" content="${escapeHtml(description)}">
 <style>
 *{box-sizing:border-box}html,body{height:100%;background:#050507}body{margin:0;min-width:0;width:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f7f8fb;background:radial-gradient(circle at 12% 0%,rgba(255,61,61,.3),transparent 32rem),radial-gradient(circle at 88% 5%,rgba(25,211,197,.22),transparent 30rem),linear-gradient(180deg,#08090d 0%,#111014 48%,#050507 100%);overflow:hidden}a{color:inherit;text-decoration:none}button,input{font:inherit}.app{width:min(1480px,100%);height:100dvh;margin:0 auto;padding:clamp(14px,2vw,28px);display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;overflow:hidden}.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,370px);gap:24px;align-items:start;min-height:0}.hero-panel{display:grid;align-content:start;gap:0;min-width:0;padding-top:8px}.eyebrow{margin:0 0 8px;color:#ffb020;font-size:12px;font-weight:950;letter-spacing:.16em;text-transform:uppercase}.top h1{max-width:860px;margin:0;font-size:clamp(30px,4vw,56px);line-height:1.02;letter-spacing:0;font-weight:950;text-wrap:balance}.hero-copy{max-width:820px;margin:12px 0 0;color:#c8d0dc;font-size:clamp(14px,1.18vw,17px);line-height:1.5}.calendar{height:300px;min-height:300px;align-self:start;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.105),rgba(255,255,255,.045));box-shadow:0 18px 48px rgba(0,0,0,.26);padding:16px 16px 22px;backdrop-filter:blur(18px)}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.cal-title{font-size:16px;font-weight:950;letter-spacing:.02em}.cal-nav{display:flex;gap:6px}.cal-nav button{display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer}.cal-nav button:hover{background:#ff3d3d}.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:4px}.cal-week{color:#8d98a8;font-size:10px;font-weight:900;text-align:center}.cal-day{position:relative;display:grid;place-items:center;min-height:24px;border:0;border-radius:7px;background:transparent;color:#cfd6e4;font-size:12px;font-weight:800}.cal-day.muted{opacity:.28}.cal-day.has-doc{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;min-height:30px!important;padding:3px 4px 2px!important;line-height:1!important;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ff3d3d,#ff9f1c);box-shadow:0 8px 18px rgba(255,80,40,.22)}.cal-day.has-doc::after{content:attr(data-type);display:block;max-width:38px;font-size:6.5px;font-weight:900;color:rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{position:static;display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:10px;align-items:center;max-width:100%;overflow:hidden;margin-top:16px;padding:8px 0 0;background:transparent;border:0;backdrop-filter:none}.search{height:38px;min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;padding:0 13px;outline:none}.search::placeholder{color:#8f98a8}.search:focus{border-color:#ffb020;box-shadow:0 0 0 3px rgba(255,176,32,.16)}.filters{min-width:0;max-width:100%;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;max-height:48px;overflow:hidden;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.filters button,.tags button{border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(255,255,255,.065);color:#dce3ef;cursor:pointer;white-space:nowrap}.filters button{height:22px;padding:0 7px;font-size:10px;line-height:1;font-weight:850}.filters button.active{border-color:#ff3d3d;background:#ff3d3d;color:#fff}.content{min-height:0;overflow:auto;padding:0 2px 28px 0;scrollbar-color:rgba(255,255,255,.26) transparent}.content::-webkit-scrollbar{width:10px}.content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:999px}.section-head{position:static;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 8px;padding:2px 0 8px;background:transparent}.section-head h2{margin:0;font-size:18px;letter-spacing:0}.section-head span{color:#9aa4b5;font-size:12px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.tile{container-type:inline-size;position:relative;display:grid;grid-template-columns:42% minmax(0,1fr);min-height:198px;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.095),rgba(255,255,255,.035));box-shadow:0 16px 34px rgba(0,0,0,.28);animation:tileIn .42s ease both;animation-delay:calc(var(--i)*42ms);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.tile::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 34%,transparent),transparent 58%);opacity:.34;pointer-events:none}.tile:hover{transform:translateY(-4px) scale(1.01);border-color:color-mix(in srgb,var(--accent) 72%,white);box-shadow:0 24px 54px rgba(0,0,0,.42)}.poster{position:relative;min-width:0;background:#181a22;overflow:hidden}.poster img{width:100%;height:100%;min-height:198px;object-fit:cover;display:block;transform:scale(1.01);transition:transform .25s ease,filter .25s ease}.tile:hover .poster img{transform:scale(1.05);filter:saturate(1.12)}.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 48%,rgba(10,10,12,.88) 100%)}.tile-body{position:relative;min-width:0;display:flex;flex-direction:column;padding:14px 44px 16px 14px}.meta-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;color:#aab4c4;font-size:11px;font-weight:850}.type{color:var(--accent2);text-transform:uppercase}.tile h2{margin:0;color:#fff;font-size:clamp(17px,2cqi,23px);line-height:1.18;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tile p{margin:8px 0 0;color:#c9d0dc;font-size:13px;line-height:1.42;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tags{display:flex;flex-wrap:nowrap;align-items:center;gap:5px;min-height:26px;max-height:26px;overflow-x:auto;overflow-y:hidden;margin-top:auto;padding:4px 38px 0 0;scrollbar-width:none}.tags::-webkit-scrollbar{display:none}.tags button{flex:0 0 auto;height:21px;line-height:1;padding:0 7px;font-size:10px;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.play{position:absolute;right:12px;bottom:12px;z-index:4;display:grid;place-items:center;width:30px;height:30px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 20px rgba(0,0,0,.26);font-size:12px}.empty{padding:18px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;color:#aab4c4}.hidden{display:none!important}.tile[data-type="공사일보"]{grid-template-columns:minmax(245px,47%) minmax(0,1fr)}.tile[data-type="공사일보"] .poster{align-self:center;aspect-ratio:16/9;height:auto;min-height:0;margin-left:10px;border-radius:8px;background:#090b10;border:1px solid rgba(255,255,255,.1)}.tile[data-type="공사일보"] .poster img{height:100%;min-height:0;object-fit:contain;padding:0;background:#090b10}.tile[data-type="공사일보"] .poster::after{background:linear-gradient(90deg,transparent 72%,rgba(10,10,12,.82) 100%)}@keyframes tileIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}@media(max-width:980px){.app{padding:10px 12px 16px;gap:8px}.top{grid-template-columns:1fr;gap:9px}.hero-panel{padding-top:0}.eyebrow{font-size:10px;margin-bottom:5px;letter-spacing:.14em}.top h1{font-size:clamp(25px,7.4vw,32px);line-height:1.02;max-width:360px}.hero-copy{margin-top:7px;font-size:12.5px;line-height:1.42;max-width:390px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.toolbar{grid-template-columns:1fr;gap:6px;margin-top:8px;padding:0;overflow:visible}.search{height:34px;border-radius:7px;font-size:12.5px;padding:0 10px}.filters{max-height:52px;gap:4px}.filters button{height:22px;padding:0 7px;font-size:10px}.calendar{height:256px;min-height:256px;padding:10px 10px 14px}.cal-title{font-size:14px}.cal-nav button{width:25px;height:25px}.cal-day{min-height:20px;font-size:10.5px}.cal-day.has-doc{min-height:24px!important;padding:2px 3px!important}.cal-day.has-doc::after{display:none}.section-head{padding:4px 0 7px;margin-bottom:7px}.section-head h2{font-size:15px}.section-head span{font-size:11px}.grid{grid-template-columns:1fr;gap:7px}.tile,.tile[data-type="공사일보"]{grid-template-columns:94px minmax(0,1fr);min-height:96px;border-radius:8px}.poster,.tile[data-type="공사일보"] .poster{width:auto;aspect-ratio:auto;margin-left:0;border:0;border-radius:0}.poster img,.tile[data-type="공사일보"] .poster img{min-height:96px;height:100%;object-fit:cover}.tile[data-type="공사일보"] .poster img{object-fit:contain;background:#090b10}.poster::after,.tile[data-type="공사일보"] .poster::after{background:linear-gradient(90deg,transparent 28%,rgba(10,10,12,.9) 100%)}.tile-body{padding:8px 34px 7px 10px}.meta-line{font-size:9.5px;margin-bottom:4px}.tile h2{font-size:15px;line-height:1.12;-webkit-line-clamp:2}.tile p{font-size:11px;line-height:1.25;margin-top:4px;-webkit-line-clamp:1}.play{width:24px;height:24px;right:7px;bottom:7px;font-size:10px}.tags{display:none}}@media(max-width:420px){.app{padding:9px 10px 14px}.calendar{display:none}.tile,.tile[data-type="공사일보"]{grid-template-columns:88px minmax(0,1fr);min-height:92px}.poster img,.tile[data-type="공사일보"] .poster img{min-height:92px}.top h1{font-size:25px}.hero-copy{font-size:12px}.filters button{font-size:10px}.tile h2{font-size:14.5px}}
 </style>
@@ -155,9 +170,9 @@ function renderShareIndexHtml(index, options = {}) {
 <div class="app">
   <header class="top">
     <div class="hero-panel">
-      <p class="eyebrow">통합선별공장 Archive</p>
+      <p class="eyebrow">${escapeHtml(eyebrow)}</p>
       <h1>${escapeHtml(title)}</h1>
-      <p class="hero-copy">공사일보, 회의록, 보고서를 스트리밍 콘텐츠처럼 빠르게 고르고 바로 여는 MarkTL 공유 아카이브.</p>
+      <p class="hero-copy">${escapeHtml(description)}</p>
       <section class="toolbar" aria-label="검색과 필터">
         <input class="search" id="search" type="search" placeholder="문서, 현장, 회의, 태그 검색" aria-label="문서 검색">
         <div class="filters"><button class="active" type="button" data-filter="">전체</button>${typeButtons}${tagButtons}</div>
@@ -190,7 +205,7 @@ document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new D
 
 function normalizeArchiveItem(item, itemIndex, baseUrl) {
   const tags = normalizeTags(item?.tags);
-  const title = cleanArchiveText(item?.title || item?.slug || '제목 없는 HTML 산출물', '제목 없는 HTML 산출물');
+  const title = recoverShareTitle(item);
   const date = extractArchiveDate(item);
   const type = inferArchiveType(item, title, tags);
   const accents = archiveAccents(type, itemIndex);
@@ -218,6 +233,14 @@ function extractArchiveDate(item) {
   const text = [item?.title, item?.sourcePath, item?.slug, item?.updatedAt].filter(Boolean).join(' ');
   const match = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
   return match ? match[1] : (formatDate(item?.updatedAt) || '');
+}
+
+function compareShareItems(left, right) {
+  const dateCompare = String(extractArchiveDate(right) || '').localeCompare(String(extractArchiveDate(left) || ''));
+  if (dateCompare !== 0) {
+    return dateCompare;
+  }
+  return String(right?.updatedAt || '').localeCompare(String(left?.updatedAt || ''));
 }
 
 function inferArchiveType(item, title, tags) {
@@ -266,10 +289,176 @@ function escapeJsString(value) {
   return String(value || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
+function normalizeShareEntry(entry, now) {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+  const normalized = {
+    ...entry,
+    schemaVersion: 2,
+    updatedAt: entry.updatedAt || now || new Date().toISOString(),
+  };
+  normalized.sourcePathKey = normalized.sourcePathKey || buildSourcePathKey(normalized.sourcePath || '');
+  normalized.title = recoverShareTitle(normalized);
+  normalized.excerpt = cleanArchiveText(normalized.excerpt || '', '');
+  normalized.tags = normalizeTags(normalized.tags);
+  return normalized;
+}
+
+function repairShareItems(items) {
+  return items
+    .map((item) => normalizeShareEntry(item, item?.updatedAt))
+    .filter(Boolean);
+}
+
+function dedupeShareItems(items) {
+  const deduped = [];
+  for (const item of items) {
+    if (!deduped.some((existing) => shareItemsMatch(existing, item))) {
+      deduped.push(item);
+    }
+  }
+  return deduped;
+}
+
+function shareItemsMatch(left, right) {
+  const rightKeys = new Set(shareItemKeys(right));
+  return shareItemKeys(left).some((key) => rightKeys.has(key));
+}
+
+function shareItemKeys(item) {
+  const keys = [];
+  const shortId = cleanArchiveText(item?.shortId, '');
+  if (shortId) {
+    keys.push(`short:${shortId}`);
+  }
+  const url = normalizeUrlKey(item?.url);
+  if (url) {
+    keys.push(`url:${url}`);
+  }
+  const canonicalUrl = normalizeUrlKey(item?.canonicalUrl);
+  if (canonicalUrl) {
+    keys.push(`canonical:${canonicalUrl}`);
+  }
+  const sourcePath = buildSourcePathKey(item?.sourcePathKey || item?.sourcePath || '');
+  if (sourcePath) {
+    keys.push(`source:${sourcePath}`);
+  }
+  const slug = normalizeIndexKey(item?.slug);
+  if (slug) {
+    keys.push(`slug:${slug}`);
+  }
+  return keys;
+}
+
+function normalizeUrlKey(value) {
+  return normalizeIndexKey(value).replace(/\/+$/g, '');
+}
+
+function buildSourcePathKey(value) {
+  return normalizeIndexKey(value);
+}
+
+function normalizeIndexKey(value) {
+  return repairMojibake(decodeArchiveComponent(value))
+    .normalize('NFC')
+    .replace(/\\/g, '/')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function recoverShareTitle(item) {
+  const candidates = [
+    item?.title,
+    titleFromUrl(item?.canonicalUrl),
+    titleFromSourcePath(item?.sourcePath),
+    item?.slug,
+  ];
+  for (const candidate of candidates) {
+    const title = normalizeTitleCandidate(candidate);
+    if (title) {
+      return title;
+    }
+  }
+  return '제목 없는 HTML 산출물';
+}
+
+function titleFromUrl(value) {
+  try {
+    const url = new URL(String(value || ''));
+    const segments = url.pathname.split('/').filter(Boolean);
+    const last = segments[segments.length - 1] || '';
+    const previous = segments[segments.length - 2] || '';
+    if (previous === 's') {
+      return '';
+    }
+    return last;
+  } catch {
+    return '';
+  }
+}
+
+function titleFromSourcePath(value) {
+  const text = decodeArchiveComponent(value).split(/[\\/]/).filter(Boolean).pop() || '';
+  return text.replace(/\.(md|html?)$/i, '');
+}
+
+function normalizeTitleCandidate(value) {
+  const basename = decodeArchiveComponent(value).split(/[\\/]/).filter(Boolean).pop() || value;
+  const cleaned = cleanArchiveText(prettifySlugTitle(String(basename || '').replace(/\.(md|html?)$/i, '')), '');
+  if (isGenericShareTitle(cleaned)) {
+    return '';
+  }
+  return cleanArchiveText(cleaned, '');
+}
+
+function isGenericShareTitle(value) {
+  const text = repairMojibake(value)
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+  return [
+    'marktl shared html',
+    'marktl archive',
+    'open artifact',
+    'html artifact',
+  ].includes(text);
+}
+
+function prettifySlugTitle(value) {
+  const text = String(value || '').trim();
+  const match = /^(\d{4}-\d{2}-\d{2})-(\S.+)$/.exec(text);
+  if (!match || text.includes(' ')) {
+    return text;
+  }
+  const parts = match[2].split('-').filter(Boolean);
+  if (parts.length >= 4) {
+    return `${match[1]} - ${parts.slice(0, 2).join(' ')} - ${parts.slice(2).join(' ')}`;
+  }
+  return `${match[1]} - ${parts.join(' ')}`;
+}
+
+function decodeArchiveComponent(value) {
+  let text = String(value || '');
+  for (let index = 0; index < 2; index += 1) {
+    try {
+      const decoded = decodeURIComponent(text);
+      if (decoded === text) {
+        break;
+      }
+      text = decoded;
+    } catch {
+      break;
+    }
+  }
+  return text;
+}
+
 function normalizeTags(tags) {
   const values = Array.isArray(tags) ? tags : String(tags || '').split(',');
   return [...new Set(values
-    .map((tag) => cleanArchiveText(String(tag || '').replace(/^-\s*/, '').replace(/^#/, '').trim(), ''))
+    .map((tag) => cleanArchiveText(String(tag || '').replace(/^\s*-\s*/, '').replace(/^#/, '').replace(/^["']|["']$/g, '').trim(), ''))
     .filter(Boolean)
     .filter((tag) => !looksLikeMojibake(tag))
     .map(toReaderTag)
@@ -350,6 +539,9 @@ function looksLikeMojibake(value) {
   if (!text) {
     return false;
   }
+  if (text.includes('�')) {
+    return true;
+  }
   return mojibakeScore(text) / Math.max(text.length, 1) > 0.08;
 }
 
@@ -390,6 +582,7 @@ module.exports = {
   mimeTypeForPath,
   normalizePublishPath,
   parseRepo,
+  repairShareIndex,
   renderShareIndexHtml,
   updateShareIndex,
 };

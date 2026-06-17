@@ -39,7 +39,20 @@ function normalizeContextTarget(target) {
 function compactMarkdownForContext(markdown, maxChars = MAX_CONTEXT_CHARS) {
   const compact = String(markdown || '')
     .replace(/^---[\s\S]*?---\s*/m, '')
-    .replace(/```[\s\S]*?```/g, '[code block omitted]')
+    .replace(/```([a-z0-9_-]*)\s*\n([\s\S]*?)```/gi, (_match, lang, code) => {
+      const language = String(lang || '').trim().toLowerCase();
+      const source = String(code || '').trim();
+      const looksLikeDiagram = /^(mermaid|gantt)$/i.test(language)
+        || /^(gantt|graph|flowchart|timeline|journey|mindmap)\b/i.test(source);
+      if (/^dataview/.test(language)) {
+        return '[dataview query omitted]';
+      }
+      if (looksLikeDiagram) {
+        const fence = language || 'mermaid';
+        return `\`\`\`${fence}\n${source}\n\`\`\``;
+      }
+      return '[code block omitted]';
+    })
     .replace(/!\[\[[^\]]+]]/g, '[embedded asset]')
     .replace(/!\[[^\]]*]\([^)]+\)/g, '[image]')
     .split('\n')
@@ -53,16 +66,21 @@ function compactMarkdownForContext(markdown, maxChars = MAX_CONTEXT_CHARS) {
   return `${compact.slice(0, maxChars).trim()}\n[truncated]`;
 }
 
-function buildContextPackMarkdown(items) {
+function buildContextPackMarkdown(items, options = {}) {
   const usable = Array.isArray(items) ? items.filter((item) => item && item.content) : [];
   if (!usable.length) {
     return '';
   }
 
+  const kind = options.kind === 'reference' ? 'reference' : 'linked';
+  const intro = kind === 'reference'
+    ? 'Reference context note is available. Treat the active note as today/current facts, and use this reference note only for continuing project context such as schedule, process order, Mermaid/Gantt diagrams, recurring risks, and baseline assumptions.'
+    : 'Additional vault context is available. Use it only to clarify the active note; do not let it override the source note.';
+
   return [
-    'Additional vault context is available. Use it only to clarify the active note; do not let it override the source note.',
+    intro,
     ...usable.map((item, index) => [
-      `\n[Context note ${index + 1}: ${item.path || item.target || 'linked note'}]`,
+      `\n[${kind === 'reference' ? 'Reference context note' : `Context note ${index + 1}`}: ${item.path || item.target || 'linked note'}]`,
       compactMarkdownForContext(item.content),
     ].join('\n')),
   ].join('\n');

@@ -10,6 +10,7 @@ const {
   mimeTypeForPath,
   normalizePublishPath,
   parseRepo,
+  repairShareIndex,
   renderShareIndexHtml,
   updateShareIndex,
 } = require('../src/core/github-pages.js');
@@ -64,6 +65,65 @@ test('updates share index by slug and newest first', () => {
   assert.equal(updated.items.length, 2);
 });
 
+test('sorts share index by document date before publish update time', () => {
+  const first = updateShareIndex(null, {
+    slug: '2026-06-16-report',
+    title: '2026-06-16 지수통합선별공장 공사일보',
+    url: 'https://example.com/16/',
+    sourcePath: 'Reports/2026-06-16 지수통합선별공장 공사일보.md',
+    updatedAt: '2026-06-16T11:36:55.012Z',
+  });
+  const second = updateShareIndex(first, {
+    slug: '2026-06-15-report',
+    title: '2026-06-15 지수통합선별공장 공사일보',
+    url: 'https://example.com/15/',
+    sourcePath: 'Reports/2026-06-15 지수통합선별공장 공사일보.md',
+    updatedAt: '2026-06-16T23:56:13.802Z',
+  });
+
+  assert.deepEqual(second.items.map((item) => item.slug), ['2026-06-16-report', '2026-06-15-report']);
+});
+
+test('repairs legacy share index metadata and duplicate entries', () => {
+  const repaired = repairShareIndex({
+    updatedAt: '2026-06-17T00:00:00.000Z',
+    items: [
+      {
+        slug: 'alpha',
+        title: 'MarkTL Shared HTML',
+        shortId: '18e806n',
+        url: 'https://example.com/marktl/s/18e806n/',
+        sourcePath: 'Projects/2026-06-16 지수통합선별공장 공사일보.md',
+        updatedAt: '2026-06-16T00:00:00.000Z',
+        tags: ['dataviewjs', 'project/지수통합선별공장', 'doc/meeting', 'state/검토중'],
+      },
+      {
+        slug: 'alpha',
+        title: '',
+        shortId: '18e806n',
+        url: 'https://example.com/marktl/s/18e806n',
+        sourcePath: 'projects/2026-06-16 지수통합선별공장 공사일보.md',
+        updatedAt: '2026-06-15T00:00:00.000Z',
+      },
+      {
+        slug: 'beta',
+        title: '',
+        sourcePath: 'Reports/2026-06-17 Weekly Report.md',
+        updatedAt: '2026-06-17T00:00:00.000Z',
+      },
+    ],
+  });
+
+  assert.equal(repaired.version, 2);
+  assert.equal(repaired.updatedAt, '2026-06-17T00:00:00.000Z');
+  assert.deepEqual(repaired.items.map((item) => item.slug), ['beta', 'alpha']);
+
+  const alpha = repaired.items.find((item) => item.slug === 'alpha');
+  assert.equal(alpha.title, '2026-06-16 지수통합선별공장 공사일보');
+  assert.equal(alpha.sourcePathKey, 'projects/2026-06-16 지수통합선별공장 공사일보.md');
+  assert.deepEqual(alpha.tags, ['지수통합선별공장', '회의록', '검토중']);
+});
+
 test('renders share home page with published links', () => {
   const html = renderShareIndexHtml({
     items: [
@@ -110,4 +170,19 @@ test('renders share home page with published links', () => {
   assert.doesNotMatch(html, /#obsidian\//);
   assert.doesNotMatch(html, /#function\//);
   assert.doesNotMatch(html, /#doc\//);
+});
+
+test('renders share home page with custom hub identity', () => {
+  const html = renderShareIndexHtml({
+    items: [],
+  }, {
+    title: '리서치 아카이브',
+    eyebrow: 'Research Hub',
+    description: '관심 분야별 HTML을 모아두는 공개 허브입니다.',
+  });
+
+  assert.match(html, /리서치 아카이브/);
+  assert.match(html, /Research Hub/);
+  assert.match(html, /관심 분야별 HTML을 모아두는 공개 허브입니다\./);
+  assert.match(html, /<meta name="description" content="관심 분야별 HTML을 모아두는 공개 허브입니다\.">/);
 });

@@ -1,32 +1,46 @@
-import { Notice, Plugin, TFile, WorkspaceLeaf, normalizePath, requestUrl } from 'obsidian';
+import { spawn } from 'node:child_process';
+import { statSync } from 'node:fs';
+import { MarkdownRenderer, Notice, Plugin, TFile, WorkspaceLeaf, normalizePath, requestUrl } from 'obsidian';
 import { MarktlExportModal } from './export-modal';
+import { MarktlPublishedHtmlModal } from './published-html-modal';
 import { MarktlProgressModal } from './progress-modal';
 import { MarktlPreviewView, VIEW_TYPE_MARKTL_PREVIEW } from './preview-view';
 import { MarktlResultModal } from './result-modal';
 import { MarktlSettingTab } from './settings-tab';
 import { MarktlSetupModal } from './setup-modal';
-import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState } from './types';
+import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState, ShareHomeProfile } from './types';
 
 const { convertWithAiFallback, getProviderPrivacyNote } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
 const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
+const { normalizeExportSelection } = require('./core/export-profiles.js');
 const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
-const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
+const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
 const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { slugify } = require('./core/html.js');
 const { migrateSettings } = require('./core/settings.js');
+const { DEFAULT_SHARE_HOME_PROFILE_ID, buildDefaultShareHomeProfile, normalizeShareHomeProfiles, resolveShareHomeProfile } = require('./core/share-home-profiles.js');
 const { buildShortId, injectSocialMeta } = require('./core/social.js');
 const { applyPresetToOptions } = require('./core/presets.js');
 
 const DEFAULT_SETTINGS: MarktlSettings = {
   exportFolder: 'html-exports',
   setupCompleted: false,
+  activeShareHomeProfileId: DEFAULT_SHARE_HOME_PROFILE_ID,
+  shareHomeProfiles: [buildDefaultShareHomeProfile({
+    githubPublishPath: 'marktl',
+    githubShareHomeTitle: '유네코 지수 통합선별공장 프로젝트',
+  })],
   artifactGoal: 'read',
   artifactType: 'faithful-note',
   template: 'minimal',
+  exportGenre: 'construction-daily',
+  exportDepth: 'standard',
+  exportPurpose: 'field-review',
+  referenceContextNotePath: '',
   aiProvider: 'none',
   conversionMode: 'preserve',
-  failurePolicy: 'fallback',
+  failurePolicy: 'strict',
   previewSecurity: 'sanitized',
   contextPackMode: 'none',
   readerFeedbackMode: 'none',
@@ -64,6 +78,147 @@ interface ImageAssetMapping {
   destinationPath: string;
   relativeSrc: string;
   aliases: string[];
+}
+
+interface GithubPagesContext {
+  owner: string;
+  repo: string;
+  branch: string;
+  basePath: string;
+  pagesBaseUrl: string;
+  indexPath: string;
+  indexHtmlPath: string;
+  shareHomeProfile: ShareHomeProfile;
+}
+
+interface PublishedShareItem {
+  slug?: string;
+  shortId?: string;
+  title?: string;
+  url?: string;
+  canonicalUrl?: string;
+  sourcePath?: string;
+  sourcePathKey?: string;
+  artifactType?: string;
+  excerpt?: string;
+  tags?: string[];
+  thumbnailUrl?: string;
+  updatedAt?: string;
+  schemaVersion?: number;
+  publishedByHost?: string;
+}
+
+interface PublishedShareIndex {
+  version?: number;
+  updatedAt?: string;
+  items: PublishedShareItem[];
+}
+
+function resolveHomePath(command: string): string {
+  const value = String(command || '').trim();
+  if (!value) {
+    return '';
+  }
+  if (value === '~') {
+    return String(process.env.HOME || value);
+  }
+  if (value.startsWith('~/')) {
+    const home = String(process.env.HOME || '');
+    return home ? `${home}${value.slice(1)}` : value;
+  }
+  return value;
+}
+
+function isExecutableFile(filePath: string): boolean {
+  const resolvedPath = resolveHomePath(filePath);
+  try {
+    const stat = statSync(resolvedPath);
+    return stat.isFile() && Boolean(stat.mode & 0o111);
+  } catch {
+    return false;
+  }
+}
+
+function isStaleCliPath(command: string): boolean {
+  const value = resolveHomePath(command);
+  if (!value) {
+    return false;
+  }
+  if (value.startsWith('/Volumes/')) {
+    return true;
+  }
+  const home = String(process.env.HOME || '');
+  const match = value.match(/^\/Users\/[^/]+\//);
+  return Boolean(match && home && !value.startsWith(`${home}/`));
+}
+
+function isManagedMarktlCodexPath(command: string): boolean {
+  return /\/\.local\/bin\/marktl-codex$/.test(resolveHomePath(command));
+}
+
+function detectCodexCliPath(preferred = ''): string {
+  const candidates = [
+    preferred,
+    '~/.local/bin/marktl-codex',
+  ].map((value) => String(value || '').trim()).filter(Boolean);
+  for (const candidate of candidates) {
+    if (isManagedMarktlCodexPath(candidate) && !isStaleCliPath(candidate) && isExecutableFile(candidate)) {
+      return candidate;
+    }
+  }
+  return '';
+}
+
+function cleanPreflightOutput(value: string): string {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function runCliPreflight(command: string, args: string[], timeoutMs = 15000): Promise<{ code: number; output: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(resolveHomePath(command), args, {
+      env: {
+        ...process.env,
+        PATH: [
+          process.env.PATH || '',
+          '/opt/homebrew/bin',
+          '/usr/local/bin',
+        ].filter(Boolean).join(':'),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let output = '';
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      child.kill('SIGTERM');
+      resolve({ code: -1, output: `Timed out after ${timeoutMs}ms.` });
+    }, timeoutMs);
+    child.stdout.on('data', (chunk) => {
+      output += String(chunk);
+    });
+    child.stderr.on('data', (chunk) => {
+      output += String(chunk);
+    });
+    child.on('error', (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve({ code: -1, output: error.message });
+    });
+    child.on('close', (code) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve({ code: code ?? -1, output });
+    });
+  });
 }
 
 export default class MarktlPlugin extends Plugin {
@@ -104,6 +259,14 @@ export default class MarktlPlugin extends Plugin {
           void this.exportActiveNote();
         }
         return canRun;
+      },
+    });
+
+    this.addCommand({
+      id: 'manage-published-html',
+      name: 'Manage published MarkTL HTML',
+      callback: () => {
+        new MarktlPublishedHtmlModal(this.app, this).open();
       },
     });
 
@@ -150,7 +313,24 @@ export default class MarktlPlugin extends Plugin {
       this.settings.timeoutMs = DEFAULT_SETTINGS.timeoutMs;
       shouldSave = true;
     }
-    if (!['none', 'linked-notes'].includes(this.settings.contextPackMode as string)) {
+    const normalizedSelection = normalizeExportSelection(this.settings);
+    if (this.settings.exportGenre !== normalizedSelection.exportGenre) {
+      this.settings.exportGenre = normalizedSelection.exportGenre;
+      shouldSave = true;
+    }
+    if (this.settings.exportDepth !== normalizedSelection.exportDepth) {
+      this.settings.exportDepth = normalizedSelection.exportDepth;
+      shouldSave = true;
+    }
+    if (this.settings.exportPurpose !== normalizedSelection.exportPurpose) {
+      this.settings.exportPurpose = normalizedSelection.exportPurpose;
+      shouldSave = true;
+    }
+    if (typeof this.settings.referenceContextNotePath !== 'string') {
+      this.settings.referenceContextNotePath = '';
+      shouldSave = true;
+    }
+    if (!['none', 'linked-notes', 'reference-note'].includes(this.settings.contextPackMode as string)) {
       this.settings.contextPackMode = DEFAULT_SETTINGS.contextPackMode;
       shouldSave = true;
     }
@@ -158,9 +338,43 @@ export default class MarktlPlugin extends Plugin {
       this.settings.readerFeedbackMode = DEFAULT_SETTINGS.readerFeedbackMode;
       shouldSave = true;
     }
+    if (!['fallback', 'strict'].includes(this.settings.failurePolicy as string)) {
+      this.settings.failurePolicy = DEFAULT_SETTINGS.failurePolicy;
+      shouldSave = true;
+    }
+    if (this.settings.shareTarget === 'github-pages' && this.settings.failurePolicy !== 'strict') {
+      this.settings.failurePolicy = 'strict';
+      shouldSave = true;
+    }
     if (!String(this.settings.githubShareHomeTitle || '').trim() || this.settings.githubShareHomeTitle === 'MarkTL Shared HTML') {
       this.settings.githubShareHomeTitle = DEFAULT_SETTINGS.githubShareHomeTitle;
       shouldSave = true;
+    }
+    const shareHomeProfiles = normalizeShareHomeProfiles(this.settings.shareHomeProfiles, this.settings) as ShareHomeProfile[];
+    if (JSON.stringify(this.settings.shareHomeProfiles) !== JSON.stringify(shareHomeProfiles)) {
+      this.settings.shareHomeProfiles = shareHomeProfiles;
+      shouldSave = true;
+    }
+    if (!shareHomeProfiles.some((profile) => profile.id === this.settings.activeShareHomeProfileId)) {
+      this.settings.activeShareHomeProfileId = shareHomeProfiles[0]?.id || DEFAULT_SHARE_HOME_PROFILE_ID;
+      shouldSave = true;
+    }
+    if (this.settings.aiProvider === 'codex') {
+      const detectedCodex = detectCodexCliPath(this.settings.codexPath);
+      const currentCodex = String(this.settings.codexPath || '').trim();
+      if (
+        detectedCodex
+        && (
+          !currentCodex
+          || currentCodex === 'codex'
+          || isStaleCliPath(currentCodex)
+          || (currentCodex.startsWith('/') && !isManagedMarktlCodexPath(currentCodex))
+          || (isManagedMarktlCodexPath(currentCodex) && !isExecutableFile(currentCodex))
+        )
+      ) {
+        this.settings.codexPath = detectedCodex;
+        shouldSave = true;
+      }
     }
     if (shouldSave) {
       await this.saveSettings();
@@ -195,6 +409,218 @@ export default class MarktlPlugin extends Plugin {
     }).open();
   }
 
+  repairHtmlHead(html: string): string {
+    let value = String(html || '').trim();
+    if (!value) {
+      return '<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>MarkTL Export</title>\n</head>\n<body></body>\n</html>';
+    }
+    if (!/<html\b/i.test(value)) {
+      value = `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+${value}
+</body>
+</html>`;
+    }
+    if (!/<!doctype\s+html/i.test(value)) {
+      value = `<!doctype html>\n${value}`;
+    }
+    value = value.replace(/<html\b([^>]*)>/i, (_match, attrs) => {
+      const cleanAttrs = String(attrs || '').replace(/\s+lang=(["']).*?\1/i, '').trim();
+      return `<html${cleanAttrs ? ` ${cleanAttrs}` : ''} lang="ko">`;
+    });
+    if (!/<head\b/i.test(value)) {
+      value = value.replace(/<html\b[^>]*>/i, (match) => `${match}\n<head></head>`);
+    }
+    if (!/<meta\s+charset=/i.test(value)) {
+      value = value.replace(/<head\b[^>]*>/i, (match) => `${match}\n<meta charset="utf-8">`);
+    }
+    if (!/<meta\s+name=(["'])viewport\1/i.test(value)) {
+      value = value.replace(/<head\b[^>]*>/i, (match) => `${match}\n<meta name="viewport" content="width=device-width, initial-scale=1">`);
+    }
+    return value;
+  }
+
+  async renderMermaidBlocksToStaticHtml(html: string, sourcePath: string): Promise<{ html: string; rendered: number; warnings: string[] }> {
+    let value = String(html || '');
+    value = value.replace(/```mermaid\s*\n([\s\S]*?)```/gi, (_match, code) => `<pre class="marktl-mermaid-source"><code class="language-mermaid" data-marktl-mermaid="true">${this.escapeHtmlValue(code)}</code></pre>`);
+    value = this.normalizeMermaidSourceBlocks(value);
+    const pattern = /<pre\b([^>]*)>\s*<code\b([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi;
+    let output = '';
+    let lastIndex = 0;
+    let rendered = 0;
+    const warnings: string[] = [];
+    for (const match of value.matchAll(pattern)) {
+      const full = match[0];
+      const attrs = `${match[1] || ''} ${match[2] || ''}`;
+      if (!/language-mermaid|data-marktl-mermaid/i.test(attrs)) {
+        continue;
+      }
+      output += value.slice(lastIndex, match.index);
+      lastIndex = (match.index || 0) + full.length;
+      const source = this.decodeHtmlEntities(match[3]).trim();
+      if (!source) {
+        output += full;
+        continue;
+      }
+      try {
+        output += await this.renderMermaidSvgFromMarkdown(source, sourcePath || '');
+        rendered += 1;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        warnings.push(`참고: Mermaid 다이어그램 렌더링 실패, 원문 코드로 대체했습니다. ${message}`);
+        output += `<details class="marktl-mermaid-source"><summary>다이어그램 원문</summary><pre><code class="language-mermaid">${this.escapeHtmlValue(source)}</code></pre></details>`;
+      }
+    }
+    if (lastIndex === 0) {
+      return { html: value, rendered: 0, warnings };
+    }
+    output += value.slice(lastIndex);
+    return { html: output, rendered, warnings };
+  }
+
+  normalizeMermaidSourceBlocks(html: string): string {
+    let value = String(html || '');
+    const toMermaidPre = (code: string): string | null => {
+      const normalized = this.decodeHtmlEntities(String(code || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/?[^>]+>/g, '')).trim();
+      if (!/^(gantt|graph|flowchart|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gitGraph|pie|mindmap|timeline|quadrantChart|requirementDiagram|C4Context|sankey-beta|xychart-beta|block-beta|packet-beta)\b/i.test(normalized)) {
+        return null;
+      }
+      return `<pre class="marktl-mermaid-source"><code class="language-mermaid" data-marktl-mermaid="true">${this.escapeHtmlValue(normalized)}</code></pre>`;
+    };
+    value = value.replace(/<details\b[^>]*>\s*<summary\b[^>]*>[\s\S]*?mermaid[\s\S]*?<\/summary>([\s\S]*?)<\/details>/gi, (match, body) => {
+      const pre = String(body || '').match(/<pre\b[^>]*>([\s\S]*?)<\/pre>/i);
+      if (!pre) {
+        return match;
+      }
+      return toMermaidPre(pre[1]) || match;
+    });
+    value = value.replace(/<pre\b(?![^>]*marktl-mermaid-source)([^>]*)>([\s\S]*?)<\/pre>/gi, (match, _attrs, code) => {
+      if (/<code\b/i.test(code)) {
+        return match;
+      }
+      return toMermaidPre(code) || match;
+    });
+    return value;
+  }
+
+  async renderMermaidSvgFromMarkdown(source: string, sourcePath: string): Promise<string> {
+    const renderer = MarkdownRenderer as unknown as {
+      render?: (app: unknown, markdown: string, el: HTMLElement, sourcePath: string, component: MarktlPlugin) => Promise<void>;
+      renderMarkdown?: (markdown: string, el: HTMLElement, sourcePath: string, component: MarktlPlugin) => Promise<void>;
+    };
+    if (!renderer) {
+      throw new Error('Obsidian MarkdownRenderer를 찾을 수 없습니다.');
+    }
+    const container = document.createElement('div');
+    container.classList.add('marktl-mermaid-render-host');
+    container.setAttribute('style', 'position:fixed;left:-10000px;top:0;width:1200px;max-width:1200px;opacity:0;pointer-events:none;');
+    document.body.appendChild(container);
+    try {
+      const markdown = `\`\`\`mermaid\n${source}\n\`\`\``;
+      if (typeof renderer.render === 'function') {
+        await renderer.render(this.app, markdown, container, sourcePath, this);
+      } else if (typeof renderer.renderMarkdown === 'function') {
+        await renderer.renderMarkdown(markdown, container, sourcePath, this);
+      } else {
+        throw new Error('지원되는 MarkdownRenderer API가 없습니다.');
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 700));
+      const svg = container.querySelector('svg');
+      if (!svg) {
+        throw new Error('렌더링된 SVG를 찾지 못했습니다.');
+      }
+      this.sanitizeRenderedSvg(svg);
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('style', 'display:block;max-width:100%;height:auto;margin:0 auto;');
+      return `<figure class="marktl-mermaid-rendered">${svg.outerHTML}</figure>`;
+    } finally {
+      container.remove();
+    }
+  }
+
+  sanitizeRenderedSvg(svg: SVGElement): void {
+    svg.querySelectorAll('script,foreignObject').forEach((node) => node.remove());
+    svg.querySelectorAll('*').forEach((node) => {
+      for (const attr of Array.from(node.attributes || [])) {
+        if (/^on/i.test(attr.name)) {
+          node.removeAttribute(attr.name);
+        }
+        if (/^(href|xlink:href)$/i.test(attr.name) && /^javascript:/i.test(attr.value || '')) {
+          node.removeAttribute(attr.name);
+        }
+      }
+    });
+  }
+
+  decodeHtmlEntities(value: string): string {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = String(value || '');
+    return textarea.value;
+  }
+
+  escapeHtmlValue(value: string): string {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  async ensureAiExportReady(options: ExportOptions, progress: MarktlProgressModal): Promise<void> {
+    if (options.shareTarget === 'github-pages' && options.aiProvider === 'none') {
+      throw new Error('GitHub Pages 게시에는 작동 중인 AI provider가 필요합니다. Codex CLI를 선택하거나 공유 대상을 로컬 파일 링크로 바꾸세요.');
+    }
+    if (options.shareTarget === 'github-pages' && options.failurePolicy !== 'strict') {
+      options.failurePolicy = 'strict';
+      this.settings.failurePolicy = 'strict';
+      await this.saveSettings();
+      progress.addStep('GitHub Pages 게시를 위해 AI 실패 정책을 strict로 고정했습니다.');
+    }
+    if (options.aiProvider !== 'codex') {
+      return;
+    }
+
+    const currentPath = String(this.settings.codexPath || '').trim();
+    if (isManagedMarktlCodexPath(currentPath) && !isExecutableFile(currentPath)) {
+      throw new Error(`MarkTL Codex wrapper가 없습니다: ${currentPath}. 공유 설정을 /opt/homebrew/bin/codex로 바꾸지 말고 이 Mac에 wrapper를 생성하세요.`);
+    }
+    const detectedPath = detectCodexCliPath(currentPath);
+    const shouldRepairPath = !currentPath
+      || currentPath === 'codex'
+      || isStaleCliPath(currentPath)
+      || (currentPath.startsWith('/') && !isManagedMarktlCodexPath(currentPath));
+    if (shouldRepairPath) {
+      if (!detectedPath) {
+        throw new Error(`Codex CLI 경로가 유효하지 않습니다: ${currentPath || '(empty)'}. 공유 설정에 /opt/homebrew/bin/codex를 저장하지 말고 이 Mac에 ~/.local/bin/marktl-codex wrapper를 생성하세요.`);
+      }
+      this.settings.codexPath = detectedPath;
+      await this.saveSettings();
+      progress.addStep(`Codex 경로 자동 복구: ${detectedPath}`);
+    }
+    const command = String(this.settings.codexPath || 'codex').trim();
+    let version = await runCliPreflight(command, ['--version'], 15000);
+    if (version.code !== 0) {
+      const fallbackPath = isManagedMarktlCodexPath(command) ? '' : detectCodexCliPath();
+      if (fallbackPath && fallbackPath !== command) {
+        this.settings.codexPath = fallbackPath;
+        await this.saveSettings();
+        version = await runCliPreflight(fallbackPath, ['--version'], 15000);
+        if (version.code === 0) {
+          progress.addStep(`Codex 경로 자동 복구: ${fallbackPath}`);
+          progress.addStep(`Codex 사전 점검 통과: ${cleanPreflightOutput(version.output) || fallbackPath}`);
+          return;
+        }
+      }
+      throw new Error(`Codex CLI 사전 점검 실패: ${command}: ${cleanPreflightOutput(version.output) || '실행할 수 없음'}`);
+    }
+    progress.addStep(`Codex 사전 점검 통과: ${cleanPreflightOutput(version.output) || command}`);
+  }
+
   async exportActiveNote(overrides: Partial<ExportOptions> = {}): Promise<void> {
     const file = this.app.workspace.getActiveFile();
     if (!(file instanceof TFile) || file.extension !== 'md') {
@@ -203,8 +629,10 @@ export default class MarktlPlugin extends Plugin {
     }
 
     const options = this.resolveExportOptions(overrides);
+    const shareHomeProfile = resolveShareHomeProfile(this.settings, options.shareHomeProfileId) as ShareHomeProfile;
     const progress = new MarktlProgressModal(this.app);
     progress.open();
+    progress.addStep(`Share hub: ${shareHomeProfile.title} (${shareHomeProfile.basePath || '/'})`);
     progress.addStep(`Goal: ${options.artifactGoal}`);
     progress.addStep(`Artifact: ${options.artifactType}`);
     progress.addStep(`Template: ${options.template}`);
@@ -217,6 +645,7 @@ export default class MarktlPlugin extends Plugin {
     progress.addStep(`Timeout: ${Math.round(this.settings.timeoutMs / 1000)}s`);
 
     try {
+      await this.ensureAiExportReady(options, progress);
       progress.addStep('Reading active Markdown note...');
       const markdown = await this.app.vault.read(file);
       const outputPlan = await this.prepareOutputPlan(file, options);
@@ -226,9 +655,13 @@ export default class MarktlPlugin extends Plugin {
         : 'No local image assets found.');
       const contextResult = await this.resolveContextPack(markdown, file, options);
       if (contextResult.count > 0) {
-        progress.addStep(`Loaded ${contextResult.count} linked context note(s).`);
+        progress.addStep(options.contextPackMode === 'reference-note'
+          ? `Loaded reference context note: ${options.referenceContextNotePath}`
+          : `Loaded ${contextResult.count} linked context note(s).`);
       } else if (options.contextPackMode !== 'none') {
-        progress.addStep('No linked context notes found.');
+        progress.addStep(options.contextPackMode === 'reference-note'
+          ? 'No reference context note loaded.'
+          : 'No linked context notes found.');
       }
       progress.addStep(options.aiProvider === 'none' ? 'Running local converter...' : `Running ${options.aiProvider} CLI...`);
       const result = await convertWithAiFallback(markdown, {
@@ -237,8 +670,12 @@ export default class MarktlPlugin extends Plugin {
         artifactType: options.artifactType,
         mode: options.conversionMode,
         template: options.template,
+        exportGenre: options.exportGenre,
+        exportDepth: options.exportDepth,
+        exportPurpose: options.exportPurpose,
+        referenceContextNotePath: options.referenceContextNotePath,
         trusted: options.previewSecurity === 'trusted',
-        strictAiFailures: options.failurePolicy === 'strict',
+        strictAiFailures: options.failurePolicy === 'strict' || options.shareTarget === 'github-pages',
         timeoutMs: this.settings.timeoutMs,
         sourcePath: file.path,
         assetMappings: assetResult.mappings,
@@ -248,11 +685,14 @@ export default class MarktlPlugin extends Plugin {
           codex: this.settings.codexPath,
         },
       });
+      if (options.shareTarget === 'github-pages' && result.usedFallback) {
+        throw new Error('GitHub Pages publishing blocked because AI conversion used local fallback.');
+      }
       progress.addStep(result.usedFallback ? 'Generated local fallback HTML.' : 'Generated AI HTML.');
       const shareMetadata = this.extractShareMetadata(markdown, outputPlan.basename);
       const shortId = buildShortId(outputPlan.basename);
       const socialUrl = options.shareTarget === 'github-pages'
-        ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo), this.settings.githubPublishPath, shortId)
+        ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo), shareHomeProfile.basePath, shortId)
         : '';
       const socialImage = options.shareTarget === 'github-pages' && assetResult.mappings[0]
         ? `${socialUrl}assets/${assetResult.mappings[0].destinationPath.split('/').pop() || ''}`
@@ -265,21 +705,32 @@ export default class MarktlPlugin extends Plugin {
       });
       const imageRewrittenHtml = rewriteHtmlImageSources(socialHtml, assetResult.mappings);
       const feedbackResult = this.applyReaderFeedback(imageRewrittenHtml, options);
-      const html = feedbackResult.html;
+      let html = this.repairHtmlHead(feedbackResult.html);
       if (feedbackResult.injected) {
         progress.addStep('Added Giscus reader feedback.');
+      }
+      const mermaidResult = await this.renderMermaidBlocksToStaticHtml(html, file.path);
+      html = this.repairHtmlHead(mermaidResult.html);
+      if (mermaidResult.rendered > 0) {
+        progress.addStep(`Rendered ${mermaidResult.rendered} Mermaid diagram(s) to static HTML/SVG.`);
       }
       const qaWarnings = validateHtmlArtifact(html, {
         trusted: options.previewSecurity === 'trusted',
         artifactGoal: options.artifactGoal,
+        exportGenre: options.exportGenre,
+        exportDepth: options.exportDepth,
         assetMappings: assetResult.mappings,
       });
+      const fatalQaWarnings = qaWarnings.filter((warning: string) => /^HTML QA fatal:/i.test(warning));
+      if (options.shareTarget === 'github-pages' && fatalQaWarnings.length > 0) {
+        throw new Error(`GitHub Pages publishing blocked by HTML QA: ${fatalQaWarnings[0]}`);
+      }
       if (qaWarnings.length > 0) {
         progress.addStep(`HTML QA produced ${qaWarnings.length} warning(s).`);
       } else {
         progress.addStep('HTML QA passed basic checks.');
       }
-      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...feedbackResult.warnings, ...qaWarnings];
+      const warnings = [...result.warnings, ...assetResult.warnings, ...contextResult.warnings, ...feedbackResult.warnings, ...mermaidResult.warnings, ...qaWarnings];
       let publicUrl = '';
       let shareHomeUrl = '';
 
@@ -327,6 +778,7 @@ export default class MarktlPlugin extends Plugin {
         commentsEnabled: feedbackResult.injected,
         commentsStatus: this.describeReaderFeedback(options, feedbackResult),
         shareTitle: shareMetadata.title,
+        shareHomeTitle: shareHomeProfile.title,
         publicUrl,
         shareHomeUrl,
       });
@@ -448,8 +900,13 @@ export default class MarktlPlugin extends Plugin {
     return {
       template: overrides.template || this.settings.template,
       presetId: overrides.presetId,
+      shareHomeProfileId: overrides.shareHomeProfileId || this.settings.activeShareHomeProfileId,
       artifactGoal: overrides.artifactGoal || this.settings.artifactGoal,
       artifactType: overrides.artifactType || this.settings.artifactType,
+      exportGenre: overrides.exportGenre || this.settings.exportGenre,
+      exportDepth: overrides.exportDepth || this.settings.exportDepth,
+      exportPurpose: overrides.exportPurpose || this.settings.exportPurpose,
+      referenceContextNotePath: overrides.referenceContextNotePath ?? this.settings.referenceContextNotePath,
       aiProvider: overrides.aiProvider || this.settings.aiProvider,
       conversionMode: overrides.conversionMode || this.settings.conversionMode,
       failurePolicy: overrides.failurePolicy || this.settings.failurePolicy,
@@ -511,6 +968,34 @@ export default class MarktlPlugin extends Plugin {
   }
 
   private async resolveContextPack(markdown: string, source: TFile, options: ExportOptions): Promise<{ markdown: string; count: number; warnings: string[] }> {
+    if (options.contextPackMode === 'reference-note') {
+      const referencePath = String(options.referenceContextNotePath || '').trim();
+      if (!referencePath) {
+        return { markdown: '', count: 0, warnings: ['Reference context note is not selected.'] };
+      }
+      const linked = this.resolveMarkdownContextFile(referencePath, source);
+      if (!linked) {
+        return { markdown: '', count: 0, warnings: [`Reference context note not found: ${referencePath}`] };
+      }
+      if (linked.path === source.path) {
+        return { markdown: '', count: 0, warnings: ['Reference context note is the active note; skipped duplicate context.'] };
+      }
+      try {
+        const items = [{
+          target: referencePath,
+          path: linked.path,
+          content: await this.app.vault.read(linked),
+        }];
+        return {
+          markdown: buildContextPackMarkdown(items, { kind: 'reference' }),
+          count: 1,
+          warnings: [],
+        };
+      } catch {
+        return { markdown: '', count: 0, warnings: [`Reference context note unreadable: ${referencePath}`] };
+      }
+    }
+
     if (options.contextPackMode !== 'linked-notes') {
       return { markdown: '', count: 0, warnings: [] };
     }
@@ -545,26 +1030,85 @@ export default class MarktlPlugin extends Plugin {
   }
 
   private resolveMarkdownContextFile(target: string, source: TFile): TFile | null {
-    const linked = this.app.metadataCache.getFirstLinkpathDest(target, source.path);
-    if (linked instanceof TFile && linked.extension === 'md') {
-      return linked;
-    }
-
-    const normalized = normalizePath(target.endsWith('.md') ? target : `${target}.md`);
-    const direct = this.app.vault.getAbstractFileByPath(normalized);
-    if (direct instanceof TFile && direct.extension === 'md') {
-      return direct;
-    }
-
-    if (source.parent?.path) {
-      const relative = this.app.vault.getAbstractFileByPath(normalizePath(`${source.parent.path}/${normalized}`));
-      if (relative instanceof TFile && relative.extension === 'md') {
-        return relative;
+    const candidates = this.buildMarkdownContextTargetVariants(target);
+    for (const candidate of candidates) {
+      const linked = this.app.metadataCache.getFirstLinkpathDest(candidate, source.path);
+      if (linked instanceof TFile && linked.extension === 'md') {
+        return linked;
       }
     }
 
-    const byName = this.app.vault.getFiles().find((file) => file.extension === 'md' && (file.basename === target || file.name === target || file.path.endsWith(`/${normalized}`)));
+    for (const candidate of candidates) {
+      const normalized = normalizePath(candidate.endsWith('.md') ? candidate : `${candidate}.md`);
+      const direct = this.app.vault.getAbstractFileByPath(normalized);
+      if (direct instanceof TFile && direct.extension === 'md') {
+        return direct;
+      }
+
+      if (source.parent?.path) {
+        const relative = this.app.vault.getAbstractFileByPath(normalizePath(`${source.parent.path}/${normalized}`));
+        if (relative instanceof TFile && relative.extension === 'md') {
+          return relative;
+        }
+      }
+    }
+
+    const candidateKeys = new Set(candidates.flatMap((candidate) => {
+      const noExt = candidate.replace(/\.md$/i, '');
+      const withExt = candidate.endsWith('.md') ? candidate : `${candidate}.md`;
+      return [
+        noExt,
+        noExt.normalize('NFC'),
+        noExt.normalize('NFD'),
+        withExt,
+        withExt.normalize('NFC'),
+        withExt.normalize('NFD'),
+      ].map((value) => normalizePath(value));
+    }));
+    const byName = this.app.vault.getFiles().find((file) => {
+      if (file.extension !== 'md') {
+        return false;
+      }
+      const fileKeys = [
+        file.basename,
+        file.basename.normalize('NFC'),
+        file.basename.normalize('NFD'),
+        file.name,
+        file.name.normalize('NFC'),
+        file.name.normalize('NFD'),
+        file.path,
+        file.path.normalize('NFC'),
+        file.path.normalize('NFD'),
+      ].map((value) => normalizePath(value));
+      return fileKeys.some((key) => candidateKeys.has(key) || [...candidateKeys].some((candidate) => key.endsWith(`/${candidate}`)));
+    });
     return byName instanceof TFile ? byName : null;
+  }
+
+  private buildMarkdownContextTargetVariants(target: string): string[] {
+    const raw = String(target || '').replace(/\\/g, '/').replace(/^\.\//, '').trim();
+    if (!raw) {
+      return [];
+    }
+    const withoutHash = raw.split('#')[0].trim();
+    const withoutAlias = withoutHash.split('|')[0].trim();
+    const values = [
+      raw,
+      withoutHash,
+      withoutAlias,
+      withoutAlias.replace(/\.md$/i, ''),
+    ].filter(Boolean);
+    const expanded: string[] = [];
+    for (const value of values) {
+      expanded.push(value, value.normalize('NFC'), value.normalize('NFD'));
+      try {
+        const decoded = decodeURI(value);
+        expanded.push(decoded, decoded.normalize('NFC'), decoded.normalize('NFD'));
+      } catch {
+        // Keep the undecoded candidate when the link is not URI-encoded.
+      }
+    }
+    return [...new Set(expanded.map((value) => normalizePath(value)).filter(Boolean))];
   }
 
   private async ensureParentFolder(filePath: string): Promise<void> {
@@ -599,6 +1143,157 @@ export default class MarktlPlugin extends Plugin {
     await this.app.vault.adapter.write(readmePath, content);
   }
 
+  getGithubPagesContext(): GithubPagesContext {
+    const repo = parseRepo(this.settings.githubRepo);
+    if (!repo) {
+      throw new Error('GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.');
+    }
+    if (!this.settings.githubToken.trim()) {
+      throw new Error('GitHub token is not configured. Add a token with Contents write permission in MarkTL settings.');
+    }
+    const branch = this.settings.githubBranch.trim() || 'main';
+    const shareHomeProfile = resolveShareHomeProfile(this.settings, this.settings.activeShareHomeProfileId) as ShareHomeProfile;
+    const basePath = shareHomeProfile.basePath;
+    const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
+    return {
+      ...repo,
+      branch,
+      basePath,
+      pagesBaseUrl,
+      indexPath: buildPublishPath(basePath, '', 'index.json'),
+      indexHtmlPath: buildPublishPath(basePath, '', 'index.html'),
+      shareHomeProfile,
+    };
+  }
+
+  async loadPublishedShareIndex(): Promise<{ context: GithubPagesContext; index: PublishedShareIndex }> {
+    await this.refreshSettingsFromDisk();
+    const context = this.getGithubPagesContext();
+    const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
+    return {
+      context,
+      index: repairShareIndex(existing || { items: [] }),
+    };
+  }
+
+  async repairPublishedShareIndex(): Promise<PublishedShareIndex> {
+    const { context, index } = await this.loadPublishedShareIndex();
+    await this.writePublishedShareIndex(context, index);
+    return index;
+  }
+
+  async writePublishedShareIndex(context: GithubPagesContext, index: PublishedShareIndex): Promise<void> {
+    const html = renderShareIndexHtml(index, {
+      title: context.shareHomeProfile.title,
+      eyebrow: context.shareHomeProfile.eyebrow,
+      description: context.shareHomeProfile.description,
+      baseUrl: buildShareHomeUrl(context.pagesBaseUrl, context.basePath).replace(/\/+$/g, ''),
+    });
+    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2));
+    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html);
+  }
+
+  async deletePublishedShareItem(target: PublishedShareItem): Promise<{ removedCount: number; index: PublishedShareIndex }> {
+    const { context, index } = await this.loadPublishedShareIndex();
+    const targetKeys = this.shareDeleteKeys(target);
+    const removed: PublishedShareItem[] = [];
+    const kept: PublishedShareItem[] = [];
+    for (const item of index.items) {
+      const keys = this.shareDeleteKeys(item);
+      const matches = keys.some((key) => targetKeys.includes(key));
+      if (matches) {
+        removed.push(item);
+      } else {
+        kept.push(item);
+      }
+    }
+    if (!removed.length) {
+      throw new Error('No matching published artifact was found.');
+    }
+    const nextIndex = repairShareIndex({
+      ...index,
+      updatedAt: new Date().toISOString(),
+      items: kept,
+    });
+    for (const item of removed) {
+      if (item.slug) {
+        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, item.slug, ''));
+      }
+      if (item.shortId) {
+        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, `s/${item.shortId}`, ''));
+      }
+    }
+    await this.writePublishedShareIndex(context, nextIndex);
+    return { removedCount: removed.length, index: nextIndex };
+  }
+
+  shareDeleteKeys(item: PublishedShareItem): string[] {
+    return [
+      item?.shortId ? `short:${item.shortId}` : '',
+      item?.url ? `url:${String(item.url).replace(/\/+$/g, '')}` : '',
+      item?.canonicalUrl ? `canonical:${String(item.canonicalUrl).replace(/\/+$/g, '')}` : '',
+      item?.sourcePathKey ? `source:${item.sourcePathKey}` : '',
+      item?.slug ? `slug:${item.slug}` : '',
+    ].filter(Boolean);
+  }
+
+  private async deleteGithubPathRecursive(owner: string, repo: string, branch: string, publishPath: string): Promise<void> {
+    const cleanPath = String(publishPath || '').replace(/^\/+|\/+$/g, '');
+    if (!cleanPath) {
+      return;
+    }
+    const token = this.settings.githubToken.trim();
+    const url = this.githubContentsUrl(owner, repo, cleanPath);
+    const existing = await requestUrl({
+      url: `${url}?ref=${encodeURIComponent(branch)}`,
+      method: 'GET',
+      headers: this.githubHeaders(token),
+      throw: false,
+    });
+    if (existing.status === 404) {
+      return;
+    }
+    if (existing.status < 200 || existing.status >= 300) {
+      const message = existing.json?.message || existing.text || `GitHub lookup failed with HTTP ${existing.status}`;
+      throw new Error(`GitHub lookup failed for ${cleanPath}: ${message}`);
+    }
+    const content = existing.json;
+    if (Array.isArray(content)) {
+      for (const child of content) {
+        if (child?.path) {
+          await this.deleteGithubPathRecursive(owner, repo, branch, child.path);
+        }
+      }
+      return;
+    }
+    await this.deleteGithubFile(owner, repo, branch, cleanPath, content?.sha);
+  }
+
+  private async deleteGithubFile(owner: string, repo: string, branch: string, publishPath: string, sha?: string): Promise<void> {
+    if (!sha) {
+      return;
+    }
+    const token = this.settings.githubToken.trim();
+    const response = await requestUrl({
+      url: this.githubContentsUrl(owner, repo, publishPath),
+      method: 'DELETE',
+      headers: {
+        ...this.githubHeaders(token),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `Delete MarkTL export ${publishPath}`,
+        sha,
+        branch,
+      }),
+      throw: false,
+    });
+    if (response.status < 200 || response.status >= 300) {
+      const message = response.json?.message || response.text || `GitHub delete failed with HTTP ${response.status}`;
+      throw new Error(`GitHub delete failed for ${publishPath}: ${message}`);
+    }
+  }
+
   private async publishGithubPages(plan: OutputPlan, mappings: ImageAssetMapping[], sourcePath: string, markdown: string, options: ExportOptions, shortId = buildShortId(plan.basename), metadata = this.extractShareMetadata(markdown, plan.basename)): Promise<{ publicUrl: string; shareHomeUrl: string }> {
     await this.refreshSettingsFromDisk();
     const repo = parseRepo(this.settings.githubRepo);
@@ -610,7 +1305,8 @@ export default class MarktlPlugin extends Plugin {
     }
 
     const branch = this.settings.githubBranch.trim() || 'main';
-    const basePath = this.settings.githubPublishPath;
+    const shareHomeProfile = resolveShareHomeProfile(this.settings, options.shareHomeProfileId) as ShareHomeProfile;
+    const basePath = shareHomeProfile.basePath;
     const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
     const canonicalUrl = buildPagesUrl(pagesBaseUrl, basePath, plan.basename);
     const publicUrl = buildShortPagesUrl(pagesBaseUrl, basePath, shortId);
@@ -642,10 +1338,13 @@ export default class MarktlPlugin extends Plugin {
       url: publicUrl,
       canonicalUrl,
       sourcePath,
+      sourcePathKey: sourcePath.normalize('NFC').replace(/\\/g, '/').trim().toLowerCase(),
       artifactType: options.artifactType,
       thumbnailUrl,
+      schemaVersion: 2,
+      publishedByHost: String((typeof process !== 'undefined' && process.env && process.env.HOSTNAME) || ''),
       ...metadata,
-    }, pagesBaseUrl);
+    }, pagesBaseUrl, shareHomeProfile);
 
     return { publicUrl, shareHomeUrl };
   }
@@ -653,22 +1352,64 @@ export default class MarktlPlugin extends Plugin {
   private extractShareMetadata(markdown: string, fallbackTitle: string): { title: string; excerpt: string; tags: string[] } {
     const value = String(markdown || '');
     const frontmatter = /^---\n([\s\S]*?)\n---/.exec(value)?.[1] || '';
-    const title = /^title:\s*["']?(.+?)["']?\s*$/m.exec(frontmatter)?.[1]
+    const cleanScalar = (text: string) => String(text || '').trim().replace(/^["']|["']$/g, '');
+    const title = cleanScalar(/^title:[ \t]*(.+?)[ \t]*$/m.exec(frontmatter)?.[1]
       || /^#\s+(.+)$/m.exec(value)?.[1]
-      || fallbackTitle;
-    const tagLine = /^tags:\s*(.+)$/m.exec(frontmatter)?.[1] || '';
-    const yamlListTags = [...frontmatter.matchAll(/^\s*-\s*["']?([^"'\n]+)["']?\s*$/gm)].map((match) => match[1]);
+      || fallbackTitle);
+    const tagLine = /^tags:[ \t]*(.+)$/m.exec(frontmatter)?.[1] || '';
     const inlineTags = tagLine
       .replace(/^\[|\]$/g, '')
       .split(',')
-      .map((tag) => tag.trim().replace(/^["']|["']$/g, ''))
+      .map(cleanScalar)
       .filter(Boolean);
+    const tagBlock = /^tags:\s*\n((?:\s+-\s*.+(?:\n|$))*)/m.exec(frontmatter);
+    const yamlListTags = tagBlock
+      ? [...tagBlock[1].matchAll(/^\s*-\s*(.+?)\s*$/gm)].map((match) => cleanScalar(match[1]))
+      : [];
+    const readerTagMap: Record<string, string> = {
+      'project/지수통합선별공장': '지수통합선별공장',
+      'topic/지수통합선별공장': '지수통합선별공장',
+      'construction/daily-report': '공사일보',
+      'construction/착공': '착공',
+      'construction/콘크리트철거': '콘크리트철거',
+      'construction/옹벽기초': '옹벽기초',
+      'risk/준공검사': '준공리스크',
+      'risk/방수': '방수배수',
+      'obsidian/project-management': '프로젝트관리',
+      'obsidian/dataviewjs': '',
+      'obsidian/mermaid': '',
+      dataviewjs: '',
+      gantt: '일정관리',
+      budget: '예산',
+      risk: '리스크',
+      'function/ops': '운영관리',
+      'doc/보고서': '보고서',
+      'doc/meeting': '회의록',
+    };
+    const toReaderTag = (tag: string): string => {
+      const raw = String(tag || '').replace(/^#/, '').trim();
+      if (!raw) {
+        return '';
+      }
+      if (Object.prototype.hasOwnProperty.call(readerTagMap, raw)) {
+        return readerTagMap[raw];
+      }
+      const last = raw.includes('/') ? raw.split('/').filter(Boolean).pop() || '' : raw;
+      return /[가-힣]/.test(last)
+        ? last.replace(/^업무\//, '').replace(/^프로젝트\//, '').slice(0, 18)
+        : '';
+    };
     const body = value
       .replace(/^---\n[\s\S]*?\n---\s*/, '')
+      .replace(/```(?:dataviewjs|dataview|mermaid|gantt)?[\s\S]*?```/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ')
+      .replace(/<![^>]*>/g, ' ')
       .replace(/^#\s+.+$/m, '')
+      .replace(/\[!abstract]\+?/gi, ' ')
+      .replace(/한 줄\s*(요약|브리프)/g, ' ')
       .replace(/!\[\[[^\]]+]]/g, '')
       .replace(/!\[[^\]]*]\([^)]+\)/g, '')
-      .replace(/\[[^\]]+]\([^)]+\)/g, '$1')
+      .replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
       .replace(/[#*_`>~-]/g, '')
       .split('\n')
       .map((line) => line.trim())
@@ -678,16 +1419,18 @@ export default class MarktlPlugin extends Plugin {
     return {
       title: title.trim(),
       excerpt: body.slice(0, 180),
-      tags: [...new Set([...inlineTags, ...yamlListTags].map((tag) => tag.replace(/^#/, '').trim()).filter(Boolean))].slice(0, 8),
+      tags: [...new Set([...inlineTags, ...yamlListTags].map(toReaderTag).filter(Boolean))].slice(0, 8),
     };
   }
 
-  private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: { slug: string; title: string; url: string; sourcePath: string; shortId?: string; canonicalUrl?: string; artifactType?: string; excerpt?: string; tags?: string[]; thumbnailUrl?: string }, pagesBaseUrl: string): Promise<void> {
+  private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: PublishedShareItem & { slug: string; title: string; url: string; sourcePath: string }, pagesBaseUrl: string, shareHomeProfile: ShareHomeProfile): Promise<void> {
     const indexPath = buildPublishPath(basePath, '', 'index.json');
     const existing = await this.getGithubJson(owner, repo, branch, indexPath);
     const index = updateShareIndex(existing, entry);
     const html = renderShareIndexHtml(index, {
-      title: this.settings.githubShareHomeTitle || DEFAULT_SETTINGS.githubShareHomeTitle,
+      title: shareHomeProfile.title,
+      eyebrow: shareHomeProfile.eyebrow,
+      description: shareHomeProfile.description,
       baseUrl: buildShareHomeUrl(pagesBaseUrl, basePath).replace(/\/+$/g, ''),
     });
     await this.putGithubTextFile(owner, repo, branch, indexPath, JSON.stringify(index, null, 2));

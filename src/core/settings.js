@@ -1,3 +1,5 @@
+const { normalizeShareHomeSettings, sameShareHomeSettings } = require('./share-home-profiles.js');
+
 function firstString(...values) {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) {
@@ -33,6 +35,17 @@ function migrateSettings(defaultSettings, rawSettings) {
     && legacyShareHomeTitle
   ) {
     settings.githubShareHomeTitle = legacyShareHomeTitle;
+    migrated = true;
+  }
+
+  if (!Array.isArray(raw.shareHomeProfiles) || raw.shareHomeProfiles.length === 0) {
+    settings.shareHomeProfiles = [];
+    settings.activeShareHomeProfileId = '';
+  }
+  const shareHomeSettings = normalizeShareHomeSettings(settings);
+  if (!sameShareHomeSettings(settings, shareHomeSettings)) {
+    settings.shareHomeProfiles = shareHomeSettings.shareHomeProfiles;
+    settings.activeShareHomeProfileId = shareHomeSettings.activeShareHomeProfileId;
     migrated = true;
   }
 

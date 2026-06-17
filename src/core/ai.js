@@ -5,6 +5,7 @@ const path = require('node:path');
 const { buildAiAssetInstruction } = require('./assets.js');
 const { getArtifactGoalInstruction } = require('./artifact-goals.js');
 const { convertMarkdownToHtml } = require('./converter.js');
+const { buildSelectionPrompt } = require('./prompt-composer.js');
 const { looksLikeHtmlDocument, sanitizeHtml } = require('./sanitizer.js');
 
 const providerCommands = {
@@ -202,13 +203,15 @@ function buildPrompt(markdown, options = {}) {
     ? 'Trusted mode is enabled: you may include small inline JavaScript for useful interactions, animations, toggles, table-of-contents behavior, or reveal effects. Keep it self-contained and do not load remote resources.'
     : 'Sanitized mode is enabled: do not use JavaScript, iframes, external CSS, external scripts, or remote assets. Use rich CSS-only layout and interactions instead.';
   const affordanceInstruction = getGoalAffordanceInstruction(artifactGoal, Boolean(options.trusted));
-  const interactionStandard = getInteractionStandard(artifactGoal, options.template || 'minimal', Boolean(options.trusted));
+  const interactionStandard = getInteractionStandard(artifactGoal, options.template || 'minimal', Boolean(options.trusted), options);
+  const selectionInstruction = buildSelectionPrompt(options);
 
   return `Convert this Obsidian Markdown note to a complete standalone HTML document.
 Artifact goal: ${artifactGoal}
 Artifact type: ${options.artifactType || 'faithful-note'}
 Template: ${options.template || 'minimal'}
 Mode: ${options.mode || 'preserve'}
+${selectionInstruction}
 Goal instruction: ${goalInstruction}
 Artifact instruction: ${artifactInstruction}
 Instruction: ${modeInstruction}
@@ -277,9 +280,18 @@ function getGoalAffordanceInstruction(artifactGoal, trusted) {
   }[artifactGoal] || `Make the artifact's intended next action obvious. ${policy}`;
 }
 
-function getInteractionStandard(artifactGoal, template, trusted) {
+function getInteractionStandard(artifactGoal, template, trusted, options = {}) {
   if (!trusted) {
     return 'Keep interaction affordances static: anchors, tables, checklists, and copy-ready text blocks only. Do not add editable playground controls, state JSON panels, or scripts.';
+  }
+  if (template === 'construction-daily') {
+    const depth = options.exportDepth || 'standard';
+    const depthInstruction = {
+      brief: 'For brief daily logs, keep the page compact and do not force Mermaid, Gantt, execution gates, or large baseline sections unless the active note explicitly contains them.',
+      standard: 'For standard daily reports, include compact Mermaid/Gantt/process context only when the active or reference note provides enough schedule/process material.',
+      milestone: 'For milestone reports, include a visible baseline schedule/process section and an HTML/CSS execution-gate or Gantt-style view when the reference note provides schedule or process material.',
+    }[depth] || '';
+    return `Build a Korean construction daily report, not a generic article. On desktop, use a first-screen two-column hero where the left side contains the title and concise project summary and the right side renders the primary infographic or lead image at comparable visual weight when an image exists. On mobile, do not preserve the desktop side-by-side composition; stack the hero in this reader order: kicker/date, primary infographic or lead image, title, then summary. Convert Obsidian callouts, DataviewJS, and raw markdown syntax into clean reader-facing HTML; never show raw markers such as [!abstract]+, dataviewjs, frontmatter, or code used only for Obsidian rendering. ${depthInstruction} Use Korean-only reader tags and card-ready summary text around 50 characters. Keep all controls local-only and self-contained.`;
   }
   if (artifactGoal === 'tune' || template === 'playground') {
     return 'Use local-only editable controls, state JSON, and copy-next-prompt affordances, but label why the controls exist and what the reader should do next. Keep everything self-contained.';

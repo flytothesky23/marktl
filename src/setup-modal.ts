@@ -1,6 +1,6 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
 import type MarktlPlugin from './main';
-import type { ArtifactGoal, ArtifactType, ConversionMode, PreviewSecurity, ReaderFeedbackMode } from './types';
+import type { ArtifactGoal, ArtifactType, ConversionMode, FailurePolicy, PreviewSecurity, ReaderFeedbackMode } from './types';
 
 const { checkClaudeProvider, checkCodexProvider } = require('./core/provider-doctor.js');
 
@@ -157,6 +157,7 @@ export class MarktlSetupModal extends Modal {
       artifactType: 'research-report' as ArtifactType,
       template: 'editorial',
       conversionMode: 'blog' as ConversionMode,
+      failurePolicy: 'strict' as FailurePolicy,
       previewSecurity: 'trusted' as PreviewSecurity,
       readerFeedbackMode: 'giscus' as ReaderFeedbackMode,
       shareTarget: 'github-pages',

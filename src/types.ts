@@ -5,15 +5,32 @@ export type ConversionMode = 'preserve' | 'presentation' | 'blog' | 'landing';
 export type FailurePolicy = 'fallback' | 'strict';
 export type PreviewSecurity = 'sanitized' | 'trusted';
 export type ShareTarget = 'local-link' | 'static-bundle' | 'github-pages';
-export type ContextPackMode = 'none' | 'linked-notes';
+export type ContextPackMode = 'none' | 'linked-notes' | 'reference-note';
 export type ReaderFeedbackMode = 'none' | 'giscus';
+export type ExportGenre = 'construction-daily' | 'meeting-notes' | 'integrated-note' | 'report' | 'general-note' | 'compare-review' | 'presentation' | 'share-article';
+export type ExportDepth = 'brief' | 'standard' | 'milestone';
+export type ExportPurpose = 'internal-share' | 'field-review' | 'external-report' | 'public-archive' | 'presentation' | 'ai-rework';
+
+export interface ShareHomeProfile {
+  id: string;
+  title: string;
+  basePath: string;
+  eyebrow: string;
+  description: string;
+}
 
 export interface MarktlSettings {
   exportFolder: string;
   setupCompleted: boolean;
+  activeShareHomeProfileId: string;
+  shareHomeProfiles: ShareHomeProfile[];
   artifactGoal: ArtifactGoal;
   artifactType: ArtifactType;
   template: string;
+  exportGenre: ExportGenre;
+  exportDepth: ExportDepth;
+  exportPurpose: ExportPurpose;
+  referenceContextNotePath: string;
   aiProvider: AiProvider;
   conversionMode: ConversionMode;
   failurePolicy: FailurePolicy;
@@ -42,9 +59,14 @@ export interface MarktlSettings {
 
 export interface ExportOptions {
   presetId?: string;
+  shareHomeProfileId: string;
   artifactGoal: ArtifactGoal;
   artifactType: ArtifactType;
   template: string;
+  exportGenre: ExportGenre;
+  exportDepth: ExportDepth;
+  exportPurpose: ExportPurpose;
+  referenceContextNotePath: string;
   aiProvider: AiProvider;
   conversionMode: ConversionMode;
   failurePolicy: FailurePolicy;
@@ -72,6 +94,7 @@ export interface ExportSummary {
   commentsEnabled: boolean;
   commentsStatus: string;
   shareTitle?: string;
+  shareHomeTitle?: string;
   publicUrl?: string;
   shareHomeUrl?: string;
 }

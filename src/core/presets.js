@@ -20,6 +20,16 @@ const exportPresets = [
     previewSecurity: 'trusted',
   },
   {
+    id: 'construction-daily-report',
+    name: 'Construction Daily',
+    description: 'Korean construction daily report with large lead infographic, concise Mermaid-style flow maps, and execution-gate Gantt UI.',
+    artifactGoal: 'review',
+    artifactType: 'research-report',
+    template: 'construction-daily',
+    mode: 'presentation',
+    previewSecurity: 'trusted',
+  },
+  {
     id: 'presentation',
     name: 'Presentation',
     description: 'Slide-like sections for reviewing or presenting a note.',
