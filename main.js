@@ -2108,7 +2108,7 @@ var require_share_home_profiles = __commonJS({
         activeShareHomeProfileId: (activeProfile == null ? void 0 : activeProfile.id) || DEFAULT_SHARE_HOME_PROFILE_ID2
       };
     }
-    function createShareHomeProfile2(existingProfiles = [], seed = {}) {
+    function createShareHomeProfile3(existingProfiles = [], seed = {}) {
       const profiles = normalizeShareHomeProfiles4(existingProfiles, {});
       const index = profiles.length + 1;
       const usedIds = new Set(profiles.map((profile) => profile.id));
@@ -2146,7 +2146,7 @@ var require_share_home_profiles = __commonJS({
       DEFAULT_SHARE_HOME_TITLE,
       buildDefaultShareHomeProfile: buildDefaultShareHomeProfile2,
       cleanProfileText,
-      createShareHomeProfile: createShareHomeProfile2,
+      createShareHomeProfile: createShareHomeProfile3,
       describeShareHomeProfile: describeShareHomeProfile3,
       normalizeShareHomeProfileId,
       normalizeShareHomeProfiles: normalizeShareHomeProfiles4,
@@ -2821,7 +2821,7 @@ var import_artifact_goals = __toESM(require_artifact_goals());
 var import_ai = __toESM(require_ai());
 var import_export_profiles = __toESM(require_export_profiles());
 var import_templates = __toESM(require_templates());
-var { describeShareHomeProfile, normalizeShareHomeProfiles, resolveShareHomeProfile } = require_share_home_profiles();
+var { createShareHomeProfile, describeShareHomeProfile, normalizeShareHomeProfiles, resolveShareHomeProfile } = require_share_home_profiles();
 var ReferenceNoteSuggestModal = class extends import_obsidian.FuzzySuggestModal {
   constructor(app, onChoose) {
     super(app);
@@ -2837,6 +2837,63 @@ var ReferenceNoteSuggestModal = class extends import_obsidian.FuzzySuggestModal 
   }
   onChooseItem(item) {
     this.onChoose(item);
+  }
+};
+var ShareHomeProfileEditModal = class extends import_obsidian.Modal {
+  constructor(app, mode, profile, profiles, onSave) {
+    super(app);
+    this.mode = mode;
+    this.draft = { ...profile };
+    this.profiles = profiles;
+    this.onSave = onSave;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    this.setTitle(this.mode === "create" ? "\uACF5\uC720 \uD5C8\uBE0C \uB9CC\uB4E4\uAE30" : "\uACF5\uC720 \uD5C8\uBE0C \uC218\uC815");
+    contentEl.createEl("p", {
+      cls: "marktl-modal-intro",
+      text: "\uD5C8\uBE0C\uB294 \uACF5\uC720 \uBA54\uC778\uD398\uC774\uC9C0\uC785\uB2C8\uB2E4. \uAC8C\uC2DC \uACBD\uB85C\uAC00 \uB2E4\uB974\uBA74 \uD504\uB85C\uC81D\uD2B8\uB098 \uC5C5\uBB34 \uBD84\uC57C\uBCC4\uB85C \uBCC4\uB3C4\uC758 \uBA54\uC778\uD398\uC774\uC9C0\uC640 \uC11C\uBE0C\uD398\uC774\uC9C0 \uBB36\uC74C\uC744 \uC6B4\uC601\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    });
+    new import_obsidian.Setting(contentEl).setName("\uD5C8\uBE0C \uBA85\uCE6D").setDesc("\uC120\uD0DD \uCE74\uB4DC\uC640 \uBA54\uC778\uD398\uC774\uC9C0 \uC81C\uBAA9\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4.").addText((text) => text.setPlaceholder("\uC608: \uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8").setValue(this.draft.title).onChange((value) => {
+      this.draft.title = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("\uAC8C\uC2DC \uACBD\uB85C").setDesc("GitHub Pages \uC800\uC7A5\uC18C \uC548\uC758 \uD3F4\uB354\uC785\uB2C8\uB2E4. \uC608: marktl, marktl/work, marktl/research").addText((text) => text.setPlaceholder("marktl/project").setValue(this.draft.basePath).onChange((value) => {
+      this.draft.basePath = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("\uC0C1\uB2E8 \uBC30\uC9C0").setDesc("\uBA54\uC778\uD398\uC774\uC9C0 \uC67C\uCABD \uC704 \uC791\uC740 \uBD84\uB958\uBA85\uC785\uB2C8\uB2E4.").addText((text) => text.setPlaceholder("\uC608: Project Archive").setValue(this.draft.eyebrow).onChange((value) => {
+      this.draft.eyebrow = value;
+    }));
+    new import_obsidian.Setting(contentEl).setName("\uD5C8\uBE0C \uC124\uBA85").setDesc("\uBA54\uC778\uD398\uC774\uC9C0 H1 \uC544\uB798 \uC124\uBA85\uBB38\uC785\uB2C8\uB2E4.").addTextArea((text) => {
+      text.inputEl.rows = 3;
+      text.setPlaceholder("\uC774 \uD5C8\uBE0C\uC5D0\uC11C \uAD00\uB9AC\uD560 \uBB38\uC11C \uBC94\uC704\uC640 \uBAA9\uC801\uC744 \uC801\uC5B4\uC8FC\uC138\uC694.").setValue(this.draft.description).onChange((value) => {
+        this.draft.description = value;
+      });
+    });
+    new import_obsidian.Setting(contentEl).addButton((button) => button.setButtonText("\uCDE8\uC18C").onClick(() => this.close())).addButton((button) => button.setButtonText(this.mode === "create" ? "\uD5C8\uBE0C \uB9CC\uB4E4\uAE30" : "\uC218\uC815 \uC800\uC7A5").setCta().onClick(() => this.save()));
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+  save() {
+    if (!this.draft.title.trim()) {
+      new import_obsidian.Notice("\uACF5\uC720 \uD5C8\uBE0C \uBA85\uCE6D\uC744 \uC785\uB825\uD558\uC138\uC694.");
+      return;
+    }
+    const [candidate] = normalizeShareHomeProfiles([this.draft], {});
+    const hasDuplicatePath = this.profiles.some((profile) => {
+      if (profile.id === candidate.id) {
+        return false;
+      }
+      const [normalized] = normalizeShareHomeProfiles([profile], {});
+      return normalized.basePath === candidate.basePath;
+    });
+    if (hasDuplicatePath) {
+      new import_obsidian.Notice("\uAC19\uC740 \uAC8C\uC2DC \uACBD\uB85C\uB97C \uC0AC\uC6A9\uD558\uB294 \uACF5\uC720 \uD5C8\uBE0C\uAC00 \uC774\uBBF8 \uC788\uC2B5\uB2C8\uB2E4.");
+      return;
+    }
+    this.onSave(candidate);
+    this.close();
   }
 };
 var MarktlExportModal = class extends import_obsidian.Modal {
@@ -2941,6 +2998,18 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     const description = describeShareHomeProfile(selectedProfile, this.plugin.settings);
     selected.createEl("span", {
       text: description.homeUrl ? `\uC120\uD0DD\uB41C \uD5C8\uBE0C: ${selectedProfile.title} \xB7 ${description.homeUrl}` : `\uC120\uD0DD\uB41C \uD5C8\uBE0C: ${selectedProfile.title} \xB7 \uAC8C\uC2DC \uACBD\uB85C ${description.pathLabel}`
+    });
+    const actions = section.createDiv({ cls: "marktl-hub-actions" });
+    actions.createEl("button", { text: "\uC0C8 \uD5C8\uBE0C", type: "button" }).addEventListener("click", () => this.openShareHomeCreateModal(profiles));
+    actions.createEl("button", { text: "\uC120\uD0DD \uD5C8\uBE0C \uC218\uC815", type: "button" }).addEventListener("click", () => this.openShareHomeEditModal(selectedProfile, profiles));
+    const deleteButton = actions.createEl("button", {
+      cls: "marktl-danger-button",
+      text: "\uC120\uD0DD \uD5C8\uBE0C \uC0AD\uC81C",
+      type: "button"
+    });
+    deleteButton.toggleAttribute("disabled", profiles.length <= 1);
+    deleteButton.addEventListener("click", () => {
+      void this.deleteShareHomeProfile(selectedProfile, profiles);
     });
   }
   renderChoiceGroup(container, step, title, desc, choices, selected, onChoose) {
@@ -3098,6 +3167,46 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       this.onOpen();
     }).open();
   }
+  openShareHomeCreateModal(profiles) {
+    const next = createShareHomeProfile(profiles);
+    new ShareHomeProfileEditModal(this.app, "create", next, profiles, (profile) => {
+      void this.persistShareHomeProfiles([...profiles, profile], profile.id);
+    }).open();
+  }
+  openShareHomeEditModal(profile, profiles) {
+    new ShareHomeProfileEditModal(this.app, "edit", profile, profiles, (updatedProfile) => {
+      const nextProfiles = profiles.map((candidate) => candidate.id === profile.id ? updatedProfile : candidate);
+      void this.persistShareHomeProfiles(nextProfiles, updatedProfile.id);
+    }).open();
+  }
+  async deleteShareHomeProfile(profile, profiles) {
+    var _a;
+    if (profiles.length <= 1) {
+      return;
+    }
+    const confirmed = window.confirm(`\uACF5\uC720 \uD5C8\uBE0C "${profile.title}"\uC744 \uC0AD\uC81C\uD560\uAE4C\uC694?
+\uC774\uBBF8 GitHub Pages\uC5D0 \uC62C\uB77C\uAC04 \uD30C\uC77C\uC740 \uC790\uB3D9 \uC0AD\uC81C\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`);
+    if (!confirmed) {
+      return;
+    }
+    const remaining = profiles.filter((candidate) => candidate.id !== profile.id);
+    await this.persistShareHomeProfiles(remaining, ((_a = remaining[0]) == null ? void 0 : _a.id) || "");
+    new import_obsidian.Notice("\uACF5\uC720 \uD5C8\uBE0C\uB97C \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4.");
+  }
+  async persistShareHomeProfiles(profiles, activeProfileId) {
+    const normalized = normalizeShareHomeProfiles(profiles, this.plugin.settings);
+    const activeProfile = normalized.find((profile) => profile.id === activeProfileId) || normalized[0];
+    this.plugin.settings.shareHomeProfiles = normalized;
+    this.plugin.settings.activeShareHomeProfileId = (activeProfile == null ? void 0 : activeProfile.id) || "";
+    if (activeProfile) {
+      this.plugin.settings.githubPublishPath = activeProfile.basePath;
+      this.plugin.settings.githubShareHomeTitle = activeProfile.title;
+      this.options.shareHomeProfileId = activeProfile.id;
+    }
+    await this.plugin.saveSettings();
+    new import_obsidian.Notice("\uACF5\uC720 \uD5C8\uBE0C \uC124\uC815\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4.");
+    this.onOpen();
+  }
   renderActions(container) {
     new import_obsidian.Setting(container).addButton((button) => button.setButtonText("\uB0B4\uBCF4\uB0B4\uAE30").setCta().onClick(() => {
       this.close();
@@ -3106,6 +3215,11 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       const { presetId: _presetId, shareHomeProfileId, ...settings } = this.options;
       Object.assign(this.plugin.settings, settings);
       this.plugin.settings.activeShareHomeProfileId = shareHomeProfileId;
+      const activeProfile = resolveShareHomeProfile(this.plugin.settings, shareHomeProfileId);
+      if (activeProfile) {
+        this.plugin.settings.githubPublishPath = activeProfile.basePath;
+        this.plugin.settings.githubShareHomeTitle = activeProfile.title;
+      }
       await this.plugin.saveSettings();
       this.close();
       this.onSubmit(this.options);
@@ -3635,7 +3749,7 @@ var import_export_profiles2 = __toESM(require_export_profiles());
 var import_templates2 = __toESM(require_templates());
 var { inferPagesBaseUrl } = require_github_pages();
 var { buildGiscusSetupChecklist, buildPagesSetupChecklist } = require_setup_guidance();
-var { createShareHomeProfile, describeShareHomeProfile: describeShareHomeProfile2, normalizeShareHomeProfiles: normalizeShareHomeProfiles2, resolveShareHomeProfile: resolveShareHomeProfile2 } = require_share_home_profiles();
+var { createShareHomeProfile: createShareHomeProfile2, describeShareHomeProfile: describeShareHomeProfile2, normalizeShareHomeProfiles: normalizeShareHomeProfiles2, resolveShareHomeProfile: resolveShareHomeProfile2 } = require_share_home_profiles();
 var MarktlSettingTab = class extends import_obsidian6.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
@@ -3822,7 +3936,7 @@ var MarktlSettingTab = class extends import_obsidian6.PluginSettingTab {
         await this.setActiveShareHomeProfile(value);
       });
     }).addButton((button) => button.setButtonText("\uC0C8 \uD5C8\uBE0C \uCD94\uAC00").onClick(async () => {
-      const next = createShareHomeProfile(profiles);
+      const next = createShareHomeProfile2(profiles);
       this.plugin.settings.shareHomeProfiles = [...profiles, next];
       await this.setActiveShareHomeProfile(next.id);
       new import_obsidian6.Notice("\uC0C8 \uACF5\uC720 \uD5C8\uBE0C\uB97C \uCD94\uAC00\uD588\uC2B5\uB2C8\uB2E4. \uBA85\uCE6D\uACFC \uAC8C\uC2DC \uACBD\uB85C\uB97C \uC218\uC815\uD558\uC138\uC694.");

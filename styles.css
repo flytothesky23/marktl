@@ -314,6 +314,36 @@
   border-left: 3px solid var(--interactive-accent);
 }
 
+.marktl-hub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.marktl-hub-actions button {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px 10px;
+  white-space: normal;
+}
+
+.marktl-hub-actions button:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+}
+
+.marktl-hub-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.marktl-hub-actions .marktl-danger-button {
+  color: var(--text-error);
+}
+
 .marktl-reference-row {
   align-items: center;
   background: var(--background-secondary);

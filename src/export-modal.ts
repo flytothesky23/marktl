@@ -1,4 +1,4 @@
-import { App, FuzzySuggestModal, Modal, Setting, TFile } from 'obsidian';
+import { App, FuzzySuggestModal, Modal, Notice, Setting, TFile } from 'obsidian';
 import type MarktlPlugin from './main';
 import { listArtifactGoals } from './core/artifact-goals.js';
 import { getProviderPrivacyNote } from './core/ai.js';
@@ -6,7 +6,7 @@ import { applySelectionProfile, describeExecutionProfile, listExportDepths, list
 import { listTemplates } from './core/templates.js';
 import type { AiProvider, ArtifactGoal, ArtifactType, ContextPackMode, ConversionMode, ExportDepth, ExportGenre, ExportOptions, ExportPurpose, FailurePolicy, PreviewSecurity, ReaderFeedbackMode, ShareHomeProfile, ShareTarget } from './types';
 
-const { describeShareHomeProfile, normalizeShareHomeProfiles, resolveShareHomeProfile } = require('./core/share-home-profiles.js');
+const { createShareHomeProfile, describeShareHomeProfile, normalizeShareHomeProfiles, resolveShareHomeProfile } = require('./core/share-home-profiles.js');
 
 type ChoiceItem = {
   id: string;
@@ -36,6 +36,112 @@ class ReferenceNoteSuggestModal extends FuzzySuggestModal<TFile> {
 
   onChooseItem(item: TFile): void {
     this.onChoose(item);
+  }
+}
+
+class ShareHomeProfileEditModal extends Modal {
+  private draft: ShareHomeProfile;
+  private mode: 'create' | 'edit';
+  private onSave: (profile: ShareHomeProfile) => void;
+  private profiles: ShareHomeProfile[];
+
+  constructor(app: App, mode: 'create' | 'edit', profile: ShareHomeProfile, profiles: ShareHomeProfile[], onSave: (profile: ShareHomeProfile) => void) {
+    super(app);
+    this.mode = mode;
+    this.draft = { ...profile };
+    this.profiles = profiles;
+    this.onSave = onSave;
+  }
+
+  onOpen(): void {
+    const { contentEl } = this;
+    contentEl.empty();
+    this.setTitle(this.mode === 'create' ? '공유 허브 만들기' : '공유 허브 수정');
+
+    contentEl.createEl('p', {
+      cls: 'marktl-modal-intro',
+      text: '허브는 공유 메인페이지입니다. 게시 경로가 다르면 프로젝트나 업무 분야별로 별도의 메인페이지와 서브페이지 묶음을 운영할 수 있습니다.',
+    });
+
+    new Setting(contentEl)
+      .setName('허브 명칭')
+      .setDesc('선택 카드와 메인페이지 제목에 표시됩니다.')
+      .addText((text) => text
+        .setPlaceholder('예: 유네코 지수 통합선별공장 프로젝트')
+        .setValue(this.draft.title)
+        .onChange((value) => {
+          this.draft.title = value;
+        }));
+
+    new Setting(contentEl)
+      .setName('게시 경로')
+      .setDesc('GitHub Pages 저장소 안의 폴더입니다. 예: marktl, marktl/work, marktl/research')
+      .addText((text) => text
+        .setPlaceholder('marktl/project')
+        .setValue(this.draft.basePath)
+        .onChange((value) => {
+          this.draft.basePath = value;
+        }));
+
+    new Setting(contentEl)
+      .setName('상단 배지')
+      .setDesc('메인페이지 왼쪽 위 작은 분류명입니다.')
+      .addText((text) => text
+        .setPlaceholder('예: Project Archive')
+        .setValue(this.draft.eyebrow)
+        .onChange((value) => {
+          this.draft.eyebrow = value;
+        }));
+
+    new Setting(contentEl)
+      .setName('허브 설명')
+      .setDesc('메인페이지 H1 아래 설명문입니다.')
+      .addTextArea((text) => {
+        text.inputEl.rows = 3;
+        text
+          .setPlaceholder('이 허브에서 관리할 문서 범위와 목적을 적어주세요.')
+          .setValue(this.draft.description)
+          .onChange((value) => {
+            this.draft.description = value;
+          });
+      });
+
+    new Setting(contentEl)
+      .addButton((button) => button
+        .setButtonText('취소')
+        .onClick(() => this.close()))
+      .addButton((button) => button
+        .setButtonText(this.mode === 'create' ? '허브 만들기' : '수정 저장')
+        .setCta()
+        .onClick(() => this.save()));
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
+  }
+
+  private save(): void {
+    if (!this.draft.title.trim()) {
+      new Notice('공유 허브 명칭을 입력하세요.');
+      return;
+    }
+
+    const [candidate] = normalizeShareHomeProfiles([this.draft], {}) as ShareHomeProfile[];
+    const hasDuplicatePath = this.profiles.some((profile) => {
+      if (profile.id === candidate.id) {
+        return false;
+      }
+      const [normalized] = normalizeShareHomeProfiles([profile], {}) as ShareHomeProfile[];
+      return normalized.basePath === candidate.basePath;
+    });
+
+    if (hasDuplicatePath) {
+      new Notice('같은 게시 경로를 사용하는 공유 허브가 이미 있습니다.');
+      return;
+    }
+
+    this.onSave(candidate);
+    this.close();
   }
 }
 
@@ -168,6 +274,21 @@ export class MarktlExportModal extends Modal {
       text: description.homeUrl
         ? `선택된 허브: ${selectedProfile.title} · ${description.homeUrl}`
         : `선택된 허브: ${selectedProfile.title} · 게시 경로 ${description.pathLabel}`,
+    });
+
+    const actions = section.createDiv({ cls: 'marktl-hub-actions' });
+    actions.createEl('button', { text: '새 허브', type: 'button' })
+      .addEventListener('click', () => this.openShareHomeCreateModal(profiles));
+    actions.createEl('button', { text: '선택 허브 수정', type: 'button' })
+      .addEventListener('click', () => this.openShareHomeEditModal(selectedProfile, profiles));
+    const deleteButton = actions.createEl('button', {
+      cls: 'marktl-danger-button',
+      text: '선택 허브 삭제',
+      type: 'button',
+    });
+    deleteButton.toggleAttribute('disabled', profiles.length <= 1);
+    deleteButton.addEventListener('click', () => {
+      void this.deleteShareHomeProfile(selectedProfile, profiles);
     });
   }
 
@@ -426,6 +547,48 @@ export class MarktlExportModal extends Modal {
     }).open();
   }
 
+  private openShareHomeCreateModal(profiles: ShareHomeProfile[]): void {
+    const next = createShareHomeProfile(profiles) as ShareHomeProfile;
+    new ShareHomeProfileEditModal(this.app, 'create', next, profiles, (profile) => {
+      void this.persistShareHomeProfiles([...profiles, profile], profile.id);
+    }).open();
+  }
+
+  private openShareHomeEditModal(profile: ShareHomeProfile, profiles: ShareHomeProfile[]): void {
+    new ShareHomeProfileEditModal(this.app, 'edit', profile, profiles, (updatedProfile) => {
+      const nextProfiles = profiles.map((candidate) => (candidate.id === profile.id ? updatedProfile : candidate));
+      void this.persistShareHomeProfiles(nextProfiles, updatedProfile.id);
+    }).open();
+  }
+
+  private async deleteShareHomeProfile(profile: ShareHomeProfile, profiles: ShareHomeProfile[]): Promise<void> {
+    if (profiles.length <= 1) {
+      return;
+    }
+    const confirmed = window.confirm(`공유 허브 "${profile.title}"을 삭제할까요?\n이미 GitHub Pages에 올라간 파일은 자동 삭제되지 않습니다.`);
+    if (!confirmed) {
+      return;
+    }
+    const remaining = profiles.filter((candidate) => candidate.id !== profile.id);
+    await this.persistShareHomeProfiles(remaining, remaining[0]?.id || '');
+    new Notice('공유 허브를 삭제했습니다.');
+  }
+
+  private async persistShareHomeProfiles(profiles: ShareHomeProfile[], activeProfileId: string): Promise<void> {
+    const normalized = normalizeShareHomeProfiles(profiles, this.plugin.settings) as ShareHomeProfile[];
+    const activeProfile = normalized.find((profile) => profile.id === activeProfileId) || normalized[0];
+    this.plugin.settings.shareHomeProfiles = normalized;
+    this.plugin.settings.activeShareHomeProfileId = activeProfile?.id || '';
+    if (activeProfile) {
+      this.plugin.settings.githubPublishPath = activeProfile.basePath;
+      this.plugin.settings.githubShareHomeTitle = activeProfile.title;
+      this.options.shareHomeProfileId = activeProfile.id;
+    }
+    await this.plugin.saveSettings();
+    new Notice('공유 허브 설정을 저장했습니다.');
+    this.onOpen();
+  }
+
   private renderActions(container: HTMLElement): void {
     new Setting(container)
       .addButton((button) => button
@@ -441,6 +604,11 @@ export class MarktlExportModal extends Modal {
           const { presetId: _presetId, shareHomeProfileId, ...settings } = this.options;
           Object.assign(this.plugin.settings, settings);
           this.plugin.settings.activeShareHomeProfileId = shareHomeProfileId;
+          const activeProfile = resolveShareHomeProfile(this.plugin.settings, shareHomeProfileId) as ShareHomeProfile;
+          if (activeProfile) {
+            this.plugin.settings.githubPublishPath = activeProfile.basePath;
+            this.plugin.settings.githubShareHomeTitle = activeProfile.title;
+          }
           await this.plugin.saveSettings();
           this.close();
           this.onSubmit(this.options);
