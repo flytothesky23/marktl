@@ -69,9 +69,10 @@ async function runCliProvider(markdown, options = {}) {
 
   const prompt = buildPrompt(markdown, options);
   const timeout = Number(options.timeoutMs || 900_000);
-  const command = options.cliPaths && options.cliPaths[options.provider]
+  const rawCommand = options.cliPaths && options.cliPaths[options.provider]
     ? options.cliPaths[options.provider]
     : provider.command;
+  const command = resolveHomePath(rawCommand);
   const args = provider.promptAsArgument ? [...provider.args, prompt] : provider.args;
   const execOptions = {
     timeout,
@@ -103,6 +104,21 @@ async function runCliProvider(markdown, options = {}) {
       .join('\n');
     throw new Error(details || String(error));
   }
+}
+
+function resolveHomePath(command, env = process.env) {
+  const value = String(command || '').trim();
+  if (!value) {
+    return '';
+  }
+  const home = String(env.HOME || os.homedir() || '');
+  if (value === '~') {
+    return home || value;
+  }
+  if (value.startsWith('~/')) {
+    return home ? `${home}${value.slice(1)}` : value;
+  }
+  return value;
 }
 
 function getProviderPrivacyNote(provider) {
@@ -444,6 +460,7 @@ module.exports = {
   discoverUserCliPaths,
   mergePath,
   parseProviderOutput,
+  resolveHomePath,
   runCliProvider,
   cleanProviderError,
 };

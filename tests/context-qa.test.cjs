@@ -6,6 +6,7 @@ const {
   compactMarkdownForContext,
   extractMarkdownContextTargets,
 } = require('../src/core/context-pack.js');
+const { repairObsidianSyntaxResidue } = require('../src/core/html-repair.js');
 const { validateHtmlArtifact } = require('../src/core/html-qa.js');
 
 test('extracts linked Markdown context targets without remote links', () => {
@@ -68,13 +69,44 @@ test('validates generated HTML artifact basics and asset references', () => {
   assert.match(warnings.join('\n'), /missing alt text/);
 });
 
-test('flags raw Obsidian syntax as fatal HTML QA', () => {
-  const warnings = validateHtmlArtifact('<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style></head><body><h1>공사일보</h1><p>dataviewjs</p></body></html>', {
+test('flags raw Obsidian-only blocks as fatal HTML QA', () => {
+  const warnings = validateHtmlArtifact('<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style></head><body><h1>공사일보</h1>\n```dataviewjs\ndv.pages()\n```\n</body></html>', {
     exportGenre: 'construction-daily',
     exportDepth: 'standard',
   });
 
   assert.match(warnings.join('\n'), /HTML QA fatal/);
+});
+
+test('does not flag ordinary dataview words as fatal HTML QA', () => {
+  const warnings = validateHtmlArtifact('<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style></head><body><h1>기술 개념</h1><p>dataview는 Obsidian 플러그인 이름으로 설명될 수 있습니다.</p></body></html>', {
+    artifactGoal: 'read',
+  });
+
+  assert.doesNotMatch(warnings.join('\n'), /HTML QA fatal/);
+});
+
+test('repairs Obsidian syntax residue before fatal HTML QA', () => {
+  const html = `<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style></head><body>
+---
+title: MCP와 API
+tags: [dataview]
+---
+<h1>기술 개념</h1>
+<p>[!summary] [[AI 에이전트|AI Agent]] 설명</p>
+---
+\`\`\`dataviewjs
+dv.pages()
+\`\`\`
+</body></html>`;
+
+  const repaired = repairObsidianSyntaxResidue(html);
+  const warnings = validateHtmlArtifact(repaired, { artifactGoal: 'read' });
+
+  assert.doesNotMatch(repaired, /\[!summary]|\[\[|```dataviewjs|title: MCP/);
+  assert.match(repaired, /AI Agent/);
+  assert.match(repaired, /<hr>/);
+  assert.doesNotMatch(warnings.join('\n'), /HTML QA fatal/);
 });
 
 test('does not require interactive controls for trusted read artifacts', () => {

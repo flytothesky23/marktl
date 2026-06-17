@@ -16,6 +16,7 @@ const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./c
 const { normalizeExportSelection } = require('./core/export-profiles.js');
 const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
 const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
+const { repairObsidianSyntaxResidue } = require('./core/html-repair.js');
 const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { slugify } = require('./core/html.js');
 const { migrateSettings } = require('./core/settings.js');
@@ -713,6 +714,11 @@ ${value}
       html = this.repairHtmlHead(mermaidResult.html);
       if (mermaidResult.rendered > 0) {
         progress.addStep(`Rendered ${mermaidResult.rendered} Mermaid diagram(s) to static HTML/SVG.`);
+      }
+      const repairedHtml = repairObsidianSyntaxResidue(html);
+      if (repairedHtml !== html) {
+        html = this.repairHtmlHead(repairedHtml);
+        progress.addStep('Cleaned residual Obsidian-only syntax before HTML QA.');
       }
       const qaWarnings = validateHtmlArtifact(html, {
         trusted: options.previewSecurity === 'trusted',

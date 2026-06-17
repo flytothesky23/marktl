@@ -1225,7 +1225,8 @@ var require_ai = __commonJS({
       }
       const prompt = buildPrompt(markdown, options);
       const timeout = Number(options.timeoutMs || 9e5);
-      const command = options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command;
+      const rawCommand = options.cliPaths && options.cliPaths[options.provider] ? options.cliPaths[options.provider] : provider.command;
+      const command = resolveHomePath2(rawCommand);
       const args = provider.promptAsArgument ? [...provider.args, prompt] : provider.args;
       const execOptions = {
         timeout,
@@ -1253,6 +1254,20 @@ var require_ai = __commonJS({
         ].filter(Boolean).join("\n");
         throw new Error(details || String(error));
       }
+    }
+    function resolveHomePath2(command, env = process.env) {
+      const value = String(command || "").trim();
+      if (!value) {
+        return "";
+      }
+      const home = String(env.HOME || os.homedir() || "");
+      if (value === "~") {
+        return home || value;
+      }
+      if (value.startsWith("~/")) {
+        return home ? `${home}${value.slice(1)}` : value;
+      }
+      return value;
     }
     function getProviderPrivacyNote3(provider) {
       return provider === "claude" ? "Claude Code CLI receives the note prompt as a command-line argument; avoid sending private notes if local process inspection is a concern." : "";
@@ -1548,6 +1563,7 @@ ${markdown}`;
       discoverUserCliPaths,
       mergePath,
       parseProviderOutput,
+      resolveHomePath: resolveHomePath2,
       runCliProvider,
       cleanProviderError
     };
@@ -2505,6 +2521,35 @@ ${section}`;
   }
 });
 
+// src/core/html-repair.js
+var require_html_repair = __commonJS({
+  "src/core/html-repair.js"(exports2, module2) {
+    "use strict";
+    function repairObsidianSyntaxResidue2(html) {
+      let value = String(html || "");
+      if (!value) {
+        return value;
+      }
+      value = removeRawDataviewBlocks(value);
+      value = removeFrontmatterResidue(value);
+      value = value.replace(/<p>\s*---\s*<\/p>/gi, "<hr>").replace(/(^|\n)\s*---\s*(?=\n|$)/g, "$1<hr>").replace(/\[![-\w]+][+-]?/gi, "").replace(/!\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?]]/g, (_match, target, label) => cleanWikiLabel(label || target)).replace(/\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?]]/g, (_match, target, label) => cleanWikiLabel(label || target)).replace(/<blockquote>\s*<\/blockquote>/gi, "").replace(/<p>\s*<\/p>/gi, "");
+      return value;
+    }
+    function removeRawDataviewBlocks(value) {
+      return String(value || "").replace(/```(?:dataviewjs|dataview)\b[\s\S]*?```/gi, "").replace(/<pre\b[^>]*>\s*<code\b[^>]*class=["'][^"']*\blanguage-(?:dataviewjs|dataview)\b[^"']*["'][^>]*>[\s\S]*?<\/code>\s*<\/pre>/gi, "").replace(/<pre\b[^>]*>\s*<code\b[^>]*>\s*(?:dataviewjs|dataview)\b[\s\S]*?<\/code>\s*<\/pre>/gi, "").replace(/<code\b[^>]*class=["'][^"']*\blanguage-(?:dataviewjs|dataview)\b[^"']*["'][^>]*>[\s\S]*?<\/code>/gi, "").replace(/<code\b[^>]*>\s*(?:dataviewjs|dataview)\b[\s\S]*?<\/code>/gi, "");
+    }
+    function removeFrontmatterResidue(value) {
+      return String(value || "").replace(/(<body\b[^>]*>\s*)---\s*\n[\s\S]{0,2000}?\n---\s*(?=\n|<)/i, "$1").replace(/(^|\n)---\s*\n(?:[A-Za-z0-9_-]+\s*:[^\n]*\n){1,40}---\s*(?=\n|$)/g, "$1");
+    }
+    function cleanWikiLabel(value) {
+      return String(value || "").split("/").pop().replace(/\.(md|markdown)$/i, "").trim();
+    }
+    module2.exports = {
+      repairObsidianSyntaxResidue: repairObsidianSyntaxResidue2
+    };
+  }
+});
+
 // src/core/html-qa.js
 var require_html_qa = __commonJS({
   "src/core/html-qa.js"(exports2, module2) {
@@ -2544,7 +2589,7 @@ var require_html_qa = __commonJS({
       if (/<img\b/i.test(value) && !/<img\b[^>]*\balt\s*=/i.test(value)) {
         warnings.push("HTML QA: at least one image is missing alt text.");
       }
-      if (/\bdataviewjs\b|\bdataview\b|\[![-\w]+]|\n---\s*(?:\n|$)/i.test(value)) {
+      if (/```(?:dataviewjs|dataview)\b|<code\b[^>]*>\s*(?:dataviewjs|dataview)\b|\[![-\w]+][+-]?|\[\[[^\]]+]]|(?:^|\n)\s*---\s*(?:\n|$)/i.test(value)) {
         warnings.push("HTML QA fatal: raw Obsidian-only syntax remains in the HTML.");
       }
       if (options.exportGenre === "construction-daily") {
@@ -4262,6 +4307,7 @@ var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_contex
 var { normalizeExportSelection } = require_export_profiles();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
+var { repairObsidianSyntaxResidue } = require_html_repair();
 var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
 var { migrateSettings } = require_settings();
@@ -4852,6 +4898,11 @@ ${source}
       html = this.repairHtmlHead(mermaidResult.html);
       if (mermaidResult.rendered > 0) {
         progress.addStep(`Rendered ${mermaidResult.rendered} Mermaid diagram(s) to static HTML/SVG.`);
+      }
+      const repairedHtml = repairObsidianSyntaxResidue(html);
+      if (repairedHtml !== html) {
+        html = this.repairHtmlHead(repairedHtml);
+        progress.addStep("Cleaned residual Obsidian-only syntax before HTML QA.");
       }
       const qaWarnings = validateHtmlArtifact(html, {
         trusted: options.previewSecurity === "trusted",

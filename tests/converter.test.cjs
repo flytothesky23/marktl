@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { buildPrompt, cleanProviderError, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, getArtifactInstruction, getGoalAffordanceInstruction, getInteractionStandard, mergePath, runCliProvider } = require('../src/core/ai.js');
+const { buildPrompt, cleanProviderError, convertWithAiFallback, discoverUserCliPaths, extractHtmlFromAiOutput, getArtifactInstruction, getGoalAffordanceInstruction, getInteractionStandard, mergePath, resolveHomePath, runCliProvider } = require('../src/core/ai.js');
 
 test('local conversion renders frontmatter, callouts, embeds, and Markdown content', () => {
   const markdown = `---
@@ -233,6 +233,36 @@ test('codex provider uses stdin JSON exec mode', async () => {
   assert.equal(captured.command, 'node');
   assert.deepEqual(captured.args, ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '-']);
   assert.match(captured.input, /# Prompt/);
+});
+
+test('provider expands home-relative CLI paths before spawning', async () => {
+  let captured = null;
+  const previousHome = process.env.HOME;
+  process.env.HOME = '/Users/example';
+
+  try {
+    await assert.rejects(
+      () => runCliProvider('# Prompt', {
+        provider: 'codex',
+        timeoutMs: 1,
+        cliPaths: { codex: '~/.local/bin/marktl-codex' },
+        runProcess: (command, args, options) => {
+          captured = { command, args, input: options.input };
+          throw new Error('stop');
+        },
+      }),
+      /stop/,
+    );
+  } finally {
+    if (previousHome === undefined) {
+      delete process.env.HOME;
+    } else {
+      process.env.HOME = previousHome;
+    }
+  }
+
+  assert.equal(captured.command, '/Users/example/.local/bin/marktl-codex');
+  assert.equal(resolveHomePath('~/.local/bin/marktl-codex', { HOME: '/Users/example' }), '/Users/example/.local/bin/marktl-codex');
 });
 
 test('provider process writes configured stdin input', async () => {

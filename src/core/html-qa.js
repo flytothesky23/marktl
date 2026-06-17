@@ -40,7 +40,7 @@ function validateHtmlArtifact(html, options = {}) {
     warnings.push('HTML QA: at least one image is missing alt text.');
   }
 
-  if (/\bdataviewjs\b|\bdataview\b|\[![-\w]+]|\n---\s*(?:\n|$)/i.test(value)) {
+  if (/```(?:dataviewjs|dataview)\b|<code\b[^>]*>\s*(?:dataviewjs|dataview)\b|\[![-\w]+][+-]?|\[\[[^\]]+]]|(?:^|\n)\s*---\s*(?:\n|$)/i.test(value)) {
     warnings.push('HTML QA fatal: raw Obsidian-only syntax remains in the HTML.');
   }
 
