@@ -13,6 +13,7 @@ import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState, ShareH
 const { convertWithAiFallback, getProviderPrivacyNote } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
 const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
+const { basenameFromHtmlFileName, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings } = require('./core/external-html.js');
 const { normalizeExportSelection } = require('./core/export-profiles.js');
 const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
 const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
@@ -272,6 +273,14 @@ export default class MarktlPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: 'upload-existing-html-to-share-hub',
+      name: 'Upload existing HTML to MarkTL share hub...',
+      callback: () => {
+        this.openExportModal();
+      },
+    });
+
+    this.addCommand({
       id: 'open-marktl-setup',
       name: 'Open Flytothesky MarkTL setup wizard',
       callback: () => {
@@ -399,14 +408,10 @@ export default class MarktlPlugin extends Plugin {
   }
 
   openExportModal(): void {
-    const file = this.app.workspace.getActiveFile();
-    if (!(file instanceof TFile) || file.extension !== 'md') {
-      new Notice('Open a Markdown note before exporting HTML.');
-      return;
-    }
-
     new MarktlExportModal(this.app, this, (options) => {
       void this.exportActiveNote(options);
+    }, (options) => {
+      this.chooseAndPublishExternalHtml(options);
     }).open();
   }
 
@@ -800,6 +805,150 @@ ${value}
     }
   }
 
+  chooseAndPublishExternalHtml(overrides: Partial<ExportOptions> = {}): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.html,.htm,text/html';
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      input.remove();
+      if (!file) {
+        return;
+      }
+      if (!/\.html?$/i.test(file.name) && file.type !== 'text/html') {
+        new Notice('HTML 파일만 업로드할 수 있습니다.');
+        return;
+      }
+      void this.publishExternalHtmlFile(file, overrides);
+    }, { once: true });
+    document.body.appendChild(input);
+    input.click();
+  }
+
+  async publishExternalHtmlFile(file: File, overrides: Partial<ExportOptions> = {}): Promise<void> {
+    const options: ExportOptions = {
+      ...this.resolveExportOptions(overrides),
+      shareTarget: 'github-pages',
+      previewSecurity: 'trusted',
+      failurePolicy: 'strict',
+      aiProvider: 'none',
+      copyShareLinkAfterExport: true,
+    };
+    const shareHomeProfile = resolveShareHomeProfile(this.settings, options.shareHomeProfileId) as ShareHomeProfile;
+    const progress = new MarktlProgressModal(this.app);
+    progress.open();
+    progress.addStep(`Share hub: ${shareHomeProfile.title} (${shareHomeProfile.basePath || '/'})`);
+    progress.addStep(`HTML upload: ${file.name}`);
+    progress.addStep('AI conversion: skipped for existing HTML file.');
+
+    try {
+      progress.addStep('Reading selected HTML file...');
+      const rawHtml = await file.text();
+      if (!rawHtml.trim()) {
+        throw new Error('선택한 HTML 파일이 비어 있습니다.');
+      }
+
+      const outputPlan = await this.prepareExternalHtmlOutputPlan(file.name);
+      const sourcePath = `External HTML file: ${file.name}`;
+      const metadata = extractExternalHtmlMetadata(rawHtml, file.name);
+      const shortId = buildShortId(outputPlan.basename);
+      const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
+      const socialUrl = buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId);
+
+      progress.addStep(`Resolved title: ${metadata.title}`);
+      let html = this.repairHtmlHead(rawHtml);
+      html = this.ensureHtmlTitle(html, metadata.title);
+      html = injectSocialMeta(html, {
+        title: metadata.title,
+        description: metadata.excerpt,
+        url: socialUrl,
+      });
+      const feedbackResult = this.applyReaderFeedback(html, options);
+      html = this.repairHtmlHead(feedbackResult.html);
+      if (feedbackResult.injected) {
+        progress.addStep('Added Giscus reader feedback.');
+      }
+      const repairedHtml = repairObsidianSyntaxResidue(html);
+      if (repairedHtml !== html) {
+        html = this.repairHtmlHead(repairedHtml);
+        progress.addStep('Cleaned residual Obsidian-only syntax before HTML QA.');
+      }
+
+      const qaWarnings = validateHtmlArtifact(html, {
+        trusted: true,
+        artifactGoal: 'publish',
+        externalHtml: true,
+        assetMappings: [],
+      });
+      const fatalQaWarnings = qaWarnings.filter((warning: string) => /^HTML QA fatal:/i.test(warning));
+      if (fatalQaWarnings.length > 0) {
+        throw new Error(`GitHub Pages publishing blocked by HTML QA: ${fatalQaWarnings[0]}`);
+      }
+      if (qaWarnings.length > 0) {
+        progress.addStep(`HTML QA produced ${qaWarnings.length} warning(s).`);
+      } else {
+        progress.addStep('HTML QA passed basic checks.');
+      }
+
+      const assetWarnings = findExternalHtmlAssetWarnings(html);
+      if (assetWarnings.length > 0) {
+        progress.addStep('HTML has relative asset reference warning(s).');
+      }
+      const warnings = [...assetWarnings, ...feedbackResult.warnings, ...qaWarnings];
+
+      progress.addStep('Writing HTML upload bundle to vault...');
+      const outputPath = await this.writeHtmlFile(outputPlan, html, options, sourcePath);
+
+      progress.addStep('Publishing GitHub Pages HTML upload...');
+      const publishResult = await this.publishGithubPages(outputPlan, [], sourcePath, '', options, shortId, metadata);
+      progress.addStep(`Published: ${publishResult.publicUrl}`);
+
+      progress.addStep('Opening internal preview pane...');
+      await this.openPreview({
+        html,
+        filePath: outputPath,
+        sourcePath,
+        title: metadata.title,
+        warnings,
+        trusted: true,
+        previewSecurity: 'trusted',
+      });
+
+      progress.addStep('Copying public share link...');
+      await this.copyShareLink(outputPath, publishResult.publicUrl);
+
+      progress.complete(`Done: ${outputPath}`);
+      this.openResultSummary({
+        options,
+        sourceKind: 'html-file',
+        sourcePath,
+        sourceTitle: metadata.title,
+        presetId: options.presetId,
+        previewSecurity: 'trusted',
+        localPath: outputPath,
+        outputPath,
+        usedFallback: false,
+        aiProvider: 'none',
+        assetCount: 0,
+        warnings,
+        shareTarget: 'github-pages',
+        copiedShareLink: true,
+        commentsEnabled: feedbackResult.injected,
+        commentsStatus: this.describeReaderFeedback(options, feedbackResult),
+        shareTitle: metadata.title,
+        shareHomeTitle: shareHomeProfile.title,
+        publicUrl: publishResult.publicUrl,
+        shareHomeUrl: publishResult.shareHomeUrl,
+      });
+      new Notice(`HTML uploaded to ${publishResult.publicUrl}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      progress.fail(message);
+      new Notice(`HTML upload failed: ${message}`);
+    }
+  }
+
   private async prepareOutputPlan(source: TFile, options: ExportOptions): Promise<OutputPlan> {
     const folder = normalizePath(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
     if (!(await this.app.vault.adapter.exists(folder))) {
@@ -819,6 +968,24 @@ ${value}
       : `${basename}-assets`;
 
     return { folder, basename, outputPath, assetFolder, assetRelativePrefix };
+  }
+
+  private async prepareExternalHtmlOutputPlan(fileName: string): Promise<OutputPlan> {
+    const folder = normalizePath(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
+    if (!(await this.app.vault.adapter.exists(folder))) {
+      await this.app.vault.createFolder(folder);
+    }
+
+    const basename = basenameFromHtmlFileName(fileName);
+    const outputPath = normalizePath(`${folder}/share/${basename}/index.html`);
+    const assetFolder = normalizePath(`${folder}/share/${basename}/assets`);
+    return {
+      folder,
+      basename,
+      outputPath,
+      assetFolder,
+      assetRelativePrefix: 'assets',
+    };
   }
 
   private async writeHtmlFile(plan: OutputPlan, html: string, options: ExportOptions, sourcePath: string): Promise<string> {
@@ -864,6 +1031,18 @@ ${value}
     }
 
     return { mappings, warnings };
+  }
+
+  private ensureHtmlTitle(html: string, title: string): string {
+    const value = String(html || '');
+    if (/<title\b/i.test(value)) {
+      return value;
+    }
+    const safeTitle = this.escapeHtmlValue(title || 'MarkTL HTML upload');
+    if (/<\/head>/i.test(value)) {
+      return value.replace(/<\/head>/i, `<title>${safeTitle}</title>\n</head>`);
+    }
+    return `<title>${safeTitle}</title>\n${value}`;
   }
 
   private resolveImageFile(target: string, source: TFile): TFile | null {

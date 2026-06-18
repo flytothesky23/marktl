@@ -38,7 +38,8 @@ export class MarktlResultModal extends Modal {
     const facts = contentEl.createDiv({ cls: 'marktl-summary-grid' });
     this.addFact(facts, 'Output', this.summary.outputPath);
     this.addFact(facts, 'Preview', this.summary.previewSecurity === 'trusted' ? 'Trusted interactive' : 'Sanitized static');
-    this.addFact(facts, 'AI', this.summary.aiProvider === 'none'
+    this.addFact(facts, 'Source', this.summary.sourceKind === 'html-file' ? 'Existing HTML file upload' : 'Markdown note export');
+    this.addFact(facts, 'AI', this.summary.sourceKind === 'html-file' ? 'Skipped; existing HTML was published' : this.summary.aiProvider === 'none'
       ? 'Local converter'
       : this.summary.usedFallback ? `${this.summary.aiProvider} failed; local fallback used` : `${this.summary.aiProvider} generated HTML`);
     this.addFact(facts, 'Images', `${this.summary.assetCount} bundled local image(s)`);
@@ -95,14 +96,16 @@ export class MarktlResultModal extends Modal {
       await navigator.clipboard.writeText(this.buildAiHandoffPrompt());
       new Notice('Copied AI handoff prompt.');
     });
-    this.addActionButton(actions, 'Regenerate slides', () => {
-      this.close();
-      this.regenerate('presentation');
-    });
-    this.addActionButton(actions, 'Regenerate interactive', () => {
-      this.close();
-      this.regenerate('interactive-report');
-    });
+    if (this.summary.sourceKind !== 'html-file') {
+      this.addActionButton(actions, 'Regenerate slides', () => {
+        this.close();
+        this.regenerate('presentation');
+      });
+      this.addActionButton(actions, 'Regenerate interactive', () => {
+        this.close();
+        this.regenerate('interactive-report');
+      });
+    }
     this.addActionButton(actions, 'Close', () => this.close(), true);
   }
 

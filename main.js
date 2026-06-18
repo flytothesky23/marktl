@@ -2429,6 +2429,94 @@ ${source}
   }
 });
 
+// src/core/external-html.js
+var require_external_html = __commonJS({
+  "src/core/external-html.js"(exports2, module2) {
+    "use strict";
+    var path = require("node:path");
+    var { slugify: slugify2 } = require_html();
+    function basenameFromHtmlFileName2(fileName) {
+      const cleanName = String(fileName || "uploaded-html").split(/[\\/]/).filter(Boolean).pop() || "uploaded-html";
+      const withoutExt = cleanName.replace(/\.html?$/i, "").trim() || cleanName;
+      return slugify2(withoutExt);
+    }
+    function extractExternalHtmlMetadata2(html, fileName = "") {
+      const value = String(html || "");
+      const fallbackTitle = titleCaseFromFileName(fileName || "HTML upload");
+      const title = cleanText(
+        firstMatch(value, /<title\b[^>]*>([\s\S]*?)<\/title>/i) || firstMatch(value, /<h1\b[^>]*>([\s\S]*?)<\/h1>/i) || fallbackTitle
+      );
+      const excerpt = cleanText(stripHtml(
+        firstMatch(value, /<meta\b[^>]*\bname=(["'])description\1[^>]*\bcontent=(["'])(.*?)\2[^>]*>/i, 3) || firstMatch(value, /<meta\b[^>]*\bcontent=(["'])(.*?)\1[^>]*\bname=(["'])description\3[^>]*>/i, 2) || firstMatch(value, /<main\b[^>]*>([\s\S]*?)<\/main>/i) || firstMatch(value, /<body\b[^>]*>([\s\S]*?)<\/body>/i) || value
+      )).slice(0, 180);
+      return {
+        title: title || fallbackTitle,
+        excerpt,
+        tags: []
+      };
+    }
+    function findExternalHtmlAssetWarnings2(html) {
+      const value = String(html || "");
+      const warnings = [];
+      const attributes = [
+        ...collectAttributeValues(value, "src"),
+        ...collectAttributeValues(value, "href"),
+        ...collectSrcsetValues(value)
+      ];
+      const localRefs = [...new Set(attributes.map((ref) => String(ref || "").trim()).filter((ref) => ref && isLikelyLocalAssetReference(ref)))];
+      if (localRefs.length > 0) {
+        warnings.push(`HTML upload warning: ${localRefs.length} relative asset reference(s) were not bundled. Use embedded/data URLs or publish assets separately: ${localRefs.slice(0, 5).join(", ")}`);
+      }
+      return warnings;
+    }
+    function collectAttributeValues(html, attributeName) {
+      const values = [];
+      const pattern = new RegExp(`\\b${attributeName}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, "gi");
+      for (const match of String(html || "").matchAll(pattern)) {
+        values.push(match[2] || match[3] || match[4] || "");
+      }
+      return values;
+    }
+    function collectSrcsetValues(html) {
+      return collectAttributeValues(html, "srcset").flatMap((value) => String(value || "").split(",")).map((item) => item.trim().split(/\s+/)[0] || "").filter(Boolean);
+    }
+    function isLikelyLocalAssetReference(value) {
+      const ref = String(value || "").trim();
+      if (!ref || /^(?:https?:|data:|blob:|mailto:|tel:|javascript:|#|\/\/)/i.test(ref)) {
+        return false;
+      }
+      if (ref.startsWith("{{") || ref.startsWith("<%")) {
+        return false;
+      }
+      const ext = path.extname(ref.split(/[?#]/)[0] || "").toLowerCase();
+      return [".css", ".js", ".mjs", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".avif", ".bmp", ".woff", ".woff2", ".ttf", ".otf", ".mp4", ".webm", ".mp3", ".wav", ".json"].includes(ext);
+    }
+    function firstMatch(value, pattern, group = 1) {
+      const match = pattern.exec(String(value || ""));
+      return (match == null ? void 0 : match[group]) || "";
+    }
+    function stripHtml(value) {
+      return String(value || "").replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<svg\b[\s\S]*?<\/svg>/gi, " ").replace(/<[^>]+>/g, " ");
+    }
+    function cleanText(value) {
+      return decodeHtmlEntities(String(value || "")).replace(/\s+/g, " ").trim();
+    }
+    function titleCaseFromFileName(fileName) {
+      var _a;
+      return cleanText(((_a = String(fileName || "HTML upload").split(/[\\/]/).filter(Boolean).pop()) == null ? void 0 : _a.replace(/\.html?$/i, "").replace(/[-_]+/g, " ")) || "HTML upload");
+    }
+    function decodeHtmlEntities(value) {
+      return String(value || "").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'");
+    }
+    module2.exports = {
+      basenameFromHtmlFileName: basenameFromHtmlFileName2,
+      extractExternalHtmlMetadata: extractExternalHtmlMetadata2,
+      findExternalHtmlAssetWarnings: findExternalHtmlAssetWarnings2,
+      isLikelyLocalAssetReference
+    };
+  }
+});
+
 // src/core/feedback.js
 var require_feedback = __commonJS({
   "src/core/feedback.js"(exports2, module2) {
@@ -2570,8 +2658,9 @@ var require_html_qa = __commonJS({
         warnings.push("HTML QA: no H1 heading found.");
       }
       const trusted = Boolean(options.trusted);
+      const externalHtml = Boolean(options.externalHtml);
       const artifactGoal = String(options.artifactGoal || "");
-      if (trusted && !/<script\b/i.test(value)) {
+      if (trusted && !externalHtml && !/<script\b/i.test(value)) {
         warnings.push("HTML QA: trusted interactive mode produced no script; artifact may be static.");
       }
       if (!trusted && /<script\b|<iframe\b|\son[a-z]+\s*=/i.test(value)) {
@@ -2592,7 +2681,7 @@ var require_html_qa = __commonJS({
       if (/```(?:dataviewjs|dataview)\b|<code\b[^>]*>\s*(?:dataviewjs|dataview)\b|\[![-\w]+][+-]?|\[\[[^\]]+]]|(?:^|\n)\s*---\s*(?:\n|$)/i.test(value)) {
         warnings.push("HTML QA fatal: raw Obsidian-only syntax remains in the HTML.");
       }
-      if (options.exportGenre === "construction-daily") {
+      if (!externalHtml && options.exportGenre === "construction-daily") {
         const depth = options.exportDepth || "standard";
         const text = value.replace(/<[^>]+>/g, " ");
         if (!/(공사일보|공사 일보|daily)/i.test(text)) {
@@ -2942,11 +3031,12 @@ var ShareHomeProfileEditModal = class extends import_obsidian.Modal {
   }
 };
 var MarktlExportModal = class extends import_obsidian.Modal {
-  constructor(app, plugin, onSubmit) {
+  constructor(app, plugin, onSubmit, onUploadHtml) {
     super(app);
     this.showAdvanced = false;
     this.plugin = plugin;
     this.onSubmit = onSubmit;
+    this.onUploadHtml = onUploadHtml;
     this.modalEl.addClass("marktl-export-modal");
     const baseOptions = {
       presetId: "custom",
@@ -2981,6 +3071,7 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       text: "HTML \uD488\uC9C8\uC5D0 \uC9C1\uC811 \uC601\uD5A5\uC744 \uC8FC\uB294 \uC120\uD0DD\uB9CC \uBA3C\uC800 \uC815\uD569\uB2C8\uB2E4. \uC138\uBD80 \uC2E4\uD589\xB7\uACF5\uC720 \uC635\uC158\uC740 \uAE30\uD0C0 \uC124\uC815\uC5D0\uC11C \uC870\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     });
     this.renderShareHomeSelector(contentEl);
+    this.renderDirectHtmlUpload(contentEl);
     this.renderDecisionRail(contentEl);
     this.renderContextSelector(contentEl);
     this.renderExecutionSummary(contentEl);
@@ -2992,6 +3083,22 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       this.renderAdvanced(contentEl);
     }
     this.renderActions(contentEl);
+  }
+  renderDirectHtmlUpload(container) {
+    const section = container.createDiv({ cls: "marktl-choice-section marktl-html-upload-section" });
+    const header = section.createDiv({ cls: "marktl-choice-header" });
+    header.createEl("span", { cls: "marktl-choice-step marktl-choice-step-hub", text: "HTML" });
+    const copy = header.createDiv();
+    copy.createEl("h3", { text: "\uC644\uC131 HTML \uBC14\uB85C \uC5C5\uB85C\uB4DC" });
+    copy.createEl("p", { text: "\uC774\uBBF8 \uB9CC\uB4E0 HTML \uD30C\uC77C\uC744 \uC120\uD0DD\uD55C \uACF5\uC720 \uD5C8\uBE0C\uC758 \uC11C\uBE0C\uD398\uC774\uC9C0\uB85C \uBC14\uB85C \uAC8C\uC2DC\uD569\uB2C8\uB2E4. \uB178\uD2B8 \uBCC0\uD658\uACFC AI \uC2E4\uD589\uC740 \uAC74\uB108\uB701\uB2C8\uB2E4." });
+    const actions = section.createDiv({ cls: "marktl-reference-row marktl-html-upload-row" });
+    actions.createEl("span", {
+      text: "\uB2E8\uC77C HTML \uD30C\uC77C \uAE30\uC900\uC785\uB2C8\uB2E4. \uC774\uBBF8\uC9C0\xB7CSS\xB7JS\uAC00 \uC0C1\uB300 \uACBD\uB85C \uD30C\uC77C\uC774\uBA74 \uD568\uAED8 \uBB36\uC774\uC9C0 \uC54A\uC73C\uBBC0\uB85C HTML \uC548\uC5D0 \uD3EC\uD568\uD558\uAC70\uB098 \uC6D0\uACA9 URL\uC744 \uC0AC\uC6A9\uD558\uC138\uC694."
+    });
+    actions.createEl("button", { text: "HTML \uD30C\uC77C \uC120\uD0DD\uD574 \uC5C5\uB85C\uB4DC", type: "button" }).addEventListener("click", () => {
+      this.close();
+      this.onUploadHtml(this.options);
+    });
   }
   onClose() {
     this.contentEl.empty();
@@ -3688,7 +3795,8 @@ var MarktlResultModal = class extends import_obsidian5.Modal {
     const facts = contentEl.createDiv({ cls: "marktl-summary-grid" });
     this.addFact(facts, "Output", this.summary.outputPath);
     this.addFact(facts, "Preview", this.summary.previewSecurity === "trusted" ? "Trusted interactive" : "Sanitized static");
-    this.addFact(facts, "AI", this.summary.aiProvider === "none" ? "Local converter" : this.summary.usedFallback ? `${this.summary.aiProvider} failed; local fallback used` : `${this.summary.aiProvider} generated HTML`);
+    this.addFact(facts, "Source", this.summary.sourceKind === "html-file" ? "Existing HTML file upload" : "Markdown note export");
+    this.addFact(facts, "AI", this.summary.sourceKind === "html-file" ? "Skipped; existing HTML was published" : this.summary.aiProvider === "none" ? "Local converter" : this.summary.usedFallback ? `${this.summary.aiProvider} failed; local fallback used` : `${this.summary.aiProvider} generated HTML`);
     this.addFact(facts, "Images", `${this.summary.assetCount} bundled local image(s)`);
     this.addFact(facts, "Share target", this.describeShareTarget());
     if (this.summary.shareHomeTitle) {
@@ -3736,14 +3844,16 @@ var MarktlResultModal = class extends import_obsidian5.Modal {
       await navigator.clipboard.writeText(this.buildAiHandoffPrompt());
       new import_obsidian5.Notice("Copied AI handoff prompt.");
     });
-    this.addActionButton(actions, "Regenerate slides", () => {
-      this.close();
-      this.regenerate("presentation");
-    });
-    this.addActionButton(actions, "Regenerate interactive", () => {
-      this.close();
-      this.regenerate("interactive-report");
-    });
+    if (this.summary.sourceKind !== "html-file") {
+      this.addActionButton(actions, "Regenerate slides", () => {
+        this.close();
+        this.regenerate("presentation");
+      });
+      this.addActionButton(actions, "Regenerate interactive", () => {
+        this.close();
+        this.regenerate("interactive-report");
+      });
+    }
     this.addActionButton(actions, "Close", () => this.close(), true);
   }
   onClose() {
@@ -4304,6 +4414,7 @@ function buildAgentSetupPrompt(agent) {
 var { convertWithAiFallback, getProviderPrivacyNote: getProviderPrivacyNote2 } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
+var { basenameFromHtmlFileName, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings } = require_external_html();
 var { normalizeExportSelection } = require_export_profiles();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
@@ -4500,6 +4611,13 @@ var MarktlPlugin = class extends import_obsidian8.Plugin {
       }
     });
     this.addCommand({
+      id: "upload-existing-html-to-share-hub",
+      name: "Upload existing HTML to MarkTL share hub...",
+      callback: () => {
+        this.openExportModal();
+      }
+    });
+    this.addCommand({
       id: "open-marktl-setup",
       name: "Open Flytothesky MarkTL setup wizard",
       callback: () => {
@@ -4610,13 +4728,10 @@ var MarktlPlugin = class extends import_obsidian8.Plugin {
     new MarktlSetupModal(this.app, this).open();
   }
   openExportModal() {
-    const file = this.app.workspace.getActiveFile();
-    if (!(file instanceof import_obsidian8.TFile) || file.extension !== "md") {
-      new import_obsidian8.Notice("Open a Markdown note before exporting HTML.");
-      return;
-    }
     new MarktlExportModal(this.app, this, (options) => {
       void this.exportActiveNote(options);
+    }, (options) => {
+      this.chooseAndPublishExternalHtml(options);
     }).open();
   }
   repairHtmlHead(html) {
@@ -4980,6 +5095,139 @@ ${source}
       new import_obsidian8.Notice(`HTML export failed: ${message}`);
     }
   }
+  chooseAndPublishExternalHtml(overrides = {}) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".html,.htm,text/html";
+    input.style.display = "none";
+    input.addEventListener("change", () => {
+      var _a;
+      const file = (_a = input.files) == null ? void 0 : _a[0];
+      input.remove();
+      if (!file) {
+        return;
+      }
+      if (!/\.html?$/i.test(file.name) && file.type !== "text/html") {
+        new import_obsidian8.Notice("HTML \uD30C\uC77C\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+        return;
+      }
+      void this.publishExternalHtmlFile(file, overrides);
+    }, { once: true });
+    document.body.appendChild(input);
+    input.click();
+  }
+  async publishExternalHtmlFile(file, overrides = {}) {
+    const options = {
+      ...this.resolveExportOptions(overrides),
+      shareTarget: "github-pages",
+      previewSecurity: "trusted",
+      failurePolicy: "strict",
+      aiProvider: "none",
+      copyShareLinkAfterExport: true
+    };
+    const shareHomeProfile = resolveShareHomeProfile3(this.settings, options.shareHomeProfileId);
+    const progress = new MarktlProgressModal(this.app);
+    progress.open();
+    progress.addStep(`Share hub: ${shareHomeProfile.title} (${shareHomeProfile.basePath || "/"})`);
+    progress.addStep(`HTML upload: ${file.name}`);
+    progress.addStep("AI conversion: skipped for existing HTML file.");
+    try {
+      progress.addStep("Reading selected HTML file...");
+      const rawHtml = await file.text();
+      if (!rawHtml.trim()) {
+        throw new Error("\uC120\uD0DD\uD55C HTML \uD30C\uC77C\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
+      }
+      const outputPlan = await this.prepareExternalHtmlOutputPlan(file.name);
+      const sourcePath = `External HTML file: ${file.name}`;
+      const metadata = extractExternalHtmlMetadata(rawHtml, file.name);
+      const shortId = buildShortId(outputPlan.basename);
+      const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
+      const socialUrl = buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId);
+      progress.addStep(`Resolved title: ${metadata.title}`);
+      let html = this.repairHtmlHead(rawHtml);
+      html = this.ensureHtmlTitle(html, metadata.title);
+      html = injectSocialMeta(html, {
+        title: metadata.title,
+        description: metadata.excerpt,
+        url: socialUrl
+      });
+      const feedbackResult = this.applyReaderFeedback(html, options);
+      html = this.repairHtmlHead(feedbackResult.html);
+      if (feedbackResult.injected) {
+        progress.addStep("Added Giscus reader feedback.");
+      }
+      const repairedHtml = repairObsidianSyntaxResidue(html);
+      if (repairedHtml !== html) {
+        html = this.repairHtmlHead(repairedHtml);
+        progress.addStep("Cleaned residual Obsidian-only syntax before HTML QA.");
+      }
+      const qaWarnings = validateHtmlArtifact(html, {
+        trusted: true,
+        artifactGoal: "publish",
+        externalHtml: true,
+        assetMappings: []
+      });
+      const fatalQaWarnings = qaWarnings.filter((warning) => /^HTML QA fatal:/i.test(warning));
+      if (fatalQaWarnings.length > 0) {
+        throw new Error(`GitHub Pages publishing blocked by HTML QA: ${fatalQaWarnings[0]}`);
+      }
+      if (qaWarnings.length > 0) {
+        progress.addStep(`HTML QA produced ${qaWarnings.length} warning(s).`);
+      } else {
+        progress.addStep("HTML QA passed basic checks.");
+      }
+      const assetWarnings = findExternalHtmlAssetWarnings(html);
+      if (assetWarnings.length > 0) {
+        progress.addStep("HTML has relative asset reference warning(s).");
+      }
+      const warnings = [...assetWarnings, ...feedbackResult.warnings, ...qaWarnings];
+      progress.addStep("Writing HTML upload bundle to vault...");
+      const outputPath = await this.writeHtmlFile(outputPlan, html, options, sourcePath);
+      progress.addStep("Publishing GitHub Pages HTML upload...");
+      const publishResult = await this.publishGithubPages(outputPlan, [], sourcePath, "", options, shortId, metadata);
+      progress.addStep(`Published: ${publishResult.publicUrl}`);
+      progress.addStep("Opening internal preview pane...");
+      await this.openPreview({
+        html,
+        filePath: outputPath,
+        sourcePath,
+        title: metadata.title,
+        warnings,
+        trusted: true,
+        previewSecurity: "trusted"
+      });
+      progress.addStep("Copying public share link...");
+      await this.copyShareLink(outputPath, publishResult.publicUrl);
+      progress.complete(`Done: ${outputPath}`);
+      this.openResultSummary({
+        options,
+        sourceKind: "html-file",
+        sourcePath,
+        sourceTitle: metadata.title,
+        presetId: options.presetId,
+        previewSecurity: "trusted",
+        localPath: outputPath,
+        outputPath,
+        usedFallback: false,
+        aiProvider: "none",
+        assetCount: 0,
+        warnings,
+        shareTarget: "github-pages",
+        copiedShareLink: true,
+        commentsEnabled: feedbackResult.injected,
+        commentsStatus: this.describeReaderFeedback(options, feedbackResult),
+        shareTitle: metadata.title,
+        shareHomeTitle: shareHomeProfile.title,
+        publicUrl: publishResult.publicUrl,
+        shareHomeUrl: publishResult.shareHomeUrl
+      });
+      new import_obsidian8.Notice(`HTML uploaded to ${publishResult.publicUrl}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      progress.fail(message);
+      new import_obsidian8.Notice(`HTML upload failed: ${message}`);
+    }
+  }
   async prepareOutputPlan(source, options) {
     const folder = (0, import_obsidian8.normalizePath)(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
     if (!await this.app.vault.adapter.exists(folder)) {
@@ -4991,6 +5239,22 @@ ${source}
     const assetFolder = bundled ? (0, import_obsidian8.normalizePath)(`${folder}/share/${basename}/assets`) : (0, import_obsidian8.normalizePath)(`${folder}/${basename}-assets`);
     const assetRelativePrefix = bundled ? "assets" : `${basename}-assets`;
     return { folder, basename, outputPath, assetFolder, assetRelativePrefix };
+  }
+  async prepareExternalHtmlOutputPlan(fileName) {
+    const folder = (0, import_obsidian8.normalizePath)(this.settings.exportFolder || DEFAULT_SETTINGS.exportFolder);
+    if (!await this.app.vault.adapter.exists(folder)) {
+      await this.app.vault.createFolder(folder);
+    }
+    const basename = basenameFromHtmlFileName(fileName);
+    const outputPath = (0, import_obsidian8.normalizePath)(`${folder}/share/${basename}/index.html`);
+    const assetFolder = (0, import_obsidian8.normalizePath)(`${folder}/share/${basename}/assets`);
+    return {
+      folder,
+      basename,
+      outputPath,
+      assetFolder,
+      assetRelativePrefix: "assets"
+    };
   }
   async writeHtmlFile(plan, html, options, sourcePath) {
     await this.ensureParentFolder(plan.outputPath);
@@ -5030,6 +5294,19 @@ ${source}
       });
     }
     return { mappings, warnings };
+  }
+  ensureHtmlTitle(html, title) {
+    const value = String(html || "");
+    if (/<title\b/i.test(value)) {
+      return value;
+    }
+    const safeTitle = this.escapeHtmlValue(title || "MarkTL HTML upload");
+    if (/<\/head>/i.test(value)) {
+      return value.replace(/<\/head>/i, `<title>${safeTitle}</title>
+</head>`);
+    }
+    return `<title>${safeTitle}</title>
+${value}`;
   }
   resolveImageFile(target, source) {
     var _a;

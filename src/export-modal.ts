@@ -149,12 +149,14 @@ export class MarktlExportModal extends Modal {
   private options: ExportOptions;
   private plugin: MarktlPlugin;
   private onSubmit: (options: ExportOptions) => void;
+  private onUploadHtml: (options: ExportOptions) => void;
   private showAdvanced = false;
 
-  constructor(app: App, plugin: MarktlPlugin, onSubmit: (options: ExportOptions) => void) {
+  constructor(app: App, plugin: MarktlPlugin, onSubmit: (options: ExportOptions) => void, onUploadHtml: (options: ExportOptions) => void) {
     super(app);
     this.plugin = plugin;
     this.onSubmit = onSubmit;
+    this.onUploadHtml = onUploadHtml;
     this.modalEl.addClass('marktl-export-modal');
     const baseOptions: ExportOptions = {
       presetId: 'custom',
@@ -196,6 +198,7 @@ export class MarktlExportModal extends Modal {
     });
 
     this.renderShareHomeSelector(contentEl);
+    this.renderDirectHtmlUpload(contentEl);
     this.renderDecisionRail(contentEl);
     this.renderContextSelector(contentEl);
     this.renderExecutionSummary(contentEl);
@@ -215,6 +218,25 @@ export class MarktlExportModal extends Modal {
     }
 
     this.renderActions(contentEl);
+  }
+
+  private renderDirectHtmlUpload(container: HTMLElement): void {
+    const section = container.createDiv({ cls: 'marktl-choice-section marktl-html-upload-section' });
+    const header = section.createDiv({ cls: 'marktl-choice-header' });
+    header.createEl('span', { cls: 'marktl-choice-step marktl-choice-step-hub', text: 'HTML' });
+    const copy = header.createDiv();
+    copy.createEl('h3', { text: '완성 HTML 바로 업로드' });
+    copy.createEl('p', { text: '이미 만든 HTML 파일을 선택한 공유 허브의 서브페이지로 바로 게시합니다. 노트 변환과 AI 실행은 건너뜁니다.' });
+
+    const actions = section.createDiv({ cls: 'marktl-reference-row marktl-html-upload-row' });
+    actions.createEl('span', {
+      text: '단일 HTML 파일 기준입니다. 이미지·CSS·JS가 상대 경로 파일이면 함께 묶이지 않으므로 HTML 안에 포함하거나 원격 URL을 사용하세요.',
+    });
+    actions.createEl('button', { text: 'HTML 파일 선택해 업로드', type: 'button' })
+      .addEventListener('click', () => {
+        this.close();
+        this.onUploadHtml(this.options);
+      });
   }
 
   onClose(): void {

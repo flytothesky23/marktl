@@ -16,8 +16,9 @@ function validateHtmlArtifact(html, options = {}) {
   }
 
   const trusted = Boolean(options.trusted);
+  const externalHtml = Boolean(options.externalHtml);
   const artifactGoal = String(options.artifactGoal || '');
-  if (trusted && !/<script\b/i.test(value)) {
+  if (trusted && !externalHtml && !/<script\b/i.test(value)) {
     warnings.push('HTML QA: trusted interactive mode produced no script; artifact may be static.');
   }
   if (!trusted && /<script\b|<iframe\b|\son[a-z]+\s*=/i.test(value)) {
@@ -44,7 +45,7 @@ function validateHtmlArtifact(html, options = {}) {
     warnings.push('HTML QA fatal: raw Obsidian-only syntax remains in the HTML.');
   }
 
-  if (options.exportGenre === 'construction-daily') {
+  if (!externalHtml && options.exportGenre === 'construction-daily') {
     const depth = options.exportDepth || 'standard';
     const text = value.replace(/<[^>]+>/g, ' ');
     if (!/(공사일보|공사 일보|daily)/i.test(text)) {

@@ -344,6 +344,20 @@
   color: var(--text-error);
 }
 
+.marktl-html-upload-section {
+  border-color: color-mix(in srgb, var(--text-accent) 30%, var(--background-modifier-border));
+}
+
+.marktl-html-upload-row {
+  background: color-mix(in srgb, var(--background-secondary) 86%, var(--interactive-accent) 14%);
+}
+
+.marktl-html-upload-row button {
+  border-color: color-mix(in srgb, var(--interactive-accent) 48%, var(--background-modifier-border));
+  color: var(--text-accent);
+  font-weight: 700;
+}
+
 .marktl-reference-row {
   align-items: center;
   background: var(--background-secondary);

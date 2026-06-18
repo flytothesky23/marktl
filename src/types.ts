@@ -79,6 +79,7 @@ export interface ExportOptions {
 
 export interface ExportSummary {
   options: ExportOptions;
+  sourceKind?: 'markdown-note' | 'html-file';
   sourcePath?: string;
   sourceTitle?: string;
   presetId?: string;
