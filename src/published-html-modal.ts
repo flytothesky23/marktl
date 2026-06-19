@@ -54,6 +54,18 @@ export class MarktlPublishedHtmlModal extends Modal {
           } catch (error) {
             statusEl.setText(error instanceof Error ? error.message : String(error));
           }
+        }))
+      .addButton((button) => button
+        .setButtonText('모든 허브 메인페이지 복구')
+        .onClick(async () => {
+          statusEl.setText('모든 공유 허브 메인페이지를 복구하는 중...');
+          try {
+            const result = await this.plugin.repairAllPublishedShareIndexes();
+            new Notice(`MarkTL 공유 허브 ${result.repairedCount}개를 복구했습니다.`);
+            await this.render();
+          } catch (error) {
+            statusEl.setText(error instanceof Error ? error.message : String(error));
+          }
         }));
 
     const listEl = contentEl.createDiv();

@@ -321,6 +321,19 @@ export default class MarktlPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: 'repair-all-share-hub-indexes',
+      name: 'Repair all MarkTL share hub indexes',
+      callback: async () => {
+        try {
+          const result = await this.repairAllPublishedShareIndexes();
+          new Notice(`MarkTL 공유 허브 ${result.repairedCount}개를 복구했습니다.`);
+        } catch (error) {
+          new Notice(error instanceof Error ? error.message : String(error));
+        }
+      },
+    });
+
+    this.addCommand({
       id: 'upload-existing-html-to-share-hub',
       name: 'Upload existing HTML to MarkTL share hub...',
       callback: () => {
@@ -1521,6 +1534,29 @@ ${value}
     const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
     await this.writePublishedShareIndex(context, index);
     return index;
+  }
+
+  async repairAllPublishedShareIndexes(): Promise<{ repairedCount: number; itemCount: number; results: Array<{ profileId: string; title: string; itemCount: number }> }> {
+    await this.refreshSettingsFromDisk();
+    const profiles = normalizeShareHomeProfiles(this.settings.shareHomeProfiles, this.settings) as ShareHomeProfile[];
+    const results: Array<{ profileId: string; title: string; itemCount: number }> = [];
+    let itemCount = 0;
+
+    for (const profile of profiles) {
+      const index = await this.repairPublishedShareIndex(profile.id);
+      results.push({
+        profileId: profile.id,
+        title: profile.title,
+        itemCount: index.items.length,
+      });
+      itemCount += index.items.length;
+    }
+
+    return {
+      repairedCount: results.length,
+      itemCount,
+      results,
+    };
   }
 
   async writePublishedShareIndex(context: GithubPagesContext, index: PublishedShareIndex): Promise<void> {

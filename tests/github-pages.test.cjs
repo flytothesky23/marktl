@@ -147,8 +147,8 @@ test('renders share home page with published links', () => {
   assert.match(html, /padding:16px 16px 22px/);
   assert.match(html, /class="tile"/);
   assert.match(html, /grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,620px\),1fr\)\)/);
-  assert.match(html, /grid-template-columns:minmax\(320px,44%\) minmax\(0,1fr\);min-height:180px/);
-  assert.match(html, /min-height:180px;object-fit:cover/);
+  assert.match(html, /grid-template-columns:minmax\(320px,44%\) minmax\(0,1fr\);height:180px;min-height:0/);
+  assert.match(html, /height:100%;min-height:0;object-fit:cover/);
   assert.doesNotMatch(html, /tile\[data-type="공사일보"]/);
   assert.match(html, /border-right:1px solid rgba\(255,255,255,\.08\)/);
   assert.doesNotMatch(html, /object-fit:contain/);

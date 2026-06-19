@@ -34,6 +34,7 @@ test('checked-in bundle is generated from source and keeps release markers', () 
       'padding:16px 16px 22px',
       'renderShareIndexHtml',
       'Manage published MarkTL HTML',
+      'Repair all MarkTL share hub indexes',
       'replacePublishedShareThumbnail',
       'shareHomeProfileId',
       'deleteGithubPathRecursive',
@@ -58,6 +59,7 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(mainSource, /Manage published MarkTL HTML/);
   assert.match(mainSource, /loadPublishedShareIndex/);
   assert.match(mainSource, /repairPublishedShareIndex/);
+  assert.match(mainSource, /repairAllPublishedShareIndexes/);
   assert.match(mainSource, /deletePublishedShareItem/);
   assert.match(mainSource, /replacePublishedShareThumbnail/);
   assert.match(mainSource, /getGithubPagesContext\(shareHomeProfileId/);
@@ -70,10 +72,11 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(modalSource, /isNoisyPublishedMeta/);
   assert.doesNotMatch(modalSource, /item\.sourcePath \|\|/);
   assert.match(modalSource, /인덱스 메타데이터 복구/);
+  assert.match(modalSource, /모든 허브 메인페이지 복구/);
   assert.match(rendererSource, /function repairShareIndex/);
   assert.match(rendererSource, /통합선별공장 Archive/);
   assert.match(rendererSource, /repeat\(auto-fit,minmax\(min\(100%,620px\),1fr\)\)/);
-  assert.match(rendererSource, /minmax\(320px,44%\) minmax\(0,1fr\);min-height:180px/);
+  assert.match(rendererSource, /minmax\(320px,44%\) minmax\(0,1fr\);height:180px;min-height:0/);
   assert.doesNotMatch(rendererSource, /object-fit:contain/);
   assert.doesNotMatch(rendererSource, /tile\[data-type="공사일보"]/);
 });
