@@ -1695,7 +1695,7 @@ var require_github_pages = __commonJS({
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(description)}">
 <style>
-*{box-sizing:border-box}html,body{height:100%;background:#050507}body{margin:0;min-width:0;width:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f7f8fb;background:radial-gradient(circle at 12% 0%,rgba(255,61,61,.3),transparent 32rem),radial-gradient(circle at 88% 5%,rgba(25,211,197,.22),transparent 30rem),linear-gradient(180deg,#08090d 0%,#111014 48%,#050507 100%);overflow:hidden}a{color:inherit;text-decoration:none}button,input{font:inherit}.app{width:min(1480px,100%);height:100dvh;margin:0 auto;padding:clamp(14px,2vw,28px);display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;overflow:hidden}.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,370px);gap:24px;align-items:start;min-height:0}.hero-panel{display:grid;align-content:start;gap:0;min-width:0;padding-top:8px}.eyebrow{margin:0 0 8px;color:#ffb020;font-size:12px;font-weight:950;letter-spacing:.16em;text-transform:uppercase}.top h1{max-width:860px;margin:0;font-size:clamp(30px,4vw,56px);line-height:1.02;letter-spacing:0;font-weight:950;text-wrap:balance}.hero-copy{max-width:820px;margin:12px 0 0;color:#c8d0dc;font-size:clamp(14px,1.18vw,17px);line-height:1.5}.calendar{height:300px;min-height:300px;align-self:start;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.105),rgba(255,255,255,.045));box-shadow:0 18px 48px rgba(0,0,0,.26);padding:16px 16px 22px;backdrop-filter:blur(18px)}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.cal-title{font-size:16px;font-weight:950;letter-spacing:.02em}.cal-nav{display:flex;gap:6px}.cal-nav button{display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer}.cal-nav button:hover{background:#ff3d3d}.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:4px}.cal-week{color:#8d98a8;font-size:10px;font-weight:900;text-align:center}.cal-day{position:relative;display:grid;place-items:center;min-height:24px;border:0;border-radius:7px;background:transparent;color:#cfd6e4;font-size:12px;font-weight:800}.cal-day.muted{opacity:.28}.cal-day.has-doc{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;min-height:30px!important;padding:3px 4px 2px!important;line-height:1!important;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ff3d3d,#ff9f1c);box-shadow:0 8px 18px rgba(255,80,40,.22)}.cal-day.has-doc::after{content:attr(data-type);display:block;max-width:38px;font-size:6.5px;font-weight:900;color:rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{position:static;display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:10px;align-items:center;max-width:100%;overflow:hidden;margin-top:16px;padding:8px 0 0;background:transparent;border:0;backdrop-filter:none}.search{height:38px;min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;padding:0 13px;outline:none}.search::placeholder{color:#8f98a8}.search:focus{border-color:#ffb020;box-shadow:0 0 0 3px rgba(255,176,32,.16)}.filters{min-width:0;max-width:100%;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;max-height:48px;overflow:hidden;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.filters button,.tags button{border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(255,255,255,.065);color:#dce3ef;cursor:pointer;white-space:nowrap}.filters button{height:22px;padding:0 7px;font-size:10px;line-height:1;font-weight:850}.filters button.active{border-color:#ff3d3d;background:#ff3d3d;color:#fff}.content{min-height:0;overflow:auto;padding:0 2px 28px 0;scrollbar-color:rgba(255,255,255,.26) transparent}.content::-webkit-scrollbar{width:10px}.content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:999px}.section-head{position:static;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 8px;padding:2px 0 8px;background:transparent}.section-head h2{margin:0;font-size:18px;letter-spacing:0}.section-head span{color:#9aa4b5;font-size:12px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.tile{container-type:inline-size;position:relative;display:grid;grid-template-columns:42% minmax(0,1fr);min-height:198px;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.095),rgba(255,255,255,.035));box-shadow:0 16px 34px rgba(0,0,0,.28);animation:tileIn .42s ease both;animation-delay:calc(var(--i)*42ms);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.tile::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 34%,transparent),transparent 58%);opacity:.34;pointer-events:none}.tile:hover{transform:translateY(-4px) scale(1.01);border-color:color-mix(in srgb,var(--accent) 72%,white);box-shadow:0 24px 54px rgba(0,0,0,.42)}.poster{position:relative;min-width:0;background:#181a22;overflow:hidden}.poster img{width:100%;height:100%;min-height:198px;object-fit:cover;display:block;transform:scale(1.01);transition:transform .25s ease,filter .25s ease}.tile:hover .poster img{transform:scale(1.05);filter:saturate(1.12)}.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 48%,rgba(10,10,12,.88) 100%)}.tile-body{position:relative;min-width:0;display:flex;flex-direction:column;padding:14px 44px 16px 14px}.meta-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;color:#aab4c4;font-size:11px;font-weight:850}.type{color:var(--accent2);text-transform:uppercase}.tile h2{margin:0;color:#fff;font-size:clamp(17px,2cqi,23px);line-height:1.18;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tile p{margin:8px 0 0;color:#c9d0dc;font-size:13px;line-height:1.42;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tags{display:flex;flex-wrap:nowrap;align-items:center;gap:5px;min-height:26px;max-height:26px;overflow-x:auto;overflow-y:hidden;margin-top:auto;padding:4px 38px 0 0;scrollbar-width:none}.tags::-webkit-scrollbar{display:none}.tags button{flex:0 0 auto;height:21px;line-height:1;padding:0 7px;font-size:10px;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.play{position:absolute;right:12px;bottom:12px;z-index:4;display:grid;place-items:center;width:30px;height:30px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 20px rgba(0,0,0,.26);font-size:12px}.empty{padding:18px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;color:#aab4c4}.hidden{display:none!important}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"]{grid-template-columns:minmax(245px,47%) minmax(0,1fr)}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster{align-self:center;aspect-ratio:16/9;height:auto;min-height:0;margin-left:10px;border-radius:8px;background:#090b10;border:1px solid rgba(255,255,255,.1)}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster img{height:100%;min-height:0;object-fit:contain;padding:0;background:#090b10}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster::after{background:linear-gradient(90deg,transparent 72%,rgba(10,10,12,.82) 100%)}@keyframes tileIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}@media(max-width:980px){.app{padding:10px 12px 16px;gap:8px}.top{grid-template-columns:1fr;gap:9px}.hero-panel{padding-top:0}.eyebrow{font-size:10px;margin-bottom:5px;letter-spacing:.14em}.top h1{font-size:clamp(25px,7.4vw,32px);line-height:1.02;max-width:360px}.hero-copy{margin-top:7px;font-size:12.5px;line-height:1.42;max-width:390px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.toolbar{grid-template-columns:1fr;gap:6px;margin-top:8px;padding:0;overflow:visible}.search{height:34px;border-radius:7px;font-size:12.5px;padding:0 10px}.filters{max-height:52px;gap:4px}.filters button{height:22px;padding:0 7px;font-size:10px}.calendar{height:256px;min-height:256px;padding:10px 10px 14px}.cal-title{font-size:14px}.cal-nav button{width:25px;height:25px}.cal-day{min-height:20px;font-size:10.5px}.cal-day.has-doc{min-height:24px!important;padding:2px 3px!important}.cal-day.has-doc::after{display:none}.section-head{padding:4px 0 7px;margin-bottom:7px}.section-head h2{font-size:15px}.section-head span{font-size:11px}.grid{grid-template-columns:1fr;gap:7px}.tile,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"]{grid-template-columns:94px minmax(0,1fr);min-height:96px;border-radius:8px}.poster,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster{width:auto;aspect-ratio:auto;margin-left:0;border:0;border-radius:0}.poster img,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster img{min-height:96px;height:100%;object-fit:cover}.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster img{object-fit:contain;background:#090b10}.poster::after,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster::after{background:linear-gradient(90deg,transparent 28%,rgba(10,10,12,.9) 100%)}.tile-body{padding:8px 34px 7px 10px}.meta-line{font-size:9.5px;margin-bottom:4px}.tile h2{font-size:15px;line-height:1.12;-webkit-line-clamp:2}.tile p{font-size:11px;line-height:1.25;margin-top:4px;-webkit-line-clamp:1}.play{width:24px;height:24px;right:7px;bottom:7px;font-size:10px}.tags{display:none}}@media(max-width:420px){.app{padding:9px 10px 14px}.calendar{display:none}.tile,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"]{grid-template-columns:88px minmax(0,1fr);min-height:92px}.poster img,.tile[data-type="\uACF5\uC0AC\uC77C\uBCF4"] .poster img{min-height:92px}.top h1{font-size:25px}.hero-copy{font-size:12px}.filters button{font-size:10px}.tile h2{font-size:14.5px}}
+*{box-sizing:border-box}html,body{height:100%;background:#050507}body{margin:0;min-width:0;width:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f7f8fb;background:radial-gradient(circle at 12% 0%,rgba(255,61,61,.3),transparent 32rem),radial-gradient(circle at 88% 5%,rgba(25,211,197,.22),transparent 30rem),linear-gradient(180deg,#08090d 0%,#111014 48%,#050507 100%);overflow:hidden}a{color:inherit;text-decoration:none}button,input{font:inherit}.app{width:min(1480px,100%);height:100dvh;margin:0 auto;padding:clamp(14px,2vw,28px);display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;overflow:hidden}.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,370px);gap:24px;align-items:start;min-height:0}.hero-panel{display:grid;align-content:start;gap:0;min-width:0;padding-top:8px}.eyebrow{margin:0 0 8px;color:#ffb020;font-size:12px;font-weight:950;letter-spacing:.16em;text-transform:uppercase}.top h1{max-width:860px;margin:0;font-size:clamp(30px,4vw,56px);line-height:1.02;letter-spacing:0;font-weight:950;text-wrap:balance}.hero-copy{max-width:820px;margin:12px 0 0;color:#c8d0dc;font-size:clamp(14px,1.18vw,17px);line-height:1.5}.calendar{height:300px;min-height:300px;align-self:start;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.105),rgba(255,255,255,.045));box-shadow:0 18px 48px rgba(0,0,0,.26);padding:16px 16px 22px;backdrop-filter:blur(18px)}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.cal-title{font-size:16px;font-weight:950;letter-spacing:.02em}.cal-nav{display:flex;gap:6px}.cal-nav button{display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer}.cal-nav button:hover{background:#ff3d3d}.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:4px}.cal-week{color:#8d98a8;font-size:10px;font-weight:900;text-align:center}.cal-day{position:relative;display:grid;place-items:center;min-height:24px;border:0;border-radius:7px;background:transparent;color:#cfd6e4;font-size:12px;font-weight:800}.cal-day.muted{opacity:.28}.cal-day.has-doc{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;min-height:30px!important;padding:3px 4px 2px!important;line-height:1!important;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ff3d3d,#ff9f1c);box-shadow:0 8px 18px rgba(255,80,40,.22)}.cal-day.has-doc::after{content:attr(data-type);display:block;max-width:38px;font-size:6.5px;font-weight:900;color:rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{position:static;display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:10px;align-items:center;max-width:100%;overflow:hidden;margin-top:16px;padding:8px 0 0;background:transparent;border:0;backdrop-filter:none}.search{height:38px;min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;padding:0 13px;outline:none}.search::placeholder{color:#8f98a8}.search:focus{border-color:#ffb020;box-shadow:0 0 0 3px rgba(255,176,32,.16)}.filters{min-width:0;max-width:100%;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;max-height:48px;overflow:hidden;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.filters button,.tags button{border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(255,255,255,.065);color:#dce3ef;cursor:pointer;white-space:nowrap}.filters button{height:22px;padding:0 7px;font-size:10px;line-height:1;font-weight:850}.filters button.active{border-color:#ff3d3d;background:#ff3d3d;color:#fff}.content{min-height:0;overflow:auto;padding:0 2px 28px 0;scrollbar-color:rgba(255,255,255,.26) transparent}.content::-webkit-scrollbar{width:10px}.content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:999px}.section-head{position:static;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 8px;padding:2px 0 8px;background:transparent}.section-head h2{margin:0;font-size:18px;letter-spacing:0}.section-head span{color:#9aa4b5;font-size:12px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.tile{container-type:inline-size;position:relative;display:grid;grid-template-columns:42% minmax(0,1fr);min-height:198px;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.095),rgba(255,255,255,.035));box-shadow:0 16px 34px rgba(0,0,0,.28);animation:tileIn .42s ease both;animation-delay:calc(var(--i)*42ms);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.tile::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 34%,transparent),transparent 58%);opacity:.34;pointer-events:none}.tile:hover{transform:translateY(-4px) scale(1.01);border-color:color-mix(in srgb,var(--accent) 72%,white);box-shadow:0 24px 54px rgba(0,0,0,.42)}.poster{position:relative;min-width:0;background:#181a22;overflow:hidden;border-right:1px solid rgba(255,255,255,.08)}.poster img{width:100%;height:100%;min-height:198px;object-fit:cover;display:block;transform:scale(1.01);transition:transform .25s ease,filter .25s ease}.tile:hover .poster img{transform:scale(1.05);filter:saturate(1.12)}.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 48%,rgba(10,10,12,.88) 100%)}.tile-body{position:relative;min-width:0;display:flex;flex-direction:column;padding:14px 44px 16px 14px}.meta-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;color:#aab4c4;font-size:11px;font-weight:850}.type{color:var(--accent2);text-transform:uppercase}.tile h2{margin:0;color:#fff;font-size:clamp(17px,2cqi,23px);line-height:1.18;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tile p{margin:8px 0 0;color:#c9d0dc;font-size:13px;line-height:1.42;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tags{display:flex;flex-wrap:nowrap;align-items:center;gap:5px;min-height:26px;max-height:26px;overflow-x:auto;overflow-y:hidden;margin-top:auto;padding:4px 38px 0 0;scrollbar-width:none}.tags::-webkit-scrollbar{display:none}.tags button{flex:0 0 auto;height:21px;line-height:1;padding:0 7px;font-size:10px;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.play{position:absolute;right:12px;bottom:12px;z-index:4;display:grid;place-items:center;width:30px;height:30px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 20px rgba(0,0,0,.26);font-size:12px}.empty{padding:18px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;color:#aab4c4}.hidden{display:none!important}@keyframes tileIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}@media(max-width:980px){.app{padding:10px 12px 16px;gap:8px}.top{grid-template-columns:1fr;gap:9px}.hero-panel{padding-top:0}.eyebrow{font-size:10px;margin-bottom:5px;letter-spacing:.14em}.top h1{font-size:clamp(25px,7.4vw,32px);line-height:1.02;max-width:360px}.hero-copy{margin-top:7px;font-size:12.5px;line-height:1.42;max-width:390px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.toolbar{grid-template-columns:1fr;gap:6px;margin-top:8px;padding:0;overflow:visible}.search{height:34px;border-radius:7px;font-size:12.5px;padding:0 10px}.filters{max-height:52px;gap:4px}.filters button{height:22px;padding:0 7px;font-size:10px}.calendar{height:256px;min-height:256px;padding:10px 10px 14px}.cal-title{font-size:14px}.cal-nav button{width:25px;height:25px}.cal-day{min-height:20px;font-size:10.5px}.cal-day.has-doc{min-height:24px!important;padding:2px 3px!important}.cal-day.has-doc::after{display:none}.section-head{padding:4px 0 7px;margin-bottom:7px}.section-head h2{font-size:15px}.section-head span{font-size:11px}.grid{grid-template-columns:1fr;gap:7px}.tile{grid-template-columns:104px minmax(0,1fr);min-height:96px;border-radius:8px}.poster{width:auto;border:0;border-radius:0}.poster img{min-height:96px;height:100%;object-fit:cover}.poster::after{background:linear-gradient(90deg,transparent 28%,rgba(10,10,12,.9) 100%)}.tile-body{padding:8px 34px 7px 10px}.meta-line{font-size:9.5px;margin-bottom:4px}.tile h2{font-size:15px;line-height:1.12;-webkit-line-clamp:2}.tile p{font-size:11px;line-height:1.25;margin-top:4px;-webkit-line-clamp:1}.play{width:24px;height:24px;right:7px;bottom:7px;font-size:10px}.tags{display:none}}@media(max-width:420px){.app{padding:9px 10px 14px}.calendar{display:none}.tile{grid-template-columns:96px minmax(0,1fr);min-height:92px}.poster img{min-height:92px}.top h1{font-size:25px}.hero-copy{font-size:12px}.filters button{font-size:10px}.tile h2{font-size:14.5px}}
 </style>
 </head>
 <body>
@@ -2471,12 +2471,16 @@ var require_external_html = __commonJS({
       return warnings;
     }
     function externalThumbnailAssetName2(fileName) {
-      const cleanName = String(fileName || "").split(/[\\/]/).filter(Boolean).pop() || "";
-      const extension = path.extname(cleanName.split(/[?#]/)[0] || "").toLowerCase();
+      const extension = externalThumbnailExtension2(fileName);
       if (!EXTERNAL_THUMBNAIL_EXTENSIONS.has(extension)) {
         return "";
       }
       return `thumbnail${extension}`;
+    }
+    function externalThumbnailExtension2(fileName) {
+      const cleanName = String(fileName || "").split(/[\\/]/).filter(Boolean).pop() || "";
+      const extension = path.extname(cleanName.split(/[?#]/)[0] || "").toLowerCase();
+      return EXTERNAL_THUMBNAIL_EXTENSIONS.has(extension) ? extension : "";
     }
     function isSupportedExternalThumbnailFileName2(fileName) {
       return Boolean(externalThumbnailAssetName2(fileName));
@@ -2523,6 +2527,7 @@ var require_external_html = __commonJS({
     module2.exports = {
       basenameFromHtmlFileName: basenameFromHtmlFileName2,
       externalThumbnailAssetName: externalThumbnailAssetName2,
+      externalThumbnailExtension: externalThumbnailExtension2,
       extractExternalHtmlMetadata: extractExternalHtmlMetadata2,
       findExternalHtmlAssetWarnings: findExternalHtmlAssetWarnings2,
       isSupportedExternalThumbnailFileName: isSupportedExternalThumbnailFileName2,
@@ -3172,6 +3177,10 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     const actions = section.createDiv({ cls: "marktl-hub-actions" });
     actions.createEl("button", { text: "\uC0C8 \uD5C8\uBE0C", type: "button" }).addEventListener("click", () => this.openShareHomeCreateModal(profiles));
     actions.createEl("button", { text: "\uC120\uD0DD \uD5C8\uBE0C \uC218\uC815", type: "button" }).addEventListener("click", () => this.openShareHomeEditModal(selectedProfile, profiles));
+    actions.createEl("button", { text: "\uAC8C\uC2DC\uBB3C \uAD00\uB9AC", type: "button" }).addEventListener("click", () => {
+      this.close();
+      this.plugin.openPublishedHtmlManager(selectedProfile.id);
+    });
     const deleteButton = actions.createEl("button", {
       cls: "marktl-danger-button",
       text: "\uC120\uD0DD \uD5C8\uBE0C \uC0AD\uC81C",
@@ -3400,9 +3409,10 @@ var MarktlExportModal = class extends import_obsidian.Modal {
 // src/published-html-modal.ts
 var import_obsidian2 = require("obsidian");
 var MarktlPublishedHtmlModal = class extends import_obsidian2.Modal {
-  constructor(app, plugin) {
+  constructor(app, plugin, shareHomeProfileId = "") {
     super(app);
     this.plugin = plugin;
+    this.shareHomeProfileId = shareHomeProfileId;
   }
   onOpen() {
     void this.render();
@@ -3412,7 +3422,7 @@ var MarktlPublishedHtmlModal = class extends import_obsidian2.Modal {
     contentEl.empty();
     contentEl.createEl("h2", { text: "\uAC8C\uC2DC\uB41C MarkTL HTML" });
     const description = contentEl.createEl("p", {
-      text: "GitHub Pages \uC778\uB371\uC2A4 \uBA54\uD0C0\uB370\uC774\uD130\uB97C \uC5EC\uAE30\uC11C \uBCF5\uAD6C\uD569\uB2C8\uB2E4. \uC911\uBCF5 \uCE74\uB4DC\uB294 \uACF5\uAC1C \uC544\uCE74\uC774\uBE0C\uC640 \uB0B4\uBCF4\uB0B8 \uD3F4\uB354\uC5D0\uC11C \uD568\uAED8 \uC81C\uAC70\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+      text: "\uD604\uC7AC \uC120\uD0DD\uB41C \uACF5\uC720 \uD5C8\uBE0C\uC758 \uAC8C\uC2DC\uBB3C\uC744 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC798\uBABB \uC62C\uB9B0 \uC11C\uBE0C\uD398\uC774\uC9C0\uB294 \uC644\uC804 \uC0AD\uC81C\uD558\uACE0, \uCE74\uB4DC \uC378\uB124\uC77C\uC740 \uAC8C\uC2DC \uD6C4\uC5D0\uB3C4 \uAD50\uCCB4\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     });
     description.addClass("setting-item-description");
     const statusEl = contentEl.createEl("div");
@@ -3420,7 +3430,7 @@ var MarktlPublishedHtmlModal = class extends import_obsidian2.Modal {
     new import_obsidian2.Setting(controls).addButton((button) => button.setButtonText("\uC0C8\uB85C\uACE0\uCE68").onClick(() => void this.render())).addButton((button) => button.setButtonText("\uC778\uB371\uC2A4 \uBA54\uD0C0\uB370\uC774\uD130 \uBCF5\uAD6C").setCta().onClick(async () => {
       statusEl.setText("\uACF5\uAC1C \uC778\uB371\uC2A4\uB97C \uBCF5\uAD6C\uD558\uB294 \uC911...");
       try {
-        const index = await this.plugin.repairPublishedShareIndex();
+        const index = await this.plugin.repairPublishedShareIndex(this.shareHomeProfileId);
         new import_obsidian2.Notice(`MarkTL \uC778\uB371\uC2A4\uB97C \uBCF5\uAD6C\uD588\uC2B5\uB2C8\uB2E4: ${index.items.length}\uAC1C \uD56D\uBAA9.`);
         await this.render();
       } catch (error) {
@@ -3430,7 +3440,7 @@ var MarktlPublishedHtmlModal = class extends import_obsidian2.Modal {
     const listEl = contentEl.createDiv();
     statusEl.setText("\uAC8C\uC2DC \uC778\uB371\uC2A4\uB97C \uBD88\uB7EC\uC624\uB294 \uC911...");
     try {
-      const { index } = await this.plugin.loadPublishedShareIndex();
+      const { index } = await this.plugin.loadPublishedShareIndex(this.shareHomeProfileId);
       statusEl.setText(`\uAC8C\uC2DC \uD56D\uBAA9 ${index.items.length}\uAC1C.`);
       if (!index.items.length) {
         listEl.createEl("p", { text: "\uAC8C\uC2DC\uB41C \uBB38\uC11C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4." });
@@ -3461,6 +3471,8 @@ var MarktlPublishedHtmlModal = class extends import_obsidian2.Modal {
         await navigator.clipboard.writeText(url);
         new import_obsidian2.Notice("MarkTL URL\uC744 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4.");
       }
+    })).addButton((button) => button.setButtonText("\uC378\uB124\uC77C \uAD50\uCCB4").onClick(() => {
+      this.chooseReplacementThumbnail(item);
     })).addButton((button) => button.setButtonText("\uC644\uC804 \uC0AD\uC81C").setWarning().onClick(async () => {
       const confirmed = window.confirm(`\uAC8C\uC2DC\uB41C MarkTL \uC0B0\uCD9C\uBB3C\uC744 \uC0AD\uC81C\uD558\uACE0 \uC544\uCE74\uC774\uBE0C\uC5D0\uC11C\uB3C4 \uC81C\uAC70\uD560\uAE4C\uC694?
 
@@ -3469,13 +3481,33 @@ ${title}`);
         return;
       }
       try {
-        const result = await this.plugin.deletePublishedShareItem(item);
+        const result = await this.plugin.deletePublishedShareItem(item, this.shareHomeProfileId);
         new import_obsidian2.Notice(`\uC544\uCE74\uC774\uBE0C \uD56D\uBAA9 ${result.removedCount}\uAC1C\uB97C \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4.`);
         await this.render();
       } catch (error) {
         new import_obsidian2.Notice(error instanceof Error ? error.message : String(error));
       }
     }));
+  }
+  chooseReplacementThumbnail(item) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml";
+    input.onchange = async () => {
+      var _a;
+      const file = (_a = input.files) == null ? void 0 : _a[0];
+      if (!file) {
+        return;
+      }
+      try {
+        const result = await this.plugin.replacePublishedShareThumbnail(item, file, this.shareHomeProfileId);
+        new import_obsidian2.Notice(`\uC378\uB124\uC77C\uC744 \uAD50\uCCB4\uD588\uC2B5\uB2C8\uB2E4: ${result.updatedCount}\uAC1C \uD56D\uBAA9.`);
+        await this.render();
+      } catch (error) {
+        new import_obsidian2.Notice(error instanceof Error ? error.message : String(error));
+      }
+    };
+    input.click();
   }
 };
 
@@ -4432,7 +4464,7 @@ function buildAgentSetupPrompt(agent) {
 var { convertWithAiFallback, getProviderPrivacyNote: getProviderPrivacyNote2 } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
-var { basenameFromHtmlFileName, externalThumbnailAssetName, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require_external_html();
+var { basenameFromHtmlFileName, externalThumbnailAssetName, externalThumbnailExtension, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require_external_html();
 var { normalizeExportSelection } = require_export_profiles();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
@@ -4660,7 +4692,7 @@ var MarktlPlugin = class extends import_obsidian8.Plugin {
       id: "manage-published-html",
       name: "Manage published MarkTL HTML",
       callback: () => {
-        new MarktlPublishedHtmlModal(this.app, this).open();
+        this.openPublishedHtmlManager();
       }
     });
     this.addCommand({
@@ -4786,6 +4818,9 @@ var MarktlPlugin = class extends import_obsidian8.Plugin {
     }, (options, includeThumbnail) => {
       this.chooseAndPublishExternalHtml(options, Boolean(includeThumbnail));
     }).open();
+  }
+  openPublishedHtmlManager(shareHomeProfileId = "") {
+    new MarktlPublishedHtmlModal(this.app, this, shareHomeProfileId).open();
   }
   repairHtmlHead(html) {
     let value = String(html || "").trim();
@@ -5719,7 +5754,7 @@ ${value}`;
     ].join("\n");
     await this.app.vault.adapter.write(readmePath, content);
   }
-  getGithubPagesContext() {
+  getGithubPagesContext(shareHomeProfileId = this.settings.activeShareHomeProfileId) {
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
       throw new Error("GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.");
@@ -5728,7 +5763,7 @@ ${value}`;
       throw new Error("GitHub token is not configured. Add a token with Contents write permission in MarkTL settings.");
     }
     const branch = this.settings.githubBranch.trim() || "main";
-    const shareHomeProfile = resolveShareHomeProfile3(this.settings, this.settings.activeShareHomeProfileId);
+    const shareHomeProfile = resolveShareHomeProfile3(this.settings, shareHomeProfileId);
     const basePath = shareHomeProfile.basePath;
     const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
     return {
@@ -5741,17 +5776,17 @@ ${value}`;
       shareHomeProfile
     };
   }
-  async loadPublishedShareIndex() {
+  async loadPublishedShareIndex(shareHomeProfileId = "") {
     await this.refreshSettingsFromDisk();
-    const context = this.getGithubPagesContext();
+    const context = this.getGithubPagesContext(shareHomeProfileId || this.settings.activeShareHomeProfileId);
     const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
     return {
       context,
       index: repairShareIndex(existing || { items: [] })
     };
   }
-  async repairPublishedShareIndex() {
-    const { context, index } = await this.loadPublishedShareIndex();
+  async repairPublishedShareIndex(shareHomeProfileId = "") {
+    const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
     await this.writePublishedShareIndex(context, index);
     return index;
   }
@@ -5765,8 +5800,8 @@ ${value}`;
     await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2));
     await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html);
   }
-  async deletePublishedShareItem(target) {
-    const { context, index } = await this.loadPublishedShareIndex();
+  async deletePublishedShareItem(target, shareHomeProfileId = "") {
+    const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
     const targetKeys = this.shareDeleteKeys(target);
     const removed = [];
     const kept = [];
@@ -5797,6 +5832,51 @@ ${value}`;
     }
     await this.writePublishedShareIndex(context, nextIndex);
     return { removedCount: removed.length, index: nextIndex };
+  }
+  async replacePublishedShareThumbnail(target, file, shareHomeProfileId = "") {
+    if (!this.isSupportedExternalThumbnail(file)) {
+      throw new Error("\uC378\uB124\uC77C\uC740 PNG, JPG, WebP, GIF, AVIF, SVG \uC774\uBBF8\uC9C0\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    }
+    const extension = externalThumbnailExtension(file.name);
+    const assetName = `thumbnail-${Date.now().toString(36)}${extension}`;
+    const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
+    const targetKeys = this.shareDeleteKeys(target);
+    const data = await file.arrayBuffer();
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    let updatedCount = 0;
+    let lastThumbnailUrl = "";
+    for (const item of index.items) {
+      const keys = this.shareDeleteKeys(item);
+      const matches = keys.some((key) => targetKeys.includes(key));
+      if (!matches) {
+        continue;
+      }
+      if (!item.slug && !item.shortId) {
+        throw new Error("\uC120\uD0DD\uD55C \uAC8C\uC2DC\uBB3C\uC5D0 slug \uB610\uB294 shortId\uAC00 \uC5C6\uC5B4 \uC378\uB124\uC77C\uC744 \uAD50\uCCB4\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+      }
+      if (item.slug) {
+        await this.putGithubFile(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, item.slug, `assets/${assetName}`), data);
+      }
+      if (item.shortId) {
+        await this.putGithubFile(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, `s/${item.shortId}`, `assets/${assetName}`), data);
+      }
+      const thumbnailUrl = item.shortId ? `${buildShortPagesUrl(context.pagesBaseUrl, context.basePath, item.shortId)}assets/${encodeURIComponent(assetName)}` : `${buildPagesUrl(context.pagesBaseUrl, context.basePath, item.slug || "")}assets/${encodeURIComponent(assetName)}`;
+      item.thumbnailUrl = thumbnailUrl;
+      item.updatedAt = now;
+      item.schemaVersion = Math.max(Number(item.schemaVersion || 0), 2);
+      lastThumbnailUrl = thumbnailUrl;
+      updatedCount += 1;
+    }
+    if (!updatedCount) {
+      throw new Error("No matching published artifact was found.");
+    }
+    const nextIndex = repairShareIndex({
+      ...index,
+      updatedAt: now,
+      items: index.items
+    });
+    await this.writePublishedShareIndex(context, nextIndex);
+    return { updatedCount, index: nextIndex, thumbnailUrl: lastThumbnailUrl };
   }
   shareDeleteKeys(item) {
     return [

@@ -308,6 +308,11 @@ export class MarktlExportModal extends Modal {
       .addEventListener('click', () => this.openShareHomeCreateModal(profiles));
     actions.createEl('button', { text: '선택 허브 수정', type: 'button' })
       .addEventListener('click', () => this.openShareHomeEditModal(selectedProfile, profiles));
+    actions.createEl('button', { text: '게시물 관리', type: 'button' })
+      .addEventListener('click', () => {
+        this.close();
+        this.plugin.openPublishedHtmlManager(selectedProfile.id);
+      });
     const deleteButton = actions.createEl('button', {
       cls: 'marktl-danger-button',
       text: '선택 허브 삭제',

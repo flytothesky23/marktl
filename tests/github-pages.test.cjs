@@ -145,7 +145,9 @@ test('renders share home page with published links', () => {
   assert.match(html, /height:300px/);
   assert.match(html, /padding:16px 16px 22px/);
   assert.match(html, /class="tile"/);
-  assert.match(html, /tile\[data-type="공사일보"]/);
+  assert.doesNotMatch(html, /tile\[data-type="공사일보"]/);
+  assert.match(html, /border-right:1px solid rgba\(255,255,255,\.08\)/);
+  assert.doesNotMatch(html, /object-fit:contain/);
   assert.match(html, /data-type="공사일보"/);
   assert.match(html, /문서, 현장, 회의, 태그 검색/);
   assert.match(html, /#strategy/);

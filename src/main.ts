@@ -13,7 +13,7 @@ import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState, ShareH
 const { convertWithAiFallback, getProviderPrivacyNote } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
 const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
-const { basenameFromHtmlFileName, externalThumbnailAssetName, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require('./core/external-html.js');
+const { basenameFromHtmlFileName, externalThumbnailAssetName, externalThumbnailExtension, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require('./core/external-html.js');
 const { normalizeExportSelection } = require('./core/export-profiles.js');
 const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
 const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
@@ -316,7 +316,7 @@ export default class MarktlPlugin extends Plugin {
       id: 'manage-published-html',
       name: 'Manage published MarkTL HTML',
       callback: () => {
-        new MarktlPublishedHtmlModal(this.app, this).open();
+        this.openPublishedHtmlManager();
       },
     });
 
@@ -461,6 +461,10 @@ export default class MarktlPlugin extends Plugin {
     }, (options, includeThumbnail) => {
       this.chooseAndPublishExternalHtml(options, Boolean(includeThumbnail));
     }).open();
+  }
+
+  openPublishedHtmlManager(shareHomeProfileId = ''): void {
+    new MarktlPublishedHtmlModal(this.app, this, shareHomeProfileId).open();
   }
 
   repairHtmlHead(html: string): string {
@@ -1480,7 +1484,7 @@ ${value}
     await this.app.vault.adapter.write(readmePath, content);
   }
 
-  getGithubPagesContext(): GithubPagesContext {
+  getGithubPagesContext(shareHomeProfileId = this.settings.activeShareHomeProfileId): GithubPagesContext {
     const repo = parseRepo(this.settings.githubRepo);
     if (!repo) {
       throw new Error('GitHub Pages repo is not configured. Use owner/repo in MarkTL settings.');
@@ -1489,7 +1493,7 @@ ${value}
       throw new Error('GitHub token is not configured. Add a token with Contents write permission in MarkTL settings.');
     }
     const branch = this.settings.githubBranch.trim() || 'main';
-    const shareHomeProfile = resolveShareHomeProfile(this.settings, this.settings.activeShareHomeProfileId) as ShareHomeProfile;
+    const shareHomeProfile = resolveShareHomeProfile(this.settings, shareHomeProfileId) as ShareHomeProfile;
     const basePath = shareHomeProfile.basePath;
     const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
     return {
@@ -1503,9 +1507,9 @@ ${value}
     };
   }
 
-  async loadPublishedShareIndex(): Promise<{ context: GithubPagesContext; index: PublishedShareIndex }> {
+  async loadPublishedShareIndex(shareHomeProfileId = ''): Promise<{ context: GithubPagesContext; index: PublishedShareIndex }> {
     await this.refreshSettingsFromDisk();
-    const context = this.getGithubPagesContext();
+    const context = this.getGithubPagesContext(shareHomeProfileId || this.settings.activeShareHomeProfileId);
     const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
     return {
       context,
@@ -1513,8 +1517,8 @@ ${value}
     };
   }
 
-  async repairPublishedShareIndex(): Promise<PublishedShareIndex> {
-    const { context, index } = await this.loadPublishedShareIndex();
+  async repairPublishedShareIndex(shareHomeProfileId = ''): Promise<PublishedShareIndex> {
+    const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
     await this.writePublishedShareIndex(context, index);
     return index;
   }
@@ -1530,8 +1534,8 @@ ${value}
     await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html);
   }
 
-  async deletePublishedShareItem(target: PublishedShareItem): Promise<{ removedCount: number; index: PublishedShareIndex }> {
-    const { context, index } = await this.loadPublishedShareIndex();
+  async deletePublishedShareItem(target: PublishedShareItem, shareHomeProfileId = ''): Promise<{ removedCount: number; index: PublishedShareIndex }> {
+    const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
     const targetKeys = this.shareDeleteKeys(target);
     const removed: PublishedShareItem[] = [];
     const kept: PublishedShareItem[] = [];
@@ -1562,6 +1566,57 @@ ${value}
     }
     await this.writePublishedShareIndex(context, nextIndex);
     return { removedCount: removed.length, index: nextIndex };
+  }
+
+  async replacePublishedShareThumbnail(target: PublishedShareItem, file: File, shareHomeProfileId = ''): Promise<{ updatedCount: number; index: PublishedShareIndex; thumbnailUrl: string }> {
+    if (!this.isSupportedExternalThumbnail(file)) {
+      throw new Error('썸네일은 PNG, JPG, WebP, GIF, AVIF, SVG 이미지만 업로드할 수 있습니다.');
+    }
+    const extension = externalThumbnailExtension(file.name);
+    const assetName = `thumbnail-${Date.now().toString(36)}${extension}`;
+    const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
+    const targetKeys = this.shareDeleteKeys(target);
+    const data = await file.arrayBuffer();
+    const now = new Date().toISOString();
+    let updatedCount = 0;
+    let lastThumbnailUrl = '';
+
+    for (const item of index.items) {
+      const keys = this.shareDeleteKeys(item);
+      const matches = keys.some((key) => targetKeys.includes(key));
+      if (!matches) {
+        continue;
+      }
+      if (!item.slug && !item.shortId) {
+        throw new Error('선택한 게시물에 slug 또는 shortId가 없어 썸네일을 교체할 수 없습니다.');
+      }
+      if (item.slug) {
+        await this.putGithubFile(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, item.slug, `assets/${assetName}`), data);
+      }
+      if (item.shortId) {
+        await this.putGithubFile(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, `s/${item.shortId}`, `assets/${assetName}`), data);
+      }
+      const thumbnailUrl = item.shortId
+        ? `${buildShortPagesUrl(context.pagesBaseUrl, context.basePath, item.shortId)}assets/${encodeURIComponent(assetName)}`
+        : `${buildPagesUrl(context.pagesBaseUrl, context.basePath, item.slug || '')}assets/${encodeURIComponent(assetName)}`;
+      item.thumbnailUrl = thumbnailUrl;
+      item.updatedAt = now;
+      item.schemaVersion = Math.max(Number(item.schemaVersion || 0), 2);
+      lastThumbnailUrl = thumbnailUrl;
+      updatedCount += 1;
+    }
+
+    if (!updatedCount) {
+      throw new Error('No matching published artifact was found.');
+    }
+
+    const nextIndex = repairShareIndex({
+      ...index,
+      updatedAt: now,
+      items: index.items,
+    });
+    await this.writePublishedShareIndex(context, nextIndex);
+    return { updatedCount, index: nextIndex, thumbnailUrl: lastThumbnailUrl };
   }
 
   shareDeleteKeys(item: PublishedShareItem): string[] {

@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const {
   basenameFromHtmlFileName,
   externalThumbnailAssetName,
+  externalThumbnailExtension,
   extractExternalHtmlMetadata,
   findExternalHtmlAssetWarnings,
   isSupportedExternalThumbnailFileName,
@@ -41,6 +42,7 @@ test('warns for relative assets that direct HTML upload cannot bundle', () => {
 test('normalizes direct HTML upload thumbnails to a stable card asset name', () => {
   assert.equal(externalThumbnailAssetName('현장 대표 컷.JPG'), 'thumbnail.jpg');
   assert.equal(externalThumbnailAssetName('/tmp/cover.image.webp?cache=1'), 'thumbnail.webp');
+  assert.equal(externalThumbnailExtension('cover.AVIF'), '.avif');
   assert.equal(isSupportedExternalThumbnailFileName('diagram.svg'), true);
   assert.equal(isSupportedExternalThumbnailFileName('notes.pdf'), false);
   assert.equal(externalThumbnailAssetName('no-extension'), '');

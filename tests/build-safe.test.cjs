@@ -34,6 +34,8 @@ test('checked-in bundle is generated from source and keeps release markers', () 
       'padding:16px 16px 22px',
       'renderShareIndexHtml',
       'Manage published MarkTL HTML',
+      'replacePublishedShareThumbnail',
+      'shareHomeProfileId',
       'deleteGithubPathRecursive',
       'repairShareIndex',
       'construction-daily-report',
@@ -57,10 +59,16 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(mainSource, /loadPublishedShareIndex/);
   assert.match(mainSource, /repairPublishedShareIndex/);
   assert.match(mainSource, /deletePublishedShareItem/);
+  assert.match(mainSource, /replacePublishedShareThumbnail/);
+  assert.match(mainSource, /getGithubPagesContext\(shareHomeProfileId/);
   assert.match(mainSource, /deleteGithubPathRecursive/);
+  assert.match(readRepoFile('src/export-modal.ts'), /openPublishedHtmlManager\(selectedProfile\.id\)/);
   assert.match(mainSource, /githubShareHomeTitle === 'MarkTL Shared HTML'/);
   assert.match(modalSource, /게시된 MarkTL HTML/);
+  assert.match(modalSource, /썸네일 교체/);
   assert.match(modalSource, /인덱스 메타데이터 복구/);
   assert.match(rendererSource, /function repairShareIndex/);
   assert.match(rendererSource, /통합선별공장 Archive/);
+  assert.doesNotMatch(rendererSource, /object-fit:contain/);
+  assert.doesNotMatch(rendererSource, /tile\[data-type="공사일보"]/);
 });

@@ -7,16 +7,20 @@ interface PublishedShareItem {
   url?: string;
   canonicalUrl?: string;
   sourcePath?: string;
+  sourcePathKey?: string;
   shortId?: string;
+  thumbnailUrl?: string;
   updatedAt?: string;
 }
 
 export class MarktlPublishedHtmlModal extends Modal {
   private plugin: MarktlPlugin;
+  private shareHomeProfileId: string;
 
-  constructor(app: App, plugin: MarktlPlugin) {
+  constructor(app: App, plugin: MarktlPlugin, shareHomeProfileId = '') {
     super(app);
     this.plugin = plugin;
+    this.shareHomeProfileId = shareHomeProfileId;
   }
 
   onOpen(): void {
@@ -28,7 +32,7 @@ export class MarktlPublishedHtmlModal extends Modal {
     contentEl.empty();
     contentEl.createEl('h2', { text: '게시된 MarkTL HTML' });
     const description = contentEl.createEl('p', {
-      text: 'GitHub Pages 인덱스 메타데이터를 여기서 복구합니다. 중복 카드는 공개 아카이브와 내보낸 폴더에서 함께 제거할 수 있습니다.',
+      text: '현재 선택된 공유 허브의 게시물을 관리합니다. 잘못 올린 서브페이지는 완전 삭제하고, 카드 썸네일은 게시 후에도 교체할 수 있습니다.',
     });
     description.addClass('setting-item-description');
 
@@ -44,7 +48,7 @@ export class MarktlPublishedHtmlModal extends Modal {
         .onClick(async () => {
           statusEl.setText('공개 인덱스를 복구하는 중...');
           try {
-            const index = await this.plugin.repairPublishedShareIndex();
+            const index = await this.plugin.repairPublishedShareIndex(this.shareHomeProfileId);
             new Notice(`MarkTL 인덱스를 복구했습니다: ${index.items.length}개 항목.`);
             await this.render();
           } catch (error) {
@@ -55,7 +59,7 @@ export class MarktlPublishedHtmlModal extends Modal {
     const listEl = contentEl.createDiv();
     statusEl.setText('게시 인덱스를 불러오는 중...');
     try {
-      const { index } = await this.plugin.loadPublishedShareIndex();
+      const { index } = await this.plugin.loadPublishedShareIndex(this.shareHomeProfileId);
       statusEl.setText(`게시 항목 ${index.items.length}개.`);
       if (!index.items.length) {
         listEl.createEl('p', { text: '게시된 문서가 없습니다.' });
@@ -97,6 +101,11 @@ export class MarktlPublishedHtmlModal extends Modal {
           }
         }))
       .addButton((button) => button
+        .setButtonText('썸네일 교체')
+        .onClick(() => {
+          this.chooseReplacementThumbnail(item);
+        }))
+      .addButton((button) => button
         .setButtonText('완전 삭제')
         .setWarning()
         .onClick(async () => {
@@ -105,12 +114,32 @@ export class MarktlPublishedHtmlModal extends Modal {
             return;
           }
           try {
-            const result = await this.plugin.deletePublishedShareItem(item);
+            const result = await this.plugin.deletePublishedShareItem(item, this.shareHomeProfileId);
             new Notice(`아카이브 항목 ${result.removedCount}개를 삭제했습니다.`);
             await this.render();
           } catch (error) {
             new Notice(error instanceof Error ? error.message : String(error));
           }
         }));
+  }
+
+  private chooseReplacementThumbnail(item: PublishedShareItem): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) {
+        return;
+      }
+      try {
+        const result = await this.plugin.replacePublishedShareThumbnail(item, file, this.shareHomeProfileId);
+        new Notice(`썸네일을 교체했습니다: ${result.updatedCount}개 항목.`);
+        await this.render();
+      } catch (error) {
+        new Notice(error instanceof Error ? error.message : String(error));
+      }
+    };
+    input.click();
   }
 }

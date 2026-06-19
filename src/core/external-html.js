@@ -52,15 +52,20 @@ function findExternalHtmlAssetWarnings(html) {
 }
 
 function externalThumbnailAssetName(fileName) {
+  const extension = externalThumbnailExtension(fileName);
+  if (!EXTERNAL_THUMBNAIL_EXTENSIONS.has(extension)) {
+    return '';
+  }
+  return `thumbnail${extension}`;
+}
+
+function externalThumbnailExtension(fileName) {
   const cleanName = String(fileName || '')
     .split(/[\\/]/)
     .filter(Boolean)
     .pop() || '';
   const extension = path.extname(cleanName.split(/[?#]/)[0] || '').toLowerCase();
-  if (!EXTERNAL_THUMBNAIL_EXTENSIONS.has(extension)) {
-    return '';
-  }
-  return `thumbnail${extension}`;
+  return EXTERNAL_THUMBNAIL_EXTENSIONS.has(extension) ? extension : '';
 }
 
 function isSupportedExternalThumbnailFileName(fileName) {
@@ -136,6 +141,7 @@ function decodeHtmlEntities(value) {
 module.exports = {
   basenameFromHtmlFileName,
   externalThumbnailAssetName,
+  externalThumbnailExtension,
   extractExternalHtmlMetadata,
   findExternalHtmlAssetWarnings,
   isSupportedExternalThumbnailFileName,
