@@ -75,16 +75,11 @@ export class MarktlPublishedHtmlModal extends Modal {
 
   private renderItem(container: HTMLElement, item: PublishedShareItem): void {
     const card = container.createDiv({ cls: 'marktl-published-item' });
-    const title = String(item.title || item.slug || '제목 없는 HTML 산출물');
+    const title = this.cleanPublishedText(item.title || item.slug || '', '제목 없는 HTML 산출물', 96);
     const url = String(item.url || item.canonicalUrl || '');
     new Setting(card)
       .setName(title)
-      .setDesc([
-        item.updatedAt ? `갱신일: ${String(item.updatedAt).slice(0, 10)}` : '',
-        item.sourcePath || '',
-        item.shortId ? `shortId: ${item.shortId}` : '',
-        url,
-      ].filter(Boolean).join('\n'))
+      .setDesc(this.formatPublishedItemDescription(item, url))
       .addButton((button) => button
         .setButtonText('열기')
         .onClick(() => {
@@ -121,6 +116,59 @@ export class MarktlPublishedHtmlModal extends Modal {
             new Notice(error instanceof Error ? error.message : String(error));
           }
         }));
+  }
+
+  private formatPublishedItemDescription(item: PublishedShareItem, url: string): string {
+    const parts = [
+      item.updatedAt ? `갱신일: ${String(item.updatedAt).slice(0, 10)}` : '',
+      this.formatSourcePath(item.sourcePath),
+      item.shortId ? `shortId: ${this.cleanPublishedText(item.shortId, '', 24)}` : '',
+      this.cleanPublishedText(url, '', 128),
+    ].filter(Boolean);
+    return parts.join(' · ');
+  }
+
+  private formatSourcePath(value?: string): string {
+    const raw = String(value || '').trim();
+    if (!raw || this.isNoisyPublishedMeta(raw)) {
+      return '';
+    }
+    const externalPrefix = 'External HTML file:';
+    if (raw.startsWith(externalPrefix)) {
+      const name = this.cleanPublishedText(raw.slice(externalPrefix.length).trim(), '', 80);
+      return name ? `출처: ${name}` : '';
+    }
+    const normalized = raw.replace(/\\/g, '/');
+    const display = normalized.length > 120
+      ? normalized.split('/').filter(Boolean).pop() || ''
+      : normalized;
+    return this.cleanPublishedText(display, '', 96)
+      ? `출처: ${this.cleanPublishedText(display, '', 96)}`
+      : '';
+  }
+
+  private cleanPublishedText(value: unknown, fallback: string, maxLength: number): string {
+    const raw = String(value || '').replace(/<[^>]*>/g, ' ');
+    if (!raw.trim() || this.isNoisyPublishedMeta(raw)) {
+      return fallback;
+    }
+    const text = raw.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return `${text.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+  }
+
+  private isNoisyPublishedMeta(value: string): boolean {
+    const text = String(value || '');
+    if (/<\/?(html|head|body|script|style|meta|div|section|article)\b/i.test(text)) {
+      return true;
+    }
+    const noisyCount = Array.from(text).filter((char) => char === 'Â' || char === 'Ã' || char === '�').length;
+    if (noisyCount >= 8 || (text.length > 0 && noisyCount / text.length > 0.12)) {
+      return true;
+    }
+    return text.length > 260 && !/[./\\]/.test(text);
   }
 
   private chooseReplacementThumbnail(item: PublishedShareItem): void {

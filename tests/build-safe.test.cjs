@@ -66,9 +66,14 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(mainSource, /githubShareHomeTitle === 'MarkTL Shared HTML'/);
   assert.match(modalSource, /게시된 MarkTL HTML/);
   assert.match(modalSource, /썸네일 교체/);
+  assert.match(modalSource, /formatPublishedItemDescription/);
+  assert.match(modalSource, /isNoisyPublishedMeta/);
+  assert.doesNotMatch(modalSource, /item\.sourcePath \|\|/);
   assert.match(modalSource, /인덱스 메타데이터 복구/);
   assert.match(rendererSource, /function repairShareIndex/);
   assert.match(rendererSource, /통합선별공장 Archive/);
+  assert.match(rendererSource, /repeat\(auto-fit,minmax\(min\(100%,620px\),1fr\)\)/);
+  assert.match(rendererSource, /minmax\(320px,44%\) minmax\(0,1fr\);min-height:180px/);
   assert.doesNotMatch(rendererSource, /object-fit:contain/);
   assert.doesNotMatch(rendererSource, /tile\[data-type="공사일보"]/);
 });

@@ -130,6 +130,7 @@ test('renders share home page with published links', () => {
       { slug: 'alpha', title: '2026-06-11 지수통합선별공장 공사일보 1일차', url: 'https://example.com/alpha/', sourcePath: 'A.md', updatedAt: '2026-06-11', excerpt: 'First note', artifactType: 'faithful-note', tags: ['ai', 'strategy', '공사일보'] },
       { slug: 'broken', title: 'dell-aiìë²', url: 'https://example.com/broken/', sourcePath: 'Bad.md', updatedAt: '2026-01-02', excerpt: '<iframe src="https://example.com"', artifactType: 'HTML artifact', tags: ['- newsletter', 'newsletter', 'Yozm IT - 바이브 코딩의 진짜 시작은 이제부터다', 'project/지수통합선별공장', 'obsidian/project-management', 'dataviewjs', 'function/ops', 'doc/meeting', 'state/검토중'] },
       { slug: 'mojibake', title: 'ë°ì´ë¸ ì½ë©ì ì¢ë§', url: 'https://example.com/mojibake/', sourcePath: 'B.md', updatedAt: '2026-01-03', excerpt: 'ð§ Voice Briefing', artifactType: 'research-report', tags: ['ë°ì´ë¸ì½ë©'] },
+      { slug: 'callout', title: 'MCP와 API', url: 'https://example.com/callout/', sourcePath: 'C.md', updatedAt: '2026-01-04', excerpt: '> [!summary] 한 줄 결론 API는 소프트웨어 기능으로 들어가는 문이고, MCP는 외부 도구를 연결합니다.', artifactType: 'note', tags: ['업무자동화'] },
     ],
   }, {
     title: 'My Shares',
@@ -145,6 +146,9 @@ test('renders share home page with published links', () => {
   assert.match(html, /height:300px/);
   assert.match(html, /padding:16px 16px 22px/);
   assert.match(html, /class="tile"/);
+  assert.match(html, /grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,620px\),1fr\)\)/);
+  assert.match(html, /grid-template-columns:minmax\(320px,44%\) minmax\(0,1fr\);min-height:180px/);
+  assert.match(html, /min-height:180px;object-fit:cover/);
   assert.doesNotMatch(html, /tile\[data-type="공사일보"]/);
   assert.match(html, /border-right:1px solid rgba\(255,255,255,\.08\)/);
   assert.doesNotMatch(html, /object-fit:contain/);
@@ -161,6 +165,8 @@ test('renders share home page with published links', () => {
   assert.match(html, /dell-ai서버/);
   assert.match(html, /바이브 코딩의 종말/);
   assert.match(html, /#바이브코딩/);
+  assert.match(html, /한 줄 결론 API는 소프트웨어 기능으로 들어가는 문이고, MCP는 외부 도구를 연결합니다\./);
+  assert.doesNotMatch(html, /\[!summary\]/i);
   assert.doesNotMatch(html, /<iframe/);
   assert.doesNotMatch(html, /&lt;iframe/);
   assert.doesNotMatch(html, /dell-aiì/);
