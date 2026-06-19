@@ -3,8 +3,10 @@ const assert = require('node:assert/strict');
 
 const {
   basenameFromHtmlFileName,
+  externalThumbnailAssetName,
   extractExternalHtmlMetadata,
   findExternalHtmlAssetWarnings,
+  isSupportedExternalThumbnailFileName,
   isLikelyLocalAssetReference,
 } = require('../src/core/external-html.js');
 const { validateHtmlArtifact } = require('../src/core/html-qa.js');
@@ -34,6 +36,14 @@ test('warns for relative assets that direct HTML upload cannot bundle', () => {
   assert.match(warnings[0], /2 relative asset reference/);
   assert.match(warnings[0], /assets\/app\.css/);
   assert.match(warnings[0], /\.\/photo\.png/);
+});
+
+test('normalizes direct HTML upload thumbnails to a stable card asset name', () => {
+  assert.equal(externalThumbnailAssetName('현장 대표 컷.JPG'), 'thumbnail.jpg');
+  assert.equal(externalThumbnailAssetName('/tmp/cover.image.webp?cache=1'), 'thumbnail.webp');
+  assert.equal(isSupportedExternalThumbnailFileName('diagram.svg'), true);
+  assert.equal(isSupportedExternalThumbnailFileName('notes.pdf'), false);
+  assert.equal(externalThumbnailAssetName('no-extension'), '');
 });
 
 test('external HTML QA keeps fatal checks but skips generated-interactive expectations', () => {

@@ -2435,6 +2435,7 @@ var require_external_html = __commonJS({
     "use strict";
     var path = require("node:path");
     var { slugify: slugify2 } = require_html();
+    var EXTERNAL_THUMBNAIL_EXTENSIONS = /* @__PURE__ */ new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif", ".svg"]);
     function basenameFromHtmlFileName2(fileName) {
       const cleanName = String(fileName || "uploaded-html").split(/[\\/]/).filter(Boolean).pop() || "uploaded-html";
       const withoutExt = cleanName.replace(/\.html?$/i, "").trim() || cleanName;
@@ -2468,6 +2469,17 @@ var require_external_html = __commonJS({
         warnings.push(`HTML upload warning: ${localRefs.length} relative asset reference(s) were not bundled. Use embedded/data URLs or publish assets separately: ${localRefs.slice(0, 5).join(", ")}`);
       }
       return warnings;
+    }
+    function externalThumbnailAssetName2(fileName) {
+      const cleanName = String(fileName || "").split(/[\\/]/).filter(Boolean).pop() || "";
+      const extension = path.extname(cleanName.split(/[?#]/)[0] || "").toLowerCase();
+      if (!EXTERNAL_THUMBNAIL_EXTENSIONS.has(extension)) {
+        return "";
+      }
+      return `thumbnail${extension}`;
+    }
+    function isSupportedExternalThumbnailFileName2(fileName) {
+      return Boolean(externalThumbnailAssetName2(fileName));
     }
     function collectAttributeValues(html, attributeName) {
       const values = [];
@@ -2510,8 +2522,10 @@ var require_external_html = __commonJS({
     }
     module2.exports = {
       basenameFromHtmlFileName: basenameFromHtmlFileName2,
+      externalThumbnailAssetName: externalThumbnailAssetName2,
       extractExternalHtmlMetadata: extractExternalHtmlMetadata2,
       findExternalHtmlAssetWarnings: findExternalHtmlAssetWarnings2,
+      isSupportedExternalThumbnailFileName: isSupportedExternalThumbnailFileName2,
       isLikelyLocalAssetReference
     };
   }
@@ -3093,11 +3107,15 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     copy.createEl("p", { text: "\uC774\uBBF8 \uB9CC\uB4E0 HTML \uD30C\uC77C\uC744 \uC120\uD0DD\uD55C \uACF5\uC720 \uD5C8\uBE0C\uC758 \uC11C\uBE0C\uD398\uC774\uC9C0\uB85C \uBC14\uB85C \uAC8C\uC2DC\uD569\uB2C8\uB2E4. \uB178\uD2B8 \uBCC0\uD658\uACFC AI \uC2E4\uD589\uC740 \uAC74\uB108\uB701\uB2C8\uB2E4." });
     const actions = section.createDiv({ cls: "marktl-reference-row marktl-html-upload-row" });
     actions.createEl("span", {
-      text: "\uB2E8\uC77C HTML \uD30C\uC77C \uAE30\uC900\uC785\uB2C8\uB2E4. \uC774\uBBF8\uC9C0\xB7CSS\xB7JS\uAC00 \uC0C1\uB300 \uACBD\uB85C \uD30C\uC77C\uC774\uBA74 \uD568\uAED8 \uBB36\uC774\uC9C0 \uC54A\uC73C\uBBC0\uB85C HTML \uC548\uC5D0 \uD3EC\uD568\uD558\uAC70\uB098 \uC6D0\uACA9 URL\uC744 \uC0AC\uC6A9\uD558\uC138\uC694."
+      text: "\uB2E8\uC77C HTML \uD30C\uC77C \uAE30\uC900\uC785\uB2C8\uB2E4. \uB300\uD45C \uC378\uB124\uC77C\uC740 \uD5C8\uBE0C \uCE74\uB4DC\uC5D0\uB9CC \uC4F0\uC774\uBA70, HTML \uC548\uC758 \uC0C1\uB300 \uACBD\uB85C \uC774\uBBF8\uC9C0\xB7CSS\xB7JS\uB294 \uD568\uAED8 \uBB36\uC774\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
     });
-    actions.createEl("button", { text: "HTML \uD30C\uC77C \uC120\uD0DD\uD574 \uC5C5\uB85C\uB4DC", type: "button" }).addEventListener("click", () => {
+    actions.createEl("button", { text: "HTML\uB9CC \uC5C5\uB85C\uB4DC", type: "button" }).addEventListener("click", () => {
       this.close();
-      this.onUploadHtml(this.options);
+      this.onUploadHtml(this.options, false);
+    });
+    actions.createEl("button", { text: "HTML + \uC378\uB124\uC77C \uC5C5\uB85C\uB4DC", type: "button" }).addEventListener("click", () => {
+      this.close();
+      this.onUploadHtml(this.options, true);
     });
   }
   onClose() {
@@ -4414,7 +4432,7 @@ function buildAgentSetupPrompt(agent) {
 var { convertWithAiFallback, getProviderPrivacyNote: getProviderPrivacyNote2 } = require_ai();
 var { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require_assets();
 var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_context_pack();
-var { basenameFromHtmlFileName, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings } = require_external_html();
+var { basenameFromHtmlFileName, externalThumbnailAssetName, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require_external_html();
 var { normalizeExportSelection } = require_export_profiles();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
@@ -4730,8 +4748,8 @@ var MarktlPlugin = class extends import_obsidian8.Plugin {
   openExportModal() {
     new MarktlExportModal(this.app, this, (options) => {
       void this.exportActiveNote(options);
-    }, (options) => {
-      this.chooseAndPublishExternalHtml(options);
+    }, (options, includeThumbnail) => {
+      this.chooseAndPublishExternalHtml(options, Boolean(includeThumbnail));
     }).open();
   }
   repairHtmlHead(html) {
@@ -5095,7 +5113,7 @@ ${source}
       new import_obsidian8.Notice(`HTML export failed: ${message}`);
     }
   }
-  chooseAndPublishExternalHtml(overrides = {}) {
+  chooseAndPublishExternalHtml(overrides = {}, includeThumbnail = false) {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".html,.htm,text/html";
@@ -5111,12 +5129,46 @@ ${source}
         new import_obsidian8.Notice("HTML \uD30C\uC77C\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
         return;
       }
+      if (includeThumbnail) {
+        new import_obsidian8.Notice("\uD5C8\uBE0C \uCE74\uB4DC\uC5D0 \uC0AC\uC6A9\uD560 \uB300\uD45C \uC378\uB124\uC77C \uC774\uBBF8\uC9C0\uB97C \uC120\uD0DD\uD558\uC138\uC694.");
+        this.chooseExternalHtmlThumbnail((thumbnailFile) => {
+          void this.publishExternalHtmlFile(file, overrides, thumbnailFile);
+        });
+        return;
+      }
       void this.publishExternalHtmlFile(file, overrides);
     }, { once: true });
     document.body.appendChild(input);
     input.click();
   }
-  async publishExternalHtmlFile(file, overrides = {}) {
+  chooseExternalHtmlThumbnail(onChoose) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".png,.jpg,.jpeg,.webp,.gif,.avif,.svg,image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml";
+    input.style.display = "none";
+    input.addEventListener("change", () => {
+      var _a;
+      const file = (_a = input.files) == null ? void 0 : _a[0];
+      input.remove();
+      if (!file) {
+        return;
+      }
+      if (!this.isSupportedExternalThumbnail(file)) {
+        new import_obsidian8.Notice("\uC378\uB124\uC77C\uC740 PNG, JPG, WebP, GIF, AVIF, SVG \uC774\uBBF8\uC9C0\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+        return;
+      }
+      onChoose(file);
+    }, { once: true });
+    document.body.appendChild(input);
+    input.click();
+  }
+  isSupportedExternalThumbnail(file) {
+    if (!isSupportedExternalThumbnailFileName(file.name)) {
+      return false;
+    }
+    return !file.type || file.type.startsWith("image/");
+  }
+  async publishExternalHtmlFile(file, overrides = {}, thumbnailFile) {
     const options = {
       ...this.resolveExportOptions(overrides),
       shareTarget: "github-pages",
@@ -5130,6 +5182,9 @@ ${source}
     progress.open();
     progress.addStep(`Share hub: ${shareHomeProfile.title} (${shareHomeProfile.basePath || "/"})`);
     progress.addStep(`HTML upload: ${file.name}`);
+    if (thumbnailFile) {
+      progress.addStep(`Thumbnail upload: ${thumbnailFile.name}`);
+    }
     progress.addStep("AI conversion: skipped for existing HTML file.");
     try {
       progress.addStep("Reading selected HTML file...");
@@ -5143,13 +5198,20 @@ ${source}
       const shortId = buildShortId(outputPlan.basename);
       const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
       const socialUrl = buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId);
+      const thumbnailMapping = thumbnailFile ? await this.writeExternalThumbnailAsset(outputPlan, thumbnailFile) : null;
+      const assetMappings = thumbnailMapping ? [thumbnailMapping] : [];
+      const thumbnailPublicUrl = thumbnailMapping ? `${socialUrl}assets/${encodeURIComponent(thumbnailMapping.destinationPath.split("/").pop() || "thumbnail")}` : "";
+      if (thumbnailMapping) {
+        progress.addStep("Stored thumbnail asset for the share hub card.");
+      }
       progress.addStep(`Resolved title: ${metadata.title}`);
       let html = this.repairHtmlHead(rawHtml);
       html = this.ensureHtmlTitle(html, metadata.title);
       html = injectSocialMeta(html, {
         title: metadata.title,
         description: metadata.excerpt,
-        url: socialUrl
+        url: socialUrl,
+        image: thumbnailPublicUrl
       });
       const feedbackResult = this.applyReaderFeedback(html, options);
       html = this.repairHtmlHead(feedbackResult.html);
@@ -5165,7 +5227,7 @@ ${source}
         trusted: true,
         artifactGoal: "publish",
         externalHtml: true,
-        assetMappings: []
+        assetMappings
       });
       const fatalQaWarnings = qaWarnings.filter((warning) => /^HTML QA fatal:/i.test(warning));
       if (fatalQaWarnings.length > 0) {
@@ -5184,7 +5246,7 @@ ${source}
       progress.addStep("Writing HTML upload bundle to vault...");
       const outputPath = await this.writeHtmlFile(outputPlan, html, options, sourcePath);
       progress.addStep("Publishing GitHub Pages HTML upload...");
-      const publishResult = await this.publishGithubPages(outputPlan, [], sourcePath, "", options, shortId, metadata);
+      const publishResult = await this.publishGithubPages(outputPlan, assetMappings, sourcePath, "", options, shortId, metadata);
       progress.addStep(`Published: ${publishResult.publicUrl}`);
       progress.addStep("Opening internal preview pane...");
       await this.openPreview({
@@ -5210,7 +5272,7 @@ ${source}
         outputPath,
         usedFallback: false,
         aiProvider: "none",
-        assetCount: 0,
+        assetCount: assetMappings.length,
         warnings,
         shareTarget: "github-pages",
         copiedShareLink: true,
@@ -5294,6 +5356,27 @@ ${source}
       });
     }
     return { mappings, warnings };
+  }
+  async writeExternalThumbnailAsset(plan, file) {
+    if (!this.isSupportedExternalThumbnail(file)) {
+      throw new Error("\uC378\uB124\uC77C\uC740 PNG, JPG, WebP, GIF, AVIF, SVG \uC774\uBBF8\uC9C0\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    }
+    const assetFileName = externalThumbnailAssetName(file.name);
+    const destinationPath = (0, import_obsidian8.normalizePath)(`${plan.assetFolder}/${assetFileName}`);
+    const relativeSrc = encodeURI(`${plan.assetRelativePrefix}/${assetFileName}`);
+    const data = await file.arrayBuffer();
+    await this.ensureParentFolder(destinationPath);
+    await this.app.vault.adapter.writeBinary(destinationPath, data);
+    return {
+      original: file.name,
+      sourcePath: `External thumbnail file: ${file.name}`,
+      destinationPath,
+      relativeSrc,
+      aliases: [
+        file.name,
+        assetFileName
+      ]
+    };
   }
   ensureHtmlTitle(html, title) {
     const value = String(html || "");

@@ -1,6 +1,8 @@
 const path = require('node:path');
 const { slugify } = require('./html.js');
 
+const EXTERNAL_THUMBNAIL_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif', '.svg']);
+
 function basenameFromHtmlFileName(fileName) {
   const cleanName = String(fileName || 'uploaded-html')
     .split(/[\\/]/)
@@ -47,6 +49,22 @@ function findExternalHtmlAssetWarnings(html) {
     warnings.push(`HTML upload warning: ${localRefs.length} relative asset reference(s) were not bundled. Use embedded/data URLs or publish assets separately: ${localRefs.slice(0, 5).join(', ')}`);
   }
   return warnings;
+}
+
+function externalThumbnailAssetName(fileName) {
+  const cleanName = String(fileName || '')
+    .split(/[\\/]/)
+    .filter(Boolean)
+    .pop() || '';
+  const extension = path.extname(cleanName.split(/[?#]/)[0] || '').toLowerCase();
+  if (!EXTERNAL_THUMBNAIL_EXTENSIONS.has(extension)) {
+    return '';
+  }
+  return `thumbnail${extension}`;
+}
+
+function isSupportedExternalThumbnailFileName(fileName) {
+  return Boolean(externalThumbnailAssetName(fileName));
 }
 
 function collectAttributeValues(html, attributeName) {
@@ -117,7 +135,9 @@ function decodeHtmlEntities(value) {
 
 module.exports = {
   basenameFromHtmlFileName,
+  externalThumbnailAssetName,
   extractExternalHtmlMetadata,
   findExternalHtmlAssetWarnings,
+  isSupportedExternalThumbnailFileName,
   isLikelyLocalAssetReference,
 };

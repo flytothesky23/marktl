@@ -149,10 +149,10 @@ export class MarktlExportModal extends Modal {
   private options: ExportOptions;
   private plugin: MarktlPlugin;
   private onSubmit: (options: ExportOptions) => void;
-  private onUploadHtml: (options: ExportOptions) => void;
+  private onUploadHtml: (options: ExportOptions, includeThumbnail?: boolean) => void;
   private showAdvanced = false;
 
-  constructor(app: App, plugin: MarktlPlugin, onSubmit: (options: ExportOptions) => void, onUploadHtml: (options: ExportOptions) => void) {
+  constructor(app: App, plugin: MarktlPlugin, onSubmit: (options: ExportOptions) => void, onUploadHtml: (options: ExportOptions, includeThumbnail?: boolean) => void) {
     super(app);
     this.plugin = plugin;
     this.onSubmit = onSubmit;
@@ -230,12 +230,17 @@ export class MarktlExportModal extends Modal {
 
     const actions = section.createDiv({ cls: 'marktl-reference-row marktl-html-upload-row' });
     actions.createEl('span', {
-      text: '단일 HTML 파일 기준입니다. 이미지·CSS·JS가 상대 경로 파일이면 함께 묶이지 않으므로 HTML 안에 포함하거나 원격 URL을 사용하세요.',
+      text: '단일 HTML 파일 기준입니다. 대표 썸네일은 허브 카드에만 쓰이며, HTML 안의 상대 경로 이미지·CSS·JS는 함께 묶이지 않습니다.',
     });
-    actions.createEl('button', { text: 'HTML 파일 선택해 업로드', type: 'button' })
+    actions.createEl('button', { text: 'HTML만 업로드', type: 'button' })
       .addEventListener('click', () => {
         this.close();
-        this.onUploadHtml(this.options);
+        this.onUploadHtml(this.options, false);
+      });
+    actions.createEl('button', { text: 'HTML + 썸네일 업로드', type: 'button' })
+      .addEventListener('click', () => {
+        this.close();
+        this.onUploadHtml(this.options, true);
       });
   }
 

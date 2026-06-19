@@ -13,7 +13,7 @@ import type { ExportOptions, ExportSummary, MarktlSettings, PreviewState, ShareH
 const { convertWithAiFallback, getProviderPrivacyNote } = require('./core/ai.js');
 const { buildAssetFileName, extractMarkdownImageReferences, rewriteHtmlImageSources } = require('./core/assets.js');
 const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./core/context-pack.js');
-const { basenameFromHtmlFileName, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings } = require('./core/external-html.js');
+const { basenameFromHtmlFileName, externalThumbnailAssetName, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require('./core/external-html.js');
 const { normalizeExportSelection } = require('./core/export-profiles.js');
 const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
 const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
@@ -410,8 +410,8 @@ export default class MarktlPlugin extends Plugin {
   openExportModal(): void {
     new MarktlExportModal(this.app, this, (options) => {
       void this.exportActiveNote(options);
-    }, (options) => {
-      this.chooseAndPublishExternalHtml(options);
+    }, (options, includeThumbnail) => {
+      this.chooseAndPublishExternalHtml(options, Boolean(includeThumbnail));
     }).open();
   }
 
@@ -805,7 +805,7 @@ ${value}
     }
   }
 
-  chooseAndPublishExternalHtml(overrides: Partial<ExportOptions> = {}): void {
+  chooseAndPublishExternalHtml(overrides: Partial<ExportOptions> = {}, includeThumbnail = false): void {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.html,.htm,text/html';
@@ -820,13 +820,48 @@ ${value}
         new Notice('HTML 파일만 업로드할 수 있습니다.');
         return;
       }
+      if (includeThumbnail) {
+        new Notice('허브 카드에 사용할 대표 썸네일 이미지를 선택하세요.');
+        this.chooseExternalHtmlThumbnail((thumbnailFile) => {
+          void this.publishExternalHtmlFile(file, overrides, thumbnailFile);
+        });
+        return;
+      }
       void this.publishExternalHtmlFile(file, overrides);
     }, { once: true });
     document.body.appendChild(input);
     input.click();
   }
 
-  async publishExternalHtmlFile(file: File, overrides: Partial<ExportOptions> = {}): Promise<void> {
+  private chooseExternalHtmlThumbnail(onChoose: (file: File) => void): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.png,.jpg,.jpeg,.webp,.gif,.avif,.svg,image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml';
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      input.remove();
+      if (!file) {
+        return;
+      }
+      if (!this.isSupportedExternalThumbnail(file)) {
+        new Notice('썸네일은 PNG, JPG, WebP, GIF, AVIF, SVG 이미지만 업로드할 수 있습니다.');
+        return;
+      }
+      onChoose(file);
+    }, { once: true });
+    document.body.appendChild(input);
+    input.click();
+  }
+
+  private isSupportedExternalThumbnail(file: File): boolean {
+    if (!isSupportedExternalThumbnailFileName(file.name)) {
+      return false;
+    }
+    return !file.type || file.type.startsWith('image/');
+  }
+
+  async publishExternalHtmlFile(file: File, overrides: Partial<ExportOptions> = {}, thumbnailFile?: File): Promise<void> {
     const options: ExportOptions = {
       ...this.resolveExportOptions(overrides),
       shareTarget: 'github-pages',
@@ -840,6 +875,9 @@ ${value}
     progress.open();
     progress.addStep(`Share hub: ${shareHomeProfile.title} (${shareHomeProfile.basePath || '/'})`);
     progress.addStep(`HTML upload: ${file.name}`);
+    if (thumbnailFile) {
+      progress.addStep(`Thumbnail upload: ${thumbnailFile.name}`);
+    }
     progress.addStep('AI conversion: skipped for existing HTML file.');
 
     try {
@@ -855,6 +893,16 @@ ${value}
       const shortId = buildShortId(outputPlan.basename);
       const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
       const socialUrl = buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId);
+      const thumbnailMapping = thumbnailFile
+        ? await this.writeExternalThumbnailAsset(outputPlan, thumbnailFile)
+        : null;
+      const assetMappings = thumbnailMapping ? [thumbnailMapping] : [];
+      const thumbnailPublicUrl = thumbnailMapping
+        ? `${socialUrl}assets/${encodeURIComponent(thumbnailMapping.destinationPath.split('/').pop() || 'thumbnail')}`
+        : '';
+      if (thumbnailMapping) {
+        progress.addStep('Stored thumbnail asset for the share hub card.');
+      }
 
       progress.addStep(`Resolved title: ${metadata.title}`);
       let html = this.repairHtmlHead(rawHtml);
@@ -863,6 +911,7 @@ ${value}
         title: metadata.title,
         description: metadata.excerpt,
         url: socialUrl,
+        image: thumbnailPublicUrl,
       });
       const feedbackResult = this.applyReaderFeedback(html, options);
       html = this.repairHtmlHead(feedbackResult.html);
@@ -879,7 +928,7 @@ ${value}
         trusted: true,
         artifactGoal: 'publish',
         externalHtml: true,
-        assetMappings: [],
+        assetMappings,
       });
       const fatalQaWarnings = qaWarnings.filter((warning: string) => /^HTML QA fatal:/i.test(warning));
       if (fatalQaWarnings.length > 0) {
@@ -901,7 +950,7 @@ ${value}
       const outputPath = await this.writeHtmlFile(outputPlan, html, options, sourcePath);
 
       progress.addStep('Publishing GitHub Pages HTML upload...');
-      const publishResult = await this.publishGithubPages(outputPlan, [], sourcePath, '', options, shortId, metadata);
+      const publishResult = await this.publishGithubPages(outputPlan, assetMappings, sourcePath, '', options, shortId, metadata);
       progress.addStep(`Published: ${publishResult.publicUrl}`);
 
       progress.addStep('Opening internal preview pane...');
@@ -930,7 +979,7 @@ ${value}
         outputPath,
         usedFallback: false,
         aiProvider: 'none',
-        assetCount: 0,
+        assetCount: assetMappings.length,
         warnings,
         shareTarget: 'github-pages',
         copiedShareLink: true,
@@ -1031,6 +1080,28 @@ ${value}
     }
 
     return { mappings, warnings };
+  }
+
+  private async writeExternalThumbnailAsset(plan: OutputPlan, file: File): Promise<ImageAssetMapping> {
+    if (!this.isSupportedExternalThumbnail(file)) {
+      throw new Error('썸네일은 PNG, JPG, WebP, GIF, AVIF, SVG 이미지만 업로드할 수 있습니다.');
+    }
+    const assetFileName = externalThumbnailAssetName(file.name);
+    const destinationPath = normalizePath(`${plan.assetFolder}/${assetFileName}`);
+    const relativeSrc = encodeURI(`${plan.assetRelativePrefix}/${assetFileName}`);
+    const data = await file.arrayBuffer();
+    await this.ensureParentFolder(destinationPath);
+    await this.app.vault.adapter.writeBinary(destinationPath, data);
+    return {
+      original: file.name,
+      sourcePath: `External thumbnail file: ${file.name}`,
+      destinationPath,
+      relativeSrc,
+      aliases: [
+        file.name,
+        assetFileName,
+      ],
+    };
   }
 
   private ensureHtmlTitle(html: string, title: string): string {
