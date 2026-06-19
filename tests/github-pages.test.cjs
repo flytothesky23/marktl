@@ -143,8 +143,10 @@ test('renders share home page with published links', () => {
   assert.match(html, /지금 볼 문서/);
   assert.match(html, /class="calendar"/);
   assert.match(html, /id="calendarGrid"/);
-  assert.match(html, /height:300px/);
-  assert.match(html, /padding:16px 16px 22px/);
+  assert.match(html, /height:180px/);
+  assert.match(html, /padding:9px 10px 12px/);
+  assert.match(html, /minmax\(190px,222px\)/);
+  assert.match(html, /width:min\(222px,100%\);height:154px;min-height:154px/);
   assert.match(html, /class="tile"/);
   assert.match(html, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(html, /grid-template-columns:minmax\(142px,44%\) minmax\(0,1fr\);height:96px;min-height:0/);

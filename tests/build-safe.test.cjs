@@ -30,8 +30,8 @@ test('checked-in bundle is generated from source and keeps release markers', () 
     assert.equal(checkedIn, generated, 'main.js must match a fresh source build');
 
     for (const marker of [
-      'height:300px',
-      'padding:16px 16px 22px',
+      'height:180px',
+      'padding:9px 10px 12px',
       'renderShareIndexHtml',
       'Manage published MarkTL HTML',
       'Repair all MarkTL share hub indexes',
@@ -77,6 +77,8 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(rendererSource, /통합선별공장 Archive/);
   assert.match(rendererSource, /repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(rendererSource, /repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(rendererSource, /minmax\(190px,222px\)/);
+  assert.match(rendererSource, /height:180px;min-height:180px/);
   assert.match(rendererSource, /minmax\(142px,44%\) minmax\(0,1fr\);height:96px;min-height:0/);
   assert.doesNotMatch(rendererSource, /object-fit:contain/);
   assert.doesNotMatch(rendererSource, /tile\[data-type="공사일보"]/);
