@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { statSync } from 'node:fs';
-import { MarkdownRenderer, Notice, Plugin, TFile, WorkspaceLeaf, normalizePath, requestUrl } from 'obsidian';
+import { App, MarkdownRenderer, Modal, Notice, Plugin, TFile, WorkspaceLeaf, normalizePath, requestUrl } from 'obsidian';
 import { MarktlExportModal } from './export-modal';
 import { MarktlPublishedHtmlModal } from './published-html-modal';
 import { MarktlProgressModal } from './progress-modal';
@@ -114,6 +114,54 @@ interface PublishedShareIndex {
   version?: number;
   updatedAt?: string;
   items: PublishedShareItem[];
+}
+
+class MarktlExternalHtmlThumbnailModal extends Modal {
+  private htmlFileName: string;
+  private onChooseThumbnail: () => void;
+  private onContinueWithoutThumbnail: () => void;
+
+  constructor(app: App, htmlFileName: string, onChooseThumbnail: () => void, onContinueWithoutThumbnail: () => void) {
+    super(app);
+    this.htmlFileName = htmlFileName;
+    this.onChooseThumbnail = onChooseThumbnail;
+    this.onContinueWithoutThumbnail = onContinueWithoutThumbnail;
+    this.modalEl.addClass('marktl-thumbnail-modal');
+  }
+
+  onOpen(): void {
+    const { contentEl } = this;
+    contentEl.empty();
+    this.setTitle('썸네일 이미지 선택');
+    contentEl.createEl('p', {
+      cls: 'marktl-modal-intro',
+      text: '선택한 HTML을 게시하기 전에 공유 허브 카드에 사용할 대표 이미지를 선택하세요. 썸네일 없이도 게시할 수 있습니다.',
+    });
+
+    const selected = contentEl.createDiv({ cls: 'marktl-reference-row' });
+    selected.createEl('span', { text: `선택한 HTML: ${this.htmlFileName}` });
+
+    const actions = contentEl.createDiv({ cls: 'marktl-result-actions' });
+    const choose = actions.createEl('button', { text: '썸네일 이미지 선택', type: 'button' });
+    choose.addClass('mod-cta');
+    choose.addEventListener('click', () => {
+      this.onChooseThumbnail();
+      this.close();
+    });
+
+    actions.createEl('button', { text: '썸네일 없이 게시', type: 'button' })
+      .addEventListener('click', () => {
+        this.close();
+        this.onContinueWithoutThumbnail();
+      });
+
+    actions.createEl('button', { text: '취소', type: 'button' })
+      .addEventListener('click', () => this.close());
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
+  }
 }
 
 function resolveHomePath(command: string): string {
@@ -821,10 +869,7 @@ ${value}
         return;
       }
       if (includeThumbnail) {
-        new Notice('허브 카드에 사용할 대표 썸네일 이미지를 선택하세요.');
-        this.chooseExternalHtmlThumbnail((thumbnailFile) => {
-          void this.publishExternalHtmlFile(file, overrides, thumbnailFile);
-        });
+        this.openExternalHtmlThumbnailPrompt(file, overrides);
         return;
       }
       void this.publishExternalHtmlFile(file, overrides);
@@ -833,22 +878,58 @@ ${value}
     input.click();
   }
 
-  private chooseExternalHtmlThumbnail(onChoose: (file: File) => void): void {
+  private openExternalHtmlThumbnailPrompt(htmlFile: File, overrides: Partial<ExportOptions>): void {
+    new MarktlExternalHtmlThumbnailModal(
+      this.app,
+      htmlFile.name,
+      () => {
+        this.chooseExternalHtmlThumbnail(
+          (thumbnailFile) => {
+            void this.publishExternalHtmlFile(htmlFile, overrides, thumbnailFile);
+          },
+          () => {
+            new Notice('썸네일 선택이 취소되었습니다. 다시 선택하거나 썸네일 없이 게시할 수 있습니다.');
+            this.openExternalHtmlThumbnailPrompt(htmlFile, overrides);
+          },
+          () => {
+            new Notice('썸네일은 PNG, JPG, WebP, GIF, AVIF, SVG 이미지만 업로드할 수 있습니다.');
+            this.openExternalHtmlThumbnailPrompt(htmlFile, overrides);
+          },
+        );
+      },
+      () => {
+        void this.publishExternalHtmlFile(htmlFile, overrides);
+      },
+    ).open();
+  }
+
+  private chooseExternalHtmlThumbnail(onChoose: (file: File) => void, onCancel?: () => void, onInvalid?: () => void): void {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.png,.jpg,.jpeg,.webp,.gif,.avif,.svg,image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml';
     input.style.display = 'none';
+    let handled = false;
     input.addEventListener('change', () => {
+      handled = true;
       const file = input.files?.[0];
       input.remove();
       if (!file) {
+        onCancel?.();
         return;
       }
       if (!this.isSupportedExternalThumbnail(file)) {
-        new Notice('썸네일은 PNG, JPG, WebP, GIF, AVIF, SVG 이미지만 업로드할 수 있습니다.');
+        onInvalid?.();
         return;
       }
       onChoose(file);
+    }, { once: true });
+    input.addEventListener('cancel', () => {
+      if (handled) {
+        return;
+      }
+      handled = true;
+      input.remove();
+      onCancel?.();
     }, { once: true });
     document.body.appendChild(input);
     input.click();

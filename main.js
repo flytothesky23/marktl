@@ -4483,6 +4483,41 @@ var DEFAULT_SETTINGS = {
   geminiPath: "",
   copyShareLinkAfterExport: false
 };
+var MarktlExternalHtmlThumbnailModal = class extends import_obsidian8.Modal {
+  constructor(app, htmlFileName, onChooseThumbnail, onContinueWithoutThumbnail) {
+    super(app);
+    this.htmlFileName = htmlFileName;
+    this.onChooseThumbnail = onChooseThumbnail;
+    this.onContinueWithoutThumbnail = onContinueWithoutThumbnail;
+    this.modalEl.addClass("marktl-thumbnail-modal");
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    this.setTitle("\uC378\uB124\uC77C \uC774\uBBF8\uC9C0 \uC120\uD0DD");
+    contentEl.createEl("p", {
+      cls: "marktl-modal-intro",
+      text: "\uC120\uD0DD\uD55C HTML\uC744 \uAC8C\uC2DC\uD558\uAE30 \uC804\uC5D0 \uACF5\uC720 \uD5C8\uBE0C \uCE74\uB4DC\uC5D0 \uC0AC\uC6A9\uD560 \uB300\uD45C \uC774\uBBF8\uC9C0\uB97C \uC120\uD0DD\uD558\uC138\uC694. \uC378\uB124\uC77C \uC5C6\uC774\uB3C4 \uAC8C\uC2DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    });
+    const selected = contentEl.createDiv({ cls: "marktl-reference-row" });
+    selected.createEl("span", { text: `\uC120\uD0DD\uD55C HTML: ${this.htmlFileName}` });
+    const actions = contentEl.createDiv({ cls: "marktl-result-actions" });
+    const choose = actions.createEl("button", { text: "\uC378\uB124\uC77C \uC774\uBBF8\uC9C0 \uC120\uD0DD", type: "button" });
+    choose.addClass("mod-cta");
+    choose.addEventListener("click", () => {
+      this.onChooseThumbnail();
+      this.close();
+    });
+    actions.createEl("button", { text: "\uC378\uB124\uC77C \uC5C6\uC774 \uAC8C\uC2DC", type: "button" }).addEventListener("click", () => {
+      this.close();
+      this.onContinueWithoutThumbnail();
+    });
+    actions.createEl("button", { text: "\uCDE8\uC18C", type: "button" }).addEventListener("click", () => this.close());
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
 function resolveHomePath(command) {
   const value = String(command || "").trim();
   if (!value) {
@@ -5130,10 +5165,7 @@ ${source}
         return;
       }
       if (includeThumbnail) {
-        new import_obsidian8.Notice("\uD5C8\uBE0C \uCE74\uB4DC\uC5D0 \uC0AC\uC6A9\uD560 \uB300\uD45C \uC378\uB124\uC77C \uC774\uBBF8\uC9C0\uB97C \uC120\uD0DD\uD558\uC138\uC694.");
-        this.chooseExternalHtmlThumbnail((thumbnailFile) => {
-          void this.publishExternalHtmlFile(file, overrides, thumbnailFile);
-        });
+        this.openExternalHtmlThumbnailPrompt(file, overrides);
         return;
       }
       void this.publishExternalHtmlFile(file, overrides);
@@ -5141,23 +5173,58 @@ ${source}
     document.body.appendChild(input);
     input.click();
   }
-  chooseExternalHtmlThumbnail(onChoose) {
+  openExternalHtmlThumbnailPrompt(htmlFile, overrides) {
+    new MarktlExternalHtmlThumbnailModal(
+      this.app,
+      htmlFile.name,
+      () => {
+        this.chooseExternalHtmlThumbnail(
+          (thumbnailFile) => {
+            void this.publishExternalHtmlFile(htmlFile, overrides, thumbnailFile);
+          },
+          () => {
+            new import_obsidian8.Notice("\uC378\uB124\uC77C \uC120\uD0DD\uC774 \uCDE8\uC18C\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC120\uD0DD\uD558\uAC70\uB098 \uC378\uB124\uC77C \uC5C6\uC774 \uAC8C\uC2DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+            this.openExternalHtmlThumbnailPrompt(htmlFile, overrides);
+          },
+          () => {
+            new import_obsidian8.Notice("\uC378\uB124\uC77C\uC740 PNG, JPG, WebP, GIF, AVIF, SVG \uC774\uBBF8\uC9C0\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+            this.openExternalHtmlThumbnailPrompt(htmlFile, overrides);
+          }
+        );
+      },
+      () => {
+        void this.publishExternalHtmlFile(htmlFile, overrides);
+      }
+    ).open();
+  }
+  chooseExternalHtmlThumbnail(onChoose, onCancel, onInvalid) {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".png,.jpg,.jpeg,.webp,.gif,.avif,.svg,image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml";
     input.style.display = "none";
+    let handled = false;
     input.addEventListener("change", () => {
       var _a;
+      handled = true;
       const file = (_a = input.files) == null ? void 0 : _a[0];
       input.remove();
       if (!file) {
+        onCancel == null ? void 0 : onCancel();
         return;
       }
       if (!this.isSupportedExternalThumbnail(file)) {
-        new import_obsidian8.Notice("\uC378\uB124\uC77C\uC740 PNG, JPG, WebP, GIF, AVIF, SVG \uC774\uBBF8\uC9C0\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+        onInvalid == null ? void 0 : onInvalid();
         return;
       }
       onChoose(file);
+    }, { once: true });
+    input.addEventListener("cancel", () => {
+      if (handled) {
+        return;
+      }
+      handled = true;
+      input.remove();
+      onCancel == null ? void 0 : onCancel();
     }, { once: true });
     document.body.appendChild(input);
     input.click();
