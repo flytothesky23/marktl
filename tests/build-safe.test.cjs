@@ -75,8 +75,9 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(modalSource, /모든 허브 메인페이지 복구/);
   assert.match(rendererSource, /function repairShareIndex/);
   assert.match(rendererSource, /통합선별공장 Archive/);
-  assert.match(rendererSource, /repeat\(auto-fit,minmax\(min\(100%,620px\),1fr\)\)/);
-  assert.match(rendererSource, /minmax\(320px,44%\) minmax\(0,1fr\);height:180px;min-height:0/);
+  assert.match(rendererSource, /repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(rendererSource, /repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(rendererSource, /minmax\(142px,44%\) minmax\(0,1fr\);height:96px;min-height:0/);
   assert.doesNotMatch(rendererSource, /object-fit:contain/);
   assert.doesNotMatch(rendererSource, /tile\[data-type="공사일보"]/);
 });
