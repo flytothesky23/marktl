@@ -16,7 +16,7 @@ const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./c
 const { basenameFromHtmlFileName, externalThumbnailAssetName, externalThumbnailExtension, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require('./core/external-html.js');
 const { normalizeExportSelection } = require('./core/export-profiles.js');
 const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
-const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
+const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShareIndexUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
 const { repairObsidianSyntaxResidue } = require('./core/html-repair.js');
 const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { slugify } = require('./core/html.js');
@@ -1524,10 +1524,36 @@ ${value}
     await this.refreshSettingsFromDisk();
     const context = this.getGithubPagesContext(shareHomeProfileId || this.settings.activeShareHomeProfileId);
     const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
+    const githubIndex = repairShareIndex(existing || { items: [] });
+    const publicIndex = await this.getPublicShareIndex(context);
     return {
       context,
-      index: repairShareIndex(existing || { items: [] }),
+      index: publicIndex && publicIndex.items.length > githubIndex.items.length
+        ? publicIndex
+        : githubIndex,
     };
+  }
+
+  private async getPublicShareIndex(context: GithubPagesContext): Promise<PublishedShareIndex | null> {
+    const url = buildShareIndexUrl(context.pagesBaseUrl, context.basePath);
+    if (!url) {
+      return null;
+    }
+    const response = await requestUrl({
+      url: `${url}?marktl-cache-bust=${Date.now()}`,
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      throw: false,
+    });
+    if (response.status < 200 || response.status >= 300) {
+      return null;
+    }
+    try {
+      const parsed = response.json || JSON.parse(response.text || '{}');
+      return repairShareIndex(parsed);
+    } catch {
+      return null;
+    }
   }
 
   async repairPublishedShareIndex(shareHomeProfileId = ''): Promise<PublishedShareIndex> {

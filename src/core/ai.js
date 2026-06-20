@@ -9,6 +9,7 @@ const {
   buildSelectionPrompt,
   shouldUseIntegratedDashboardStandard,
 } = require('./prompt-composer.js');
+const { normalizeIntegratedDashboardHtml } = require('./integrated-dashboard.js');
 const { looksLikeHtmlDocument, sanitizeHtml } = require('./sanitizer.js');
 
 const providerCommands = {
@@ -32,8 +33,9 @@ const unixCliPath = [
 
 async function convertWithAiFallback(markdown, options = {}) {
   if (!options.provider || options.provider === 'none') {
+    const html = normalizeIntegratedDashboardHtml(convertMarkdownToHtml(markdown, options), options);
     return {
-      html: convertMarkdownToHtml(markdown, options),
+      html,
       usedFallback: true,
       warnings: ['AI provider is disabled; used local conversion.'],
     };
@@ -46,8 +48,12 @@ async function convertWithAiFallback(markdown, options = {}) {
     if (!looksLikeHtmlDocument(aiHtml)) {
       throw new Error('AI provider returned invalid HTML');
     }
+    const html = normalizeIntegratedDashboardHtml(
+      sanitizeHtml(aiHtml, { trusted: Boolean(options.trusted) }),
+      options,
+    );
     return {
-      html: sanitizeHtml(aiHtml, { trusted: Boolean(options.trusted) }),
+      html,
       usedFallback: false,
       warnings: [],
     };
@@ -57,7 +63,7 @@ async function convertWithAiFallback(markdown, options = {}) {
     }
 
     return {
-      html: convertMarkdownToHtml(markdown, options),
+      html: normalizeIntegratedDashboardHtml(convertMarkdownToHtml(markdown, options), options),
       usedFallback: true,
       warnings: [`AI conversion failed: ${error.message}. Used local fallback.`],
     };

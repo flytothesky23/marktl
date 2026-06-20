@@ -358,6 +358,17 @@
   font-weight: 700;
 }
 
+.marktl-selection-guidance {
+  background: color-mix(in srgb, var(--background-secondary) 88%, var(--interactive-accent) 12%);
+  border-left: 4px solid var(--interactive-accent);
+  margin: 2px 0 12px;
+}
+
+.marktl-selection-guidance span {
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
 .marktl-reference-row {
   align-items: center;
   background: var(--background-secondary);
