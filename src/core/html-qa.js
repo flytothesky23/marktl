@@ -45,24 +45,6 @@ function validateHtmlArtifact(html, options = {}) {
     warnings.push('HTML QA fatal: raw Obsidian-only syntax remains in the HTML.');
   }
 
-  const integratedDashboard = options.template === 'integrated-dashboard'
-    || options.exportGenre === 'integrated-note'
-    || (options.exportGenre === 'construction-daily' && options.exportDepth === 'milestone');
-
-  if (!externalHtml && integratedDashboard) {
-    const h2Count = (value.match(/<h2\b/gi) || []).length;
-    const text = value.replace(/<[^>]+>/g, ' ');
-    if (h2Count < 4) {
-      warnings.push('HTML QA: integrated dashboard should use multiple H2 operating sections, not a single long brief.');
-    }
-    if (!/(문서\s*지도|빠른\s*현황|일정|간트|gantt|실행\s*게이트|공정|리스크|의사결정|마일스톤|업데이트\s*로그)/i.test(text)) {
-      warnings.push('HTML QA: integrated dashboard is missing expected navigation, status, schedule/process, risk, milestone, or log sections.');
-    }
-    if (trusted && !/(theme|다크|라이트|dark|light|data-theme|prefers-color-scheme)/i.test(value)) {
-      warnings.push('HTML QA: integrated dashboard should include a dark/light theme affordance in trusted mode.');
-    }
-  }
-
   if (!externalHtml && options.exportGenre === 'construction-daily') {
     const depth = options.exportDepth || 'standard';
     const text = value.replace(/<[^>]+>/g, ' ');

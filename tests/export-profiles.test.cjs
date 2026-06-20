@@ -35,21 +35,7 @@ test('maps visible selection axes to internal execution profiles', () => {
   assert.equal(brief.artifactGoal, 'read');
   assert.equal(brief.conversionMode, 'preserve');
   assert.equal(milestone.artifactType, 'strategy-brief');
-  assert.equal(milestone.template, 'integrated-dashboard');
   assert.equal(milestone.previewSecurity, 'trusted');
-});
-
-test('routes integrated notes to the approved project dashboard standard', () => {
-  const profile = getExecutionProfile({
-    exportGenre: 'integrated-note',
-    exportDepth: 'milestone',
-    exportPurpose: 'field-review',
-  });
-
-  assert.equal(profile.artifactGoal, 'review');
-  assert.equal(profile.artifactType, 'strategy-brief');
-  assert.equal(profile.template, 'integrated-dashboard');
-  assert.equal(profile.previewSecurity, 'trusted');
 });
 
 test('preserves operational settings while applying selected execution profile', () => {
@@ -94,22 +80,4 @@ test('builds construction daily prompt contracts for all depth levels', () => {
   assert.match(standard, /기준 대비 변경\/확인 필요/);
   assert.match(milestone, /plan-versus-actual/);
   assert.match(milestone, /Mermaid\/Gantt/);
-  assert.match(milestone, /2026-05-19 integrated-note dashboard standard/);
-  assert.match(milestone, /dark\/light theme toggle/);
-  assert.match(milestone, /문서 지도/);
-  assert.match(milestone, /H2 sections/);
-});
-
-test('builds integrated-note prompt around operations dashboard layout', () => {
-  const prompt = buildSelectionPrompt({
-    exportGenre: 'integrated-note',
-    exportDepth: 'milestone',
-    exportPurpose: 'field-review',
-  });
-
-  assert.match(prompt, /integrated project dashboard/);
-  assert.match(prompt, /operations control board/);
-  assert.match(prompt, /2026-05-19 integrated-note dashboard standard/);
-  assert.match(prompt, /dark\/light theme toggle/);
-  assert.match(prompt, /리스크·의사결정/);
 });

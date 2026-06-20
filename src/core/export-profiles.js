@@ -114,9 +114,9 @@ const genreProfiles = {
     previewSecurity: 'trusted',
   },
   'integrated-note': {
-    artifactGoal: 'review',
+    artifactGoal: 'read',
     artifactType: 'strategy-brief',
-    template: 'integrated-dashboard',
+    template: 'dashboard',
     conversionMode: 'presentation',
     previewSecurity: 'trusted',
   },
@@ -208,7 +208,6 @@ function getExecutionProfile(selection = {}) {
       Object.assign(profile, {
         artifactGoal: 'review',
         artifactType: 'strategy-brief',
-        template: 'integrated-dashboard',
         conversionMode: 'presentation',
         previewSecurity: 'trusted',
       });

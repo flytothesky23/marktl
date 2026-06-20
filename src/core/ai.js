@@ -5,10 +5,7 @@ const path = require('node:path');
 const { buildAiAssetInstruction } = require('./assets.js');
 const { getArtifactGoalInstruction } = require('./artifact-goals.js');
 const { convertMarkdownToHtml } = require('./converter.js');
-const {
-  buildSelectionPrompt,
-  shouldUseIntegratedDashboardStandard,
-} = require('./prompt-composer.js');
+const { buildSelectionPrompt } = require('./prompt-composer.js');
 const { looksLikeHtmlDocument, sanitizeHtml } = require('./sanitizer.js');
 
 const providerCommands = {
@@ -302,15 +299,6 @@ function getGoalAffordanceInstruction(artifactGoal, trusted) {
 function getInteractionStandard(artifactGoal, template, trusted, options = {}) {
   if (!trusted) {
     return 'Keep interaction affordances static: anchors, tables, checklists, and copy-ready text blocks only. Do not add editable playground controls, state JSON panels, or scripts.';
-  }
-  if (template === 'integrated-dashboard' || shouldUseIntegratedDashboardStandard(options.exportGenre, options.exportDepth)) {
-    return [
-      'Use the integrated project dashboard standard modeled on the approved 2026-05-19 integrated note.',
-      'The output must feel like a project operations control board: dark/light theme toggle, sticky or prominent document map, quick status cards, section navigation, timeline or execution-gate view, risk/decision table, milestone summary, update log, and review room.',
-      'Use H2 sections for the main lanes. Avoid collapsing the page into a single strategy-brief hero followed by many H3 blocks.',
-      'Include local-only JavaScript only for useful controls such as theme toggle, section navigation, copy summary, or review notes. Do not add generic sliders, state JSON panels, or playground widgets unless the artifact goal is tune.',
-      'When source notes are sparse, keep the skeleton honest: show 확인 필요 or 기준 대비 변경/확인 필요 instead of inventing quantities, progress, dates, costs, or decisions.',
-    ].join(' ');
   }
   if (template === 'construction-daily') {
     const depth = options.exportDepth || 'standard';

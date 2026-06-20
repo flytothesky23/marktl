@@ -150,25 +150,6 @@ test('interaction standard reserves state JSON playgrounds for tuning flows', ()
   assert.match(getInteractionStandard('read', 'minimal', false), /Do not add editable playground controls/);
 });
 
-test('AI prompt uses integrated dashboard standard for integrated notes and milestones', () => {
-  const prompt = buildPrompt('# 통합노트', {
-    artifactGoal: 'review',
-    artifactType: 'strategy-brief',
-    mode: 'presentation',
-    template: 'integrated-dashboard',
-    trusted: true,
-    exportGenre: 'integrated-note',
-    exportDepth: 'milestone',
-    exportPurpose: 'field-review',
-  });
-
-  assert.match(prompt, /Template: integrated-dashboard/);
-  assert.match(prompt, /approved 2026-05-19 integrated note/);
-  assert.match(prompt, /project operations control board/);
-  assert.match(prompt, /dark\/light theme toggle/);
-  assert.match(prompt, /Avoid collapsing the page into a single strategy-brief hero/);
-});
-
 test('AI prompt can include linked-note context packs', () => {
   const prompt = buildPrompt('# Active', {
     mode: 'presentation',
