@@ -200,7 +200,6 @@ export class MarktlExportModal extends Modal {
     this.renderShareHomeSelector(contentEl);
     this.renderDirectHtmlUpload(contentEl);
     this.renderDecisionRail(contentEl);
-    this.renderSelectionGuidance(contentEl);
     this.renderContextSelector(contentEl);
     this.renderExecutionSummary(contentEl);
 
@@ -259,21 +258,6 @@ export class MarktlExportModal extends Modal {
     });
     this.renderChoiceGroup(rail, '3', '사용 목적', '독자와 문체, 다음 행동을 정합니다.', listExportPurposes(), this.options.exportPurpose, (value) => {
       this.applyPrimarySelection({ exportPurpose: value as ExportPurpose });
-    });
-  }
-
-  private renderSelectionGuidance(container: HTMLElement): void {
-    const isIntegratedDashboard = this.options.exportGenre === 'integrated-note'
-      || (this.options.exportGenre === 'construction-daily' && this.options.exportDepth === 'milestone');
-    const section = container.createDiv({ cls: 'marktl-reference-row marktl-selection-guidance' });
-    if (isIntegratedDashboard) {
-      section.createEl('span', {
-        text: '권장 표준: 통합노트 + 종합·마일스톤 + 현장 검토 조합은 2026-05-19 통합노트형 운영 대시보드 구조로 정규화됩니다. 오늘 노트가 짧으면 기준 맥락 노트를 지정하세요.',
-      });
-      return;
-    }
-    section.createEl('span', {
-      text: '간단 기록은 짧은 카드형 결과, 표준 일보는 작업·증빙·리스크 중심, 종합·마일스톤은 기준 맥락과 일정·게이트를 포함한 대시보드형 결과에 적합합니다.',
     });
   }
 

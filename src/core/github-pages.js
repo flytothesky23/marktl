@@ -53,11 +53,6 @@ function buildShareHomeUrl(baseUrl, basePath) {
   return `${root}/${suffix ? `${encodePathPart(suffix)}/` : ''}`;
 }
 
-function buildShareIndexUrl(baseUrl, basePath) {
-  const homeUrl = buildShareHomeUrl(baseUrl, basePath);
-  return homeUrl ? `${homeUrl}index.json` : '';
-}
-
 function encodePathPart(value) {
   return String(value || '')
     .split('/')
@@ -586,7 +581,6 @@ function escapeHtml(value) {
 module.exports = {
   buildPagesUrl,
   buildPublishPath,
-  buildShareIndexUrl,
   buildShareHomeUrl,
   buildShortPagesUrl,
   inferPagesBaseUrl,

@@ -508,131 +508,6 @@ var require_templates = __commonJS({
         font-size: .86rem;
         font-weight: 700;
       }
-      .project-hero {
-        grid-column: 1 / -1;
-        display: grid;
-        gap: 12px;
-        min-height: 260px;
-        align-content: end;
-        background:
-          linear-gradient(135deg, rgba(56, 189, 248, .2), transparent 42%),
-          linear-gradient(155deg, var(--panel-strong), var(--panel));
-        border-radius: 24px;
-        padding: clamp(28px, 5vw, 54px);
-      }
-      .project-hero h1 {
-        margin: 0;
-        max-width: 980px;
-        font-size: clamp(2.25rem, 6vw, 5rem);
-        line-height: 1.02;
-        letter-spacing: 0;
-      }
-      .dashboard-eyebrow {
-        margin: 0;
-        color: var(--warn);
-        font-size: .82rem;
-        font-weight: 950;
-        letter-spacing: .14em;
-        text-transform: uppercase;
-      }
-      .dashboard-lead {
-        max-width: 760px;
-        margin: 0;
-        color: var(--muted);
-        font-size: 1.05rem;
-      }
-      .dashboard-meta-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      .dashboard-meta-row span {
-        display: inline-flex;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(148, 163, 184, .1);
-        color: var(--text);
-        padding: 7px 11px;
-        font-size: .86rem;
-        font-weight: 800;
-      }
-      .dashboard-layout {
-        grid-column: 1 / -1;
-        display: grid;
-        grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-        gap: 16px;
-        background: transparent;
-        border: 0;
-        box-shadow: none;
-        padding: 0;
-      }
-      .dashboard-sidebar {
-        display: grid;
-        gap: 12px;
-        align-content: start;
-        position: sticky;
-        top: 78px;
-        height: max-content;
-      }
-      .dashboard-main {
-        display: grid;
-        gap: 14px;
-        min-width: 0;
-      }
-      .dashboard-panel,
-      .dashboard-section {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        padding: 18px 20px;
-      }
-      .dashboard-panel h2,
-      .dashboard-panel h3,
-      .dashboard-section h2,
-      .dashboard-source-block h3 {
-        margin: 0 0 10px;
-        color: var(--text);
-      }
-      .dashboard-section h2 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border-left: 6px solid var(--accent);
-        padding-left: 12px;
-        font-size: clamp(1.35rem, 2.4vw, 2rem);
-      }
-      .dashboard-section-body {
-        display: grid;
-        gap: 12px;
-      }
-      .dashboard-source-block {
-        background: rgba(148, 163, 184, .07);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 14px 16px;
-      }
-      .dashboard-nav {
-        display: grid;
-        gap: 7px;
-      }
-      .dashboard-nav a {
-        display: block;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: rgba(148, 163, 184, .08);
-        padding: 8px 10px;
-        color: var(--text);
-        font-weight: 800;
-      }
-      .dashboard-empty {
-        margin: 0;
-        color: var(--muted);
-        border: 1px dashed var(--line);
-        border-radius: 12px;
-        padding: 14px;
-        background: rgba(148, 163, 184, .06);
-      }
       @media (min-width: 900px) {
         article > h2 + p,
         article > h2 + ul,
@@ -642,9 +517,6 @@ var require_templates = __commonJS({
       @media (max-width: 760px) {
         main { padding: 16px 12px 56px; }
         article > * { padding: 16px; }
-        .project-hero { min-height: 220px; padding: 24px 18px; }
-        .dashboard-layout { grid-template-columns: 1fr; }
-        .dashboard-sidebar { position: static; }
         table { display: block; overflow-x: auto; }
         .marktl-theme-toggle { right: 12px; bottom: 12px; }
       }
@@ -1541,242 +1413,6 @@ var require_prompt_composer = __commonJS({
   }
 });
 
-// src/core/integrated-dashboard.js
-var require_integrated_dashboard = __commonJS({
-  "src/core/integrated-dashboard.js"(exports2, module2) {
-    "use strict";
-    var path = require("node:path");
-    var { escapeHtml } = require_html();
-    var { wrapWithTemplate } = require_templates();
-    var { shouldUseIntegratedDashboardStandard } = require_prompt_composer();
-    var CANONICAL_SECTIONS = [
-      {
-        id: "document-map",
-        title: "\uBB38\uC11C \uC9C0\uB3C4",
-        empty: "\uC0DD\uC131\uB41C \uC6B4\uC601 \uC139\uC158\uC744 \uAE30\uC900\uC73C\uB85C \uBE60\uB974\uAC8C \uC774\uB3D9\uD569\uB2C8\uB2E4.",
-        patterns: [/문서\s*지도/i, /project\s*navigation/i, /navigation/i, /운영\s*체크/i, /리뷰\s*포커스/i]
-      },
-      {
-        id: "status",
-        title: "\uBE60\uB978 \uD604\uD669",
-        empty: "\uD604\uC7AC \uB178\uD2B8\uC5D0\uC11C \uD655\uC778 \uAC00\uB2A5\uD55C \uC0C1\uD0DC \uC694\uC57D\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.",
-        patterns: [/빠른\s*현황/i, /집행\s*상태/i, /현재\s*상태/i, /기준\s*상태/i, /현장\s*검토\s*포인트/i, /요약/i]
-      },
-      {
-        id: "flow",
-        title: "\uD575\uC2EC \uAD00\uB9AC \uD750\uB984",
-        empty: "\uACF5\uC815 \uD750\uB984 \uB610\uB294 \uAD00\uB9AC \uC6D0\uCE59\uC740 \uAE30\uC900 \uB9E5\uB77D \uB178\uD2B8\uB97C \uC9C0\uC815\uD558\uBA74 \uBCF4\uAC15\uB429\uB2C8\uB2E4.",
-        patterns: [/핵심\s*관리\s*흐름/i, /관리\s*원칙/i, /합의된\s*판단/i, /실행\s*순서/i, /프로젝트\s*관리/i]
-      },
-      {
-        id: "schedule",
-        title: "\u2460 \uD1B5\uD569\uAC04\uD2B8\uCC28\uD2B8",
-        empty: "\uC77C\uC815\xB7\uAC04\uD2B8\xB7\uC2E4\uD589 \uAC8C\uC774\uD2B8 \uC815\uBCF4\uAC00 \uD655\uC778\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        patterns: [/통합\s*간트/i, /일정/i, /간트/i, /gantt/i, /게이트/i, /timeline/i, /master\s*plan/i, /인허가/i]
-      },
-      {
-        id: "budget",
-        title: "\u2461 \uC790\uAE08\uC2A4\uCF00\uC904",
-        empty: "\uC790\uAE08\xB7\uC608\uC0B0\xB7\uC790\uC6D0 \uC815\uBCF4\uAC00 \uD655\uC778\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        patterns: [/자금/i, /예산/i, /비용/i, /금액/i, /자원/i, /집행/i]
-      },
-      {
-        id: "inventory",
-        title: "\u2462 \uC7AC\uACE0\uAD00\uB9AC\uACC4\uD68D",
-        empty: "\uC7AC\uACE0 \uB610\uB294 \uC790\uC7AC \uAD00\uB9AC \uC815\uBCF4\uAC00 \uD655\uC778\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        patterns: [/재고/i, /자재/i, /설비/i, /증빙/i, /공정\s*증빙/i]
-      },
-      {
-        id: "risk",
-        title: "\u2463 \uB9AC\uC2A4\uD06C\xB7\uC758\uC0AC\uACB0\uC815",
-        empty: "\uB9AC\uC2A4\uD06C\xB7\uACB0\uC815\xB7\uD655\uC778 \uD544\uC694 \uC0AC\uD56D\uC774 \uD655\uC778\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        patterns: [/리스크/i, /risk/i, /의사결정/i, /결정/i, /판단/i, /확인\s*필요/i]
-      },
-      {
-        id: "milestone",
-        title: "\u2464 \uB9C8\uC77C\uC2A4\uD1A4\uC694\uC57D",
-        empty: "\uB9C8\uC77C\uC2A4\uD1A4 \uB610\uB294 \uB2E4\uC74C \uAC8C\uC774\uD2B8 \uC815\uBCF4\uAC00 \uD655\uC778\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        patterns: [/마일스톤/i, /milestone/i, /다음/i, /후속/i, /차주/i, /next/i]
-      },
-      {
-        id: "log",
-        title: "\u2465 \uC5C5\uB370\uC774\uD2B8\uB85C\uADF8",
-        empty: "\uC5C5\uB370\uC774\uD2B8 \uB85C\uADF8 \uB610\uB294 \uC77C\uC790\uBCC4 \uBCC0\uACBD \uB0B4\uC6A9\uC774 \uD655\uC778\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        patterns: [/업데이트/i, /로그/i, /공사일보/i, /현장\s*진행/i, /현장\s*공정/i, /기록/i]
-      },
-      {
-        id: "review",
-        title: "\uB9AC\uBDF0 \uB8F8",
-        empty: "\uAC80\uD1A0 \uBA54\uBAA8\uC640 \uD53C\uB4DC\uBC31 \uD56D\uBAA9\uC740 \uC0DD\uC131 \uD6C4 \uBCF4\uC644\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
-        patterns: [/리뷰/i, /review/i, /feedback/i, /피드백/i, /reader/i, /보조\s*메모/i]
-      },
-      {
-        id: "source",
-        title: "\uC6D0\uBB38 \uBCF4\uC874 \uBA54\uBAA8",
-        empty: "\uC6D0\uBB38 \uBCF4\uC874 \uBA54\uBAA8\uAC00 \uBCC4\uB3C4\uB85C \uAC10\uC9C0\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.",
-        patterns: [/원문/i, /보존/i, /source/i, /memo/i]
-      }
-    ];
-    function shouldNormalizeIntegratedDashboard(options = {}) {
-      return options.template === "integrated-dashboard" || shouldUseIntegratedDashboardStandard(options.exportGenre, options.exportDepth);
-    }
-    function normalizeIntegratedDashboardHtml(html, options = {}) {
-      if (!shouldNormalizeIntegratedDashboard(options)) {
-        return html;
-      }
-      const body = extractBody(html);
-      const title = inferDocumentTitle(html, body, options.sourcePath);
-      const buckets = bucketSections(body);
-      const sections = CANONICAL_SECTIONS.map((section) => ({
-        ...section,
-        content: buckets.get(section.id) || ""
-      }));
-      const period = inferPeriod([title, body].join(" "));
-      const dashboardBody = [
-        renderHero(title, period),
-        '<section class="dashboard-layout">',
-        renderSidebar(sections),
-        '<div class="dashboard-main">',
-        sections.map(renderCanonicalSection).join("\n"),
-        "</div>",
-        "</section>"
-      ].join("\n");
-      return wrapWithTemplate(dashboardBody, {
-        template: "integrated-dashboard",
-        title,
-        trusted: Boolean(options.trusted)
-      });
-    }
-    function extractBody(html) {
-      var _a;
-      const value = String(html || "");
-      return (((_a = /<body\b[^>]*>([\s\S]*?)<\/body>/i.exec(value)) == null ? void 0 : _a[1]) || value).replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<nav\b[^>]*class=(["'])marktl-generated-map\1[\s\S]*?<\/nav>/gi, " ").replace(/<\/?(?:main|article)\b[^>]*>/gi, " ").trim();
-    }
-    function inferDocumentTitle(html, body, sourcePath) {
-      var _a, _b;
-      const titleCandidates = [
-        (_a = /<h1\b[^>]*>([\s\S]*?)<\/h1>/i.exec(body)) == null ? void 0 : _a[1],
-        (_b = /<title\b[^>]*>([\s\S]*?)<\/title>/i.exec(html)) == null ? void 0 : _b[1],
-        sourcePath ? path.basename(String(sourcePath), path.extname(String(sourcePath))) : ""
-      ];
-      for (const candidate of titleCandidates) {
-        const title = cleanText(candidate);
-        if (title) {
-          return title;
-        }
-      }
-      return "\uD1B5\uD569\uB178\uD2B8";
-    }
-    function bucketSections(body) {
-      const buckets = /* @__PURE__ */ new Map();
-      const headings = [...String(body || "").matchAll(/<h([1-4])\b[^>]*>([\s\S]*?)<\/h\1>/gi)];
-      if (!headings.length) {
-        addBucket(buckets, "status", body);
-        return buckets;
-      }
-      const leading = body.slice(0, headings[0].index || 0).trim();
-      if (leading) {
-        addBucket(buckets, "status", leading);
-      }
-      for (let index = 0; index < headings.length; index += 1) {
-        const heading = headings[index];
-        const level = Number(heading[1]);
-        const title = cleanText(heading[2]);
-        const nextStart = index + 1 < headings.length ? headings[index + 1].index || body.length : body.length;
-        const content = body.slice((heading.index || 0) + heading[0].length, nextStart).trim();
-        if (level === 1 && index === 0) {
-          if (content && !looksLikeDuplicateTitle(title, content)) {
-            addBucket(buckets, "status", content);
-          }
-          continue;
-        }
-        const bucket = findBucketForHeading(title);
-        const block = `<section class="dashboard-source-block"><h3>${escapeHtml(title)}</h3>${content}</section>`;
-        addBucket(buckets, bucket, block);
-      }
-      return buckets;
-    }
-    function findBucketForHeading(title) {
-      const text = String(title || "");
-      for (const section of CANONICAL_SECTIONS) {
-        if (section.patterns.some((pattern) => pattern.test(text))) {
-          return section.id;
-        }
-      }
-      return "flow";
-    }
-    function addBucket(buckets, key, html) {
-      const value = String(html || "").trim();
-      if (!value) {
-        return;
-      }
-      buckets.set(key, [buckets.get(key), value].filter(Boolean).join("\n"));
-    }
-    function renderHero(title, period) {
-      return `<header class="project-hero">
-  <p class="dashboard-eyebrow">Integrated Project Dashboard</p>
-  <h1>${escapeHtml(title)}</h1>
-  <p class="dashboard-lead">\uD504\uB85C\uC81D\uD2B8 \uC0C1\uD0DC, \uC77C\uC815, \uACF5\uC815 \uD750\uB984, \uB9AC\uC2A4\uD06C, \uB9C8\uC77C\uC2A4\uD1A4\uC744 \uD558\uB098\uC758 \uC6B4\uC601 \uD654\uBA74\uC5D0\uC11C \uAC80\uD1A0\uD569\uB2C8\uB2E4.</p>
-  <div class="dashboard-meta-row">
-    <span>\uD45C\uC900: 2026-05-19 \uD1B5\uD569\uB178\uD2B8 \uB300\uC2DC\uBCF4\uB4DC</span>
-    <span>${period ? `\uAE30\uAC04/\uC77C\uC790: ${escapeHtml(period)}` : "\uAE30\uAC04/\uC77C\uC790: \uD655\uC778 \uD544\uC694"}</span>
-  </div>
-</header>`;
-    }
-    function renderSidebar(sections) {
-      const links = sections.filter((section) => section.id !== "source").map((section) => `<a href="#${section.id}">${escapeHtml(section.title)}</a>`).join("");
-      return `<aside class="dashboard-sidebar">
-  <section class="dashboard-panel">
-    <h3>\uBB38\uC11C \uC9C0\uB3C4</h3>
-    <nav class="dashboard-nav">${links}</nav>
-  </section>
-  <section class="dashboard-panel">
-    <h3>\uC6B4\uC601 \uCCB4\uD06C\uB9AC\uC2A4\uD2B8</h3>
-    <ul>
-      <li>\uC624\uB298 \uC0AC\uC2E4\uACFC \uAE30\uC900 \uB9E5\uB77D\uC774 \uAD6C\uBD84\uB418\uC5B4 \uC788\uB294\uAC00</li>
-      <li>\uC77C\uC815\xB7\uACF5\uC815\xB7\uB9AC\uC2A4\uD06C\uC758 \uBCC0\uACBD\uC810\uC774 \uBCF4\uC774\uB294\uAC00</li>
-      <li>\uB2E4\uC74C \uC2E4\uD589 \uAC8C\uC774\uD2B8\uAC00 \uD655\uC778 \uAC00\uB2A5\uD55C\uAC00</li>
-    </ul>
-  </section>
-  <section class="dashboard-panel">
-    <h3>\uB9AC\uBDF0 \uD3EC\uCEE4\uC2A4</h3>
-    <p>\uBD80\uC871\uD55C \uAC12\uC740 \uC784\uC758 \uC0DD\uC131\uD558\uC9C0 \uC54A\uACE0 \uD655\uC778 \uD544\uC694\uB85C \uB0A8\uAE41\uB2C8\uB2E4.</p>
-  </section>
-</aside>`;
-    }
-    function renderCanonicalSection(section) {
-      const content = String(section.content || "").trim() || `<p class="dashboard-empty">${escapeHtml(section.empty)}</p>`;
-      const extraClass = section.content ? "" : " is-empty";
-      return `<section class="dashboard-section${extraClass}" id="${section.id}">
-  <h2>${escapeHtml(section.title)}</h2>
-  <div class="dashboard-section-body">
-    ${content}
-  </div>
-</section>`;
-    }
-    function cleanText(value) {
-      return String(value || "").replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim();
-    }
-    function looksLikeDuplicateTitle(title, content) {
-      const text = cleanText(content);
-      return title && text.startsWith(title) && text.length < title.length + 20;
-    }
-    function inferPeriod(value) {
-      const dates = [...String(value || "").matchAll(/\b(20\d{2}-\d{2}-\d{2})\b/g)].map((match) => match[1]);
-      const unique = [...new Set(dates)];
-      if (unique.length >= 2) {
-        return `${unique[0]} ~ ${unique[unique.length - 1]}`;
-      }
-      return unique[0] || "";
-    }
-    module2.exports = {
-      CANONICAL_SECTIONS,
-      normalizeIntegratedDashboardHtml,
-      shouldNormalizeIntegratedDashboard
-    };
-  }
-});
-
 // src/core/ai.js
 var require_ai = __commonJS({
   "src/core/ai.js"(exports2, module2) {
@@ -1792,7 +1428,6 @@ var require_ai = __commonJS({
       buildSelectionPrompt,
       shouldUseIntegratedDashboardStandard
     } = require_prompt_composer();
-    var { normalizeIntegratedDashboardHtml } = require_integrated_dashboard();
     var { looksLikeHtmlDocument, sanitizeHtml } = require_sanitizer();
     var providerCommands = {
       claude: {
@@ -1813,9 +1448,8 @@ var require_ai = __commonJS({
     ];
     async function convertWithAiFallback2(markdown, options = {}) {
       if (!options.provider || options.provider === "none") {
-        const html = normalizeIntegratedDashboardHtml(convertMarkdownToHtml(markdown, options), options);
         return {
-          html,
+          html: convertMarkdownToHtml(markdown, options),
           usedFallback: true,
           warnings: ["AI provider is disabled; used local conversion."]
         };
@@ -1826,12 +1460,8 @@ var require_ai = __commonJS({
         if (!looksLikeHtmlDocument(aiHtml)) {
           throw new Error("AI provider returned invalid HTML");
         }
-        const html = normalizeIntegratedDashboardHtml(
-          sanitizeHtml(aiHtml, { trusted: Boolean(options.trusted) }),
-          options
-        );
         return {
-          html,
+          html: sanitizeHtml(aiHtml, { trusted: Boolean(options.trusted) }),
           usedFallback: false,
           warnings: []
         };
@@ -1840,7 +1470,7 @@ var require_ai = __commonJS({
           throw error;
         }
         return {
-          html: normalizeIntegratedDashboardHtml(convertMarkdownToHtml(markdown, options), options),
+          html: convertMarkdownToHtml(markdown, options),
           usedFallback: true,
           warnings: [`AI conversion failed: ${error.message}. Used local fallback.`]
         };
@@ -2244,10 +1874,6 @@ var require_github_pages = __commonJS({
       }
       const suffix = normalizePublishPath(basePath);
       return `${root}/${suffix ? `${encodePathPart(suffix)}/` : ""}`;
-    }
-    function buildShareIndexUrl2(baseUrl, basePath) {
-      const homeUrl = buildShareHomeUrl2(baseUrl, basePath);
-      return homeUrl ? `${homeUrl}index.json` : "";
     }
     function encodePathPart(value) {
       return String(value || "").split("/").map((part) => encodeURIComponent(part)).join("/");
@@ -2681,7 +2307,6 @@ document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new D
     module2.exports = {
       buildPagesUrl: buildPagesUrl2,
       buildPublishPath: buildPublishPath2,
-      buildShareIndexUrl: buildShareIndexUrl2,
       buildShareHomeUrl: buildShareHomeUrl2,
       buildShortPagesUrl: buildShortPagesUrl2,
       inferPagesBaseUrl: inferPagesBaseUrl3,
@@ -3746,7 +3371,6 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     this.renderShareHomeSelector(contentEl);
     this.renderDirectHtmlUpload(contentEl);
     this.renderDecisionRail(contentEl);
-    this.renderSelectionGuidance(contentEl);
     this.renderContextSelector(contentEl);
     this.renderExecutionSummary(contentEl);
     new import_obsidian.Setting(contentEl).setName("\uAE30\uD0C0 \uC124\uC815").setDesc("AI CLI, \uC2E4\uD328 \uCC98\uB9AC, \uBCF4\uC548, \uB313\uAE00, \uACF5\uC720 \uB300\uC0C1\uCC98\uB7FC \uC790\uC8FC \uBC14\uAFB8\uC9C0 \uC54A\uB294 \uC2E4\uD589 \uC635\uC158\uC785\uB2C8\uB2E4.").addButton((button) => button.setButtonText(this.showAdvanced ? "\uAE30\uD0C0 \uC124\uC815 \uC228\uAE30\uAE30" : "\uAE30\uD0C0 \uC124\uC815 \uC5F4\uAE30").onClick(() => {
@@ -3791,19 +3415,6 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     });
     this.renderChoiceGroup(rail, "3", "\uC0AC\uC6A9 \uBAA9\uC801", "\uB3C5\uC790\uC640 \uBB38\uCCB4, \uB2E4\uC74C \uD589\uB3D9\uC744 \uC815\uD569\uB2C8\uB2E4.", (0, import_export_profiles.listExportPurposes)(), this.options.exportPurpose, (value) => {
       this.applyPrimarySelection({ exportPurpose: value });
-    });
-  }
-  renderSelectionGuidance(container) {
-    const isIntegratedDashboard = this.options.exportGenre === "integrated-note" || this.options.exportGenre === "construction-daily" && this.options.exportDepth === "milestone";
-    const section = container.createDiv({ cls: "marktl-reference-row marktl-selection-guidance" });
-    if (isIntegratedDashboard) {
-      section.createEl("span", {
-        text: "\uAD8C\uC7A5 \uD45C\uC900: \uD1B5\uD569\uB178\uD2B8 + \uC885\uD569\xB7\uB9C8\uC77C\uC2A4\uD1A4 + \uD604\uC7A5 \uAC80\uD1A0 \uC870\uD569\uC740 2026-05-19 \uD1B5\uD569\uB178\uD2B8\uD615 \uC6B4\uC601 \uB300\uC2DC\uBCF4\uB4DC \uAD6C\uC870\uB85C \uC815\uADDC\uD654\uB429\uB2C8\uB2E4. \uC624\uB298 \uB178\uD2B8\uAC00 \uC9E7\uC73C\uBA74 \uAE30\uC900 \uB9E5\uB77D \uB178\uD2B8\uB97C \uC9C0\uC815\uD558\uC138\uC694."
-      });
-      return;
-    }
-    section.createEl("span", {
-      text: "\uAC04\uB2E8 \uAE30\uB85D\uC740 \uC9E7\uC740 \uCE74\uB4DC\uD615 \uACB0\uACFC, \uD45C\uC900 \uC77C\uBCF4\uB294 \uC791\uC5C5\xB7\uC99D\uBE59\xB7\uB9AC\uC2A4\uD06C \uC911\uC2EC, \uC885\uD569\xB7\uB9C8\uC77C\uC2A4\uD1A4\uC740 \uAE30\uC900 \uB9E5\uB77D\uACFC \uC77C\uC815\xB7\uAC8C\uC774\uD2B8\uB97C \uD3EC\uD568\uD55C \uB300\uC2DC\uBCF4\uB4DC\uD615 \uACB0\uACFC\uC5D0 \uC801\uD569\uD569\uB2C8\uB2E4."
     });
   }
   renderShareHomeSelector(container) {
@@ -5184,7 +4795,7 @@ var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_contex
 var { basenameFromHtmlFileName, externalThumbnailAssetName, externalThumbnailExtension, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require_external_html();
 var { normalizeExportSelection } = require_export_profiles();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
-var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShareIndexUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
+var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
 var { repairObsidianSyntaxResidue } = require_html_repair();
 var { validateHtmlArtifact } = require_html_qa();
 var { slugify } = require_html();
@@ -6509,33 +6120,10 @@ ${value}`;
     await this.refreshSettingsFromDisk();
     const context = this.getGithubPagesContext(shareHomeProfileId || this.settings.activeShareHomeProfileId);
     const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
-    const githubIndex = repairShareIndex(existing || { items: [] });
-    const publicIndex = await this.getPublicShareIndex(context);
     return {
       context,
-      index: publicIndex && publicIndex.items.length > githubIndex.items.length ? publicIndex : githubIndex
+      index: repairShareIndex(existing || { items: [] })
     };
-  }
-  async getPublicShareIndex(context) {
-    const url = buildShareIndexUrl(context.pagesBaseUrl, context.basePath);
-    if (!url) {
-      return null;
-    }
-    const response = await (0, import_obsidian8.requestUrl)({
-      url: `${url}?marktl-cache-bust=${Date.now()}`,
-      method: "GET",
-      headers: { Accept: "application/json" },
-      throw: false
-    });
-    if (response.status < 200 || response.status >= 300) {
-      return null;
-    }
-    try {
-      const parsed = response.json || JSON.parse(response.text || "{}");
-      return repairShareIndex(parsed);
-    } catch (e) {
-      return null;
-    }
   }
   async repairPublishedShareIndex(shareHomeProfileId = "") {
     const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
