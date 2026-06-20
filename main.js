@@ -340,6 +340,232 @@ var require_templates = __commonJS({
     `
       },
       {
+        id: "integrated-dashboard",
+        name: "Integrated Project Dashboard",
+        description: "Operations dashboard standard for integrated notes and milestone construction reports, with dark/light theme toggle.",
+        css: `
+      :root {
+        color-scheme: dark light;
+        --bg: #08111f;
+        --bg-soft: #0e1a2c;
+        --panel: rgba(18, 30, 52, .9);
+        --panel-strong: #12203a;
+        --card: rgba(15, 26, 46, .96);
+        --text: #e6eefb;
+        --muted: #a8b6ca;
+        --line: rgba(148, 163, 184, .22);
+        --accent: #38bdf8;
+        --accent-2: #22c55e;
+        --warn: #f59e0b;
+        --danger: #ef4444;
+        --radius: 16px;
+        --shadow: 0 18px 48px rgba(0, 0, 0, .28);
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --bg: #f4f7fb;
+        --bg-soft: #e9f0f8;
+        --panel: rgba(255, 255, 255, .92);
+        --panel-strong: #ffffff;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #526175;
+        --line: rgba(15, 23, 42, .12);
+        --accent: #2563eb;
+        --accent-2: #0f766e;
+        --warn: #d97706;
+        --danger: #dc2626;
+        --shadow: 0 16px 42px rgba(15, 23, 42, .12);
+      }
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme]) {
+          color-scheme: light;
+          --bg: #f4f7fb;
+          --bg-soft: #e9f0f8;
+          --panel: rgba(255, 255, 255, .92);
+          --panel-strong: #ffffff;
+          --card: #ffffff;
+          --text: #111827;
+          --muted: #526175;
+          --line: rgba(15, 23, 42, .12);
+          --accent: #2563eb;
+          --accent-2: #0f766e;
+          --warn: #d97706;
+          --danger: #dc2626;
+          --shadow: 0 16px 42px rgba(15, 23, 42, .12);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: Inter, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 12% 8%, rgba(56, 189, 248, .16), transparent 25%),
+          radial-gradient(circle at 85% 12%, rgba(34, 197, 94, .12), transparent 22%),
+          linear-gradient(180deg, var(--bg), var(--bg-soft));
+        line-height: 1.62;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+      }
+      main { max-width: 1240px; margin: 0 auto; padding: 28px 20px 72px; }
+      article {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 14px;
+      }
+      article > * {
+        grid-column: 1 / -1;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      article > h1 {
+        position: relative;
+        overflow: hidden;
+        padding: 30px 26px;
+        margin: 0 0 2px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(56, 189, 248, .18), var(--panel));
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+      article > h2 {
+        margin: 18px 0 0;
+        border-left: 6px solid var(--accent);
+        font-size: clamp(1.35rem, 2.4vw, 2rem);
+        color: var(--text);
+      }
+      article > h3 {
+        color: var(--accent);
+        font-size: 1.08rem;
+      }
+      p, li { color: var(--muted); }
+      strong { color: var(--text); }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      th, td { border-bottom: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+      th { color: var(--text); background: rgba(56, 189, 248, .12); }
+      tr:last-child td { border-bottom: 0; }
+      img { max-width: 100%; height: auto; border-radius: 12px; display: block; }
+      pre { overflow: auto; background: #07101f; color: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid var(--line); }
+      blockquote, .callout {
+        margin: 18px 0;
+        border-left: 5px solid var(--accent-2);
+        background: rgba(34, 197, 94, .1);
+        border-radius: 12px;
+        padding: 14px 18px;
+      }
+      .marktl-theme-toggle {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 50;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel-strong);
+        color: var(--text);
+        box-shadow: var(--shadow);
+        padding: 10px 13px;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .marktl-generated-map {
+        position: sticky;
+        top: 12px;
+        z-index: 20;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        background: var(--panel-strong);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 10px 12px;
+        box-shadow: var(--shadow);
+      }
+      .marktl-generated-map a {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 10px;
+        color: var(--text);
+        background: rgba(148, 163, 184, .08);
+        font-size: .86rem;
+        font-weight: 700;
+      }
+      @media (min-width: 900px) {
+        article > h2 + p,
+        article > h2 + ul,
+        article > h2 + ol,
+        article > h2 + table { grid-column: span 6; }
+      }
+      @media (max-width: 760px) {
+        main { padding: 16px 12px 56px; }
+        article > * { padding: 16px; }
+        table { display: block; overflow-x: auto; }
+        .marktl-theme-toggle { right: 12px; bottom: 12px; }
+      }
+    `,
+        script: `
+      const root = document.documentElement;
+      const themeKey = 'marktl-integrated-dashboard-theme';
+      const savedTheme = localStorage.getItem(themeKey);
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        root.dataset.theme = savedTheme;
+      }
+      const themeButton = document.createElement('button');
+      themeButton.type = 'button';
+      themeButton.className = 'marktl-theme-toggle';
+      const syncThemeLabel = () => {
+        const current = root.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        themeButton.textContent = current === 'light' ? 'Dark' : 'Light';
+        themeButton.setAttribute('aria-label', current === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+      };
+      themeButton.addEventListener('click', () => {
+        const current = root.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        const next = current === 'light' ? 'dark' : 'light';
+        root.dataset.theme = next;
+        localStorage.setItem(themeKey, next);
+        syncThemeLabel();
+      });
+      syncThemeLabel();
+      document.body.append(themeButton);
+
+      const headings = [...document.querySelectorAll('article h2')];
+      if (headings.length && !document.querySelector('.marktl-generated-map')) {
+        const map = document.createElement('nav');
+        map.className = 'marktl-generated-map';
+        map.setAttribute('aria-label', 'Document map');
+        const label = document.createElement('strong');
+        label.textContent = '\uBB38\uC11C \uC9C0\uB3C4';
+        map.append(label);
+        headings.slice(0, 12).forEach((heading, index) => {
+          heading.id = heading.id || 'section-' + (index + 1);
+          const link = document.createElement('a');
+          link.href = '#' + heading.id;
+          link.textContent = heading.textContent.trim();
+          map.append(link);
+        });
+        document.querySelector('main').prepend(map);
+      }
+    `
+      },
+      {
         id: "investor-brief",
         name: "Investor Brief",
         description: "Sharp memo style for strategy, market, and investment analysis.",
@@ -903,9 +1129,9 @@ var require_export_profiles = __commonJS({
         previewSecurity: "trusted"
       },
       "integrated-note": {
-        artifactGoal: "read",
+        artifactGoal: "review",
         artifactType: "strategy-brief",
-        template: "dashboard",
+        template: "integrated-dashboard",
         conversionMode: "presentation",
         previewSecurity: "trusted"
       },
@@ -988,6 +1214,7 @@ var require_export_profiles = __commonJS({
           Object.assign(profile, {
             artifactGoal: "review",
             artifactType: "strategy-brief",
+            template: "integrated-dashboard",
             conversionMode: "presentation",
             previewSecurity: "trusted"
           });
@@ -1074,6 +1301,7 @@ var require_prompt_composer = __commonJS({
         `Depth instruction: ${getDepthInstruction(selection.exportGenre, selection.exportDepth)}`,
         `Audience instruction: ${getPurposeInstruction(selection.exportPurpose)}`,
         `Context instruction: ${getContextInstruction(selection.exportGenre, selection.exportDepth, referencePath)}`,
+        `Layout instruction: ${getLayoutInstruction(selection.exportGenre, selection.exportDepth)}`,
         `Quality contract: ${getQualityContract(selection.exportGenre, selection.exportDepth)}`
       ];
       return blocks.join("\n");
@@ -1082,7 +1310,7 @@ var require_prompt_composer = __commonJS({
       return {
         "construction-daily": "Create a Korean construction daily HTML report. The reader must quickly understand what happened today, where the work sits in the project sequence, what evidence exists, what risks remain, and what should happen next.",
         "meeting-notes": "Create a Korean meeting note artifact with agenda, attendees if available, decisions, unresolved questions, owners, and next actions.",
-        "integrated-note": "Create an integrated project note that connects status, context, decisions, risks, and next steps without turning it into a generic article.",
+        "integrated-note": "Create a Korean integrated project dashboard that connects status, context, decisions, risks, schedule, execution gates, logs, and next steps. It must feel like an operations control board, not a generic article or loose strategy memo.",
         report: "Create a structured report with executive summary, evidence, analysis, implications, and next actions.",
         "general-note": "Create a faithful readable note. Preserve the original meaning and avoid unnecessary restructuring.",
         "compare-review": "Create a comparison review with criteria, alternatives, pros and cons, risks, and a clear comparison matrix.",
@@ -1101,7 +1329,7 @@ var require_prompt_composer = __commonJS({
       return {
         brief: "Keep the artifact compact. Summarize only enough structure to make the note easy to scan.",
         standard: "Create a balanced artifact with summary, main sections, evidence, and next actions.",
-        milestone: "Create a full artifact with context, detailed sections, implications, risks, and decision-ready next steps."
+        milestone: "Create a full artifact with context, detailed sections, schedule/process view, implications, risks, decisions, and next-step gates."
       }[depth] || "Use a balanced level of detail.";
     }
     function getPurposeInstruction(purpose) {
@@ -1135,8 +1363,33 @@ var require_prompt_composer = __commonJS({
         "The active note remains the primary source of current facts."
       ].join(" ");
     }
+    function shouldUseIntegratedDashboardStandard(genre, depth) {
+      return genre === "integrated-note" || genre === "construction-daily" && depth === "milestone";
+    }
+    function getLayoutInstruction(genre, depth) {
+      if (!shouldUseIntegratedDashboardStandard(genre, depth)) {
+        return "Use the selected template normally. Keep section hierarchy clear and avoid decorative layouts that obscure the note.";
+      }
+      return [
+        "Use the approved 2026-05-19 integrated-note dashboard standard as the layout model.",
+        "Build a project operations dashboard, not a strategy brief, article, poster, or generic slide deck.",
+        "Required H2-level sequence: \uBB38\uC11C \uC9C0\uB3C4, \uBE60\uB978 \uD604\uD669, \uD575\uC2EC \uAD00\uB9AC \uD750\uB984, \uC77C\uC815/\uAC04\uD2B8 \uB610\uB294 \uC2E4\uD589 \uAC8C\uC774\uD2B8, \uC790\uAE08/\uC790\uC6D0 \uB610\uB294 \uACF5\uC815 \uC99D\uBE59 when present, \uB9AC\uC2A4\uD06C\xB7\uC758\uC0AC\uACB0\uC815, \uB9C8\uC77C\uC2A4\uD1A4 \uC694\uC57D, \uC5C5\uB370\uC774\uD2B8 \uB85C\uADF8, \uB9AC\uBDF0 \uB8F8.",
+        "Use a sticky/visible document map or quick navigation, compact status cards, timeline/process/gate blocks, evidence cards, risk/decision tables, and reader-review prompts.",
+        "Include a visible dark/light theme toggle in trusted mode. Use CSS custom properties, local-only JavaScript, and prefers-color-scheme fallback. Do not rely on remote assets.",
+        "If source content is sparse, preserve the dashboard skeleton but mark missing data as \uD655\uC778 \uD544\uC694 rather than inventing facts."
+      ].join(" ");
+    }
     function getQualityContract(genre, depth) {
       const common = "Never show raw Obsidian-only syntax such as frontmatter, dataviewjs, [!callout] markers, or code that exists only to render inside Obsidian. Keep Korean documents in Korean.";
+      if (shouldUseIntegratedDashboardStandard(genre, depth)) {
+        const dashboard = [
+          "Integrated dashboard output must use clear H2 sections rather than one long H3-only brief.",
+          "It must include title/date or reporting period, executive status, baseline context, schedule/process or execution gate, risks/issues, decisions, next actions, and update log when source material supports them.",
+          "Do not expose raw Markdown command labels such as [!summary], DataviewJS, wiki links, or frontmatter.",
+          "Do not invent progress, quantities, completion status, manpower, dates, costs, risks, or decisions."
+        ].join(" ");
+        return `${dashboard} ${common}`;
+      }
       if (genre !== "construction-daily") {
         return common;
       }
@@ -1152,8 +1405,10 @@ var require_prompt_composer = __commonJS({
       getContextInstruction,
       getDepthInstruction,
       getGenreInstruction,
+      getLayoutInstruction,
       getPurposeInstruction,
-      getQualityContract
+      getQualityContract,
+      shouldUseIntegratedDashboardStandard
     };
   }
 });
@@ -1169,7 +1424,10 @@ var require_ai = __commonJS({
     var { buildAiAssetInstruction } = require_assets();
     var { getArtifactGoalInstruction } = require_artifact_goals();
     var { convertMarkdownToHtml } = require_converter();
-    var { buildSelectionPrompt } = require_prompt_composer();
+    var {
+      buildSelectionPrompt,
+      shouldUseIntegratedDashboardStandard
+    } = require_prompt_composer();
     var { looksLikeHtmlDocument, sanitizeHtml } = require_sanitizer();
     var providerCommands = {
       claude: {
@@ -1429,6 +1687,15 @@ ${markdown}`;
     function getInteractionStandard(artifactGoal, template, trusted, options = {}) {
       if (!trusted) {
         return "Keep interaction affordances static: anchors, tables, checklists, and copy-ready text blocks only. Do not add editable playground controls, state JSON panels, or scripts.";
+      }
+      if (template === "integrated-dashboard" || shouldUseIntegratedDashboardStandard(options.exportGenre, options.exportDepth)) {
+        return [
+          "Use the integrated project dashboard standard modeled on the approved 2026-05-19 integrated note.",
+          "The output must feel like a project operations control board: dark/light theme toggle, sticky or prominent document map, quick status cards, section navigation, timeline or execution-gate view, risk/decision table, milestone summary, update log, and review room.",
+          "Use H2 sections for the main lanes. Avoid collapsing the page into a single strategy-brief hero followed by many H3 blocks.",
+          "Include local-only JavaScript only for useful controls such as theme toggle, section navigation, copy summary, or review notes. Do not add generic sliders, state JSON panels, or playground widgets unless the artifact goal is tune.",
+          "When source notes are sparse, keep the skeleton honest: show \uD655\uC778 \uD544\uC694 or \uAE30\uC900 \uB300\uBE44 \uBCC0\uACBD/\uD655\uC778 \uD544\uC694 instead of inventing quantities, progress, dates, costs, or decisions."
+        ].join(" ");
       }
       if (template === "construction-daily") {
         const depth = options.exportDepth || "standard";
@@ -2697,6 +2964,20 @@ var require_html_qa = __commonJS({
       }
       if (/```(?:dataviewjs|dataview)\b|<code\b[^>]*>\s*(?:dataviewjs|dataview)\b|\[![-\w]+][+-]?|\[\[[^\]]+]]|(?:^|\n)\s*---\s*(?:\n|$)/i.test(value)) {
         warnings.push("HTML QA fatal: raw Obsidian-only syntax remains in the HTML.");
+      }
+      const integratedDashboard = options.template === "integrated-dashboard" || options.exportGenre === "integrated-note" || options.exportGenre === "construction-daily" && options.exportDepth === "milestone";
+      if (!externalHtml && integratedDashboard) {
+        const h2Count = (value.match(/<h2\b/gi) || []).length;
+        const text = value.replace(/<[^>]+>/g, " ");
+        if (h2Count < 4) {
+          warnings.push("HTML QA: integrated dashboard should use multiple H2 operating sections, not a single long brief.");
+        }
+        if (!/(문서\s*지도|빠른\s*현황|일정|간트|gantt|실행\s*게이트|공정|리스크|의사결정|마일스톤|업데이트\s*로그)/i.test(text)) {
+          warnings.push("HTML QA: integrated dashboard is missing expected navigation, status, schedule/process, risk, milestone, or log sections.");
+        }
+        if (trusted && !/(theme|다크|라이트|dark|light|data-theme|prefers-color-scheme)/i.test(value)) {
+          warnings.push("HTML QA: integrated dashboard should include a dark/light theme affordance in trusted mode.");
+        }
       }
       if (!externalHtml && options.exportGenre === "construction-daily") {
         const depth = options.exportDepth || "standard";

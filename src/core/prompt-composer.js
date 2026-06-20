@@ -17,6 +17,7 @@ function buildSelectionPrompt(options = {}) {
     `Depth instruction: ${getDepthInstruction(selection.exportGenre, selection.exportDepth)}`,
     `Audience instruction: ${getPurposeInstruction(selection.exportPurpose)}`,
     `Context instruction: ${getContextInstruction(selection.exportGenre, selection.exportDepth, referencePath)}`,
+    `Layout instruction: ${getLayoutInstruction(selection.exportGenre, selection.exportDepth)}`,
     `Quality contract: ${getQualityContract(selection.exportGenre, selection.exportDepth)}`,
   ];
   return blocks.join('\n');
@@ -26,7 +27,7 @@ function getGenreInstruction(genre) {
   return {
     'construction-daily': 'Create a Korean construction daily HTML report. The reader must quickly understand what happened today, where the work sits in the project sequence, what evidence exists, what risks remain, and what should happen next.',
     'meeting-notes': 'Create a Korean meeting note artifact with agenda, attendees if available, decisions, unresolved questions, owners, and next actions.',
-    'integrated-note': 'Create an integrated project note that connects status, context, decisions, risks, and next steps without turning it into a generic article.',
+    'integrated-note': 'Create a Korean integrated project dashboard that connects status, context, decisions, risks, schedule, execution gates, logs, and next steps. It must feel like an operations control board, not a generic article or loose strategy memo.',
     report: 'Create a structured report with executive summary, evidence, analysis, implications, and next actions.',
     'general-note': 'Create a faithful readable note. Preserve the original meaning and avoid unnecessary restructuring.',
     'compare-review': 'Create a comparison review with criteria, alternatives, pros and cons, risks, and a clear comparison matrix.',
@@ -46,7 +47,7 @@ function getDepthInstruction(genre, depth) {
   return {
     brief: 'Keep the artifact compact. Summarize only enough structure to make the note easy to scan.',
     standard: 'Create a balanced artifact with summary, main sections, evidence, and next actions.',
-    milestone: 'Create a full artifact with context, detailed sections, implications, risks, and decision-ready next steps.',
+    milestone: 'Create a full artifact with context, detailed sections, schedule/process view, implications, risks, decisions, and next-step gates.',
   }[depth] || 'Use a balanced level of detail.';
 }
 
@@ -85,8 +86,35 @@ function getContextInstruction(genre, depth, referencePath) {
   ].join(' ');
 }
 
+function shouldUseIntegratedDashboardStandard(genre, depth) {
+  return genre === 'integrated-note' || (genre === 'construction-daily' && depth === 'milestone');
+}
+
+function getLayoutInstruction(genre, depth) {
+  if (!shouldUseIntegratedDashboardStandard(genre, depth)) {
+    return 'Use the selected template normally. Keep section hierarchy clear and avoid decorative layouts that obscure the note.';
+  }
+  return [
+    'Use the approved 2026-05-19 integrated-note dashboard standard as the layout model.',
+    'Build a project operations dashboard, not a strategy brief, article, poster, or generic slide deck.',
+    'Required H2-level sequence: 문서 지도, 빠른 현황, 핵심 관리 흐름, 일정/간트 또는 실행 게이트, 자금/자원 또는 공정 증빙 when present, 리스크·의사결정, 마일스톤 요약, 업데이트 로그, 리뷰 룸.',
+    'Use a sticky/visible document map or quick navigation, compact status cards, timeline/process/gate blocks, evidence cards, risk/decision tables, and reader-review prompts.',
+    'Include a visible dark/light theme toggle in trusted mode. Use CSS custom properties, local-only JavaScript, and prefers-color-scheme fallback. Do not rely on remote assets.',
+    'If source content is sparse, preserve the dashboard skeleton but mark missing data as 확인 필요 rather than inventing facts.',
+  ].join(' ');
+}
+
 function getQualityContract(genre, depth) {
   const common = 'Never show raw Obsidian-only syntax such as frontmatter, dataviewjs, [!callout] markers, or code that exists only to render inside Obsidian. Keep Korean documents in Korean.';
+  if (shouldUseIntegratedDashboardStandard(genre, depth)) {
+    const dashboard = [
+      'Integrated dashboard output must use clear H2 sections rather than one long H3-only brief.',
+      'It must include title/date or reporting period, executive status, baseline context, schedule/process or execution gate, risks/issues, decisions, next actions, and update log when source material supports them.',
+      'Do not expose raw Markdown command labels such as [!summary], DataviewJS, wiki links, or frontmatter.',
+      'Do not invent progress, quantities, completion status, manpower, dates, costs, risks, or decisions.',
+    ].join(' ');
+    return `${dashboard} ${common}`;
+  }
   if (genre !== 'construction-daily') {
     return common;
   }
@@ -103,6 +131,8 @@ module.exports = {
   getContextInstruction,
   getDepthInstruction,
   getGenreInstruction,
+  getLayoutInstruction,
   getPurposeInstruction,
   getQualityContract,
+  shouldUseIntegratedDashboardStandard,
 };

@@ -83,6 +83,232 @@ const templates = [
     `,
   },
   {
+    id: 'integrated-dashboard',
+    name: 'Integrated Project Dashboard',
+    description: 'Operations dashboard standard for integrated notes and milestone construction reports, with dark/light theme toggle.',
+    css: `
+      :root {
+        color-scheme: dark light;
+        --bg: #08111f;
+        --bg-soft: #0e1a2c;
+        --panel: rgba(18, 30, 52, .9);
+        --panel-strong: #12203a;
+        --card: rgba(15, 26, 46, .96);
+        --text: #e6eefb;
+        --muted: #a8b6ca;
+        --line: rgba(148, 163, 184, .22);
+        --accent: #38bdf8;
+        --accent-2: #22c55e;
+        --warn: #f59e0b;
+        --danger: #ef4444;
+        --radius: 16px;
+        --shadow: 0 18px 48px rgba(0, 0, 0, .28);
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --bg: #f4f7fb;
+        --bg-soft: #e9f0f8;
+        --panel: rgba(255, 255, 255, .92);
+        --panel-strong: #ffffff;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #526175;
+        --line: rgba(15, 23, 42, .12);
+        --accent: #2563eb;
+        --accent-2: #0f766e;
+        --warn: #d97706;
+        --danger: #dc2626;
+        --shadow: 0 16px 42px rgba(15, 23, 42, .12);
+      }
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme]) {
+          color-scheme: light;
+          --bg: #f4f7fb;
+          --bg-soft: #e9f0f8;
+          --panel: rgba(255, 255, 255, .92);
+          --panel-strong: #ffffff;
+          --card: #ffffff;
+          --text: #111827;
+          --muted: #526175;
+          --line: rgba(15, 23, 42, .12);
+          --accent: #2563eb;
+          --accent-2: #0f766e;
+          --warn: #d97706;
+          --danger: #dc2626;
+          --shadow: 0 16px 42px rgba(15, 23, 42, .12);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: Inter, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 12% 8%, rgba(56, 189, 248, .16), transparent 25%),
+          radial-gradient(circle at 85% 12%, rgba(34, 197, 94, .12), transparent 22%),
+          linear-gradient(180deg, var(--bg), var(--bg-soft));
+        line-height: 1.62;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+      }
+      main { max-width: 1240px; margin: 0 auto; padding: 28px 20px 72px; }
+      article {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 14px;
+      }
+      article > * {
+        grid-column: 1 / -1;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      article > h1 {
+        position: relative;
+        overflow: hidden;
+        padding: 30px 26px;
+        margin: 0 0 2px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(56, 189, 248, .18), var(--panel));
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+      article > h2 {
+        margin: 18px 0 0;
+        border-left: 6px solid var(--accent);
+        font-size: clamp(1.35rem, 2.4vw, 2rem);
+        color: var(--text);
+      }
+      article > h3 {
+        color: var(--accent);
+        font-size: 1.08rem;
+      }
+      p, li { color: var(--muted); }
+      strong { color: var(--text); }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      th, td { border-bottom: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+      th { color: var(--text); background: rgba(56, 189, 248, .12); }
+      tr:last-child td { border-bottom: 0; }
+      img { max-width: 100%; height: auto; border-radius: 12px; display: block; }
+      pre { overflow: auto; background: #07101f; color: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid var(--line); }
+      blockquote, .callout {
+        margin: 18px 0;
+        border-left: 5px solid var(--accent-2);
+        background: rgba(34, 197, 94, .1);
+        border-radius: 12px;
+        padding: 14px 18px;
+      }
+      .marktl-theme-toggle {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 50;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel-strong);
+        color: var(--text);
+        box-shadow: var(--shadow);
+        padding: 10px 13px;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .marktl-generated-map {
+        position: sticky;
+        top: 12px;
+        z-index: 20;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        background: var(--panel-strong);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 10px 12px;
+        box-shadow: var(--shadow);
+      }
+      .marktl-generated-map a {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 10px;
+        color: var(--text);
+        background: rgba(148, 163, 184, .08);
+        font-size: .86rem;
+        font-weight: 700;
+      }
+      @media (min-width: 900px) {
+        article > h2 + p,
+        article > h2 + ul,
+        article > h2 + ol,
+        article > h2 + table { grid-column: span 6; }
+      }
+      @media (max-width: 760px) {
+        main { padding: 16px 12px 56px; }
+        article > * { padding: 16px; }
+        table { display: block; overflow-x: auto; }
+        .marktl-theme-toggle { right: 12px; bottom: 12px; }
+      }
+    `,
+    script: `
+      const root = document.documentElement;
+      const themeKey = 'marktl-integrated-dashboard-theme';
+      const savedTheme = localStorage.getItem(themeKey);
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        root.dataset.theme = savedTheme;
+      }
+      const themeButton = document.createElement('button');
+      themeButton.type = 'button';
+      themeButton.className = 'marktl-theme-toggle';
+      const syncThemeLabel = () => {
+        const current = root.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        themeButton.textContent = current === 'light' ? 'Dark' : 'Light';
+        themeButton.setAttribute('aria-label', current === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+      };
+      themeButton.addEventListener('click', () => {
+        const current = root.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        const next = current === 'light' ? 'dark' : 'light';
+        root.dataset.theme = next;
+        localStorage.setItem(themeKey, next);
+        syncThemeLabel();
+      });
+      syncThemeLabel();
+      document.body.append(themeButton);
+
+      const headings = [...document.querySelectorAll('article h2')];
+      if (headings.length && !document.querySelector('.marktl-generated-map')) {
+        const map = document.createElement('nav');
+        map.className = 'marktl-generated-map';
+        map.setAttribute('aria-label', 'Document map');
+        const label = document.createElement('strong');
+        label.textContent = '문서 지도';
+        map.append(label);
+        headings.slice(0, 12).forEach((heading, index) => {
+          heading.id = heading.id || 'section-' + (index + 1);
+          const link = document.createElement('a');
+          link.href = '#' + heading.id;
+          link.textContent = heading.textContent.trim();
+          map.append(link);
+        });
+        document.querySelector('main').prepend(map);
+      }
+    `,
+  },
+  {
     id: 'investor-brief',
     name: 'Investor Brief',
     description: 'Sharp memo style for strategy, market, and investment analysis.',

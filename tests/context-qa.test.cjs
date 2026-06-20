@@ -78,6 +78,29 @@ test('flags raw Obsidian-only blocks as fatal HTML QA', () => {
   assert.match(warnings.join('\n'), /HTML QA fatal/);
 });
 
+test('warns when integrated dashboard output collapses into a shallow brief', () => {
+  const warnings = validateHtmlArtifact('<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style><script>const theme = "dark";</script></head><body><h1>통합노트</h1><h2>요약</h2><h3>리스크</h3><p>내용</p></body></html>', {
+    trusted: true,
+    template: 'integrated-dashboard',
+    exportGenre: 'integrated-note',
+    exportDepth: 'milestone',
+  });
+
+  assert.match(warnings.join('\n'), /multiple H2 operating sections/);
+});
+
+test('accepts integrated dashboard output with theme and operating sections', () => {
+  const html = '<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>:root{color:red}</style><script>document.documentElement.dataset.theme="dark";</script></head><body><h1>통합노트</h1><h2>문서 지도</h2><h2>빠른 현황</h2><h2>일정/간트</h2><h2>리스크·의사결정</h2><h2>마일스톤 요약</h2><h2>업데이트 로그</h2></body></html>';
+  const warnings = validateHtmlArtifact(html, {
+    trusted: true,
+    template: 'integrated-dashboard',
+    exportGenre: 'integrated-note',
+    exportDepth: 'milestone',
+  });
+
+  assert.doesNotMatch(warnings.join('\n'), /integrated dashboard/);
+});
+
 test('does not flag ordinary dataview words as fatal HTML QA', () => {
   const warnings = validateHtmlArtifact('<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style></head><body><h1>기술 개념</h1><p>dataview는 Obsidian 플러그인 이름으로 설명될 수 있습니다.</p></body></html>', {
     artifactGoal: 'read',
