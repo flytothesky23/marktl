@@ -11,7 +11,9 @@ const {
   normalizePublishPath,
   parseRepo,
   repairShareIndex,
+  removeShareIndexItems,
   renderShareIndexHtml,
+  shareDeleteKeys,
   updateShareIndex,
 } = require('../src/core/github-pages.js');
 
@@ -122,6 +124,56 @@ test('repairs legacy share index metadata and duplicate entries', () => {
   assert.equal(alpha.title, '2026-06-16 지수통합선별공장 공사일보');
   assert.equal(alpha.sourcePathKey, 'projects/2026-06-16 지수통합선별공장 공사일보.md');
   assert.deepEqual(alpha.tags, ['지수통합선별공장', '회의록', '검토중']);
+});
+
+test('removes multiple share index items by stable delete keys', () => {
+  const index = repairShareIndex({
+    updatedAt: '2026-06-21T00:00:00.000Z',
+    items: [
+      {
+        slug: 'alpha',
+        shortId: 'a1',
+        title: 'Alpha',
+        url: 'https://example.com/marktl/s/a1/',
+        canonicalUrl: 'https://example.com/marktl/alpha/',
+        sourcePathKey: 'notes/alpha.md',
+        updatedAt: '2026-06-19T00:00:00.000Z',
+      },
+      {
+        slug: 'beta',
+        shortId: 'b2',
+        title: 'Beta',
+        url: 'https://example.com/marktl/s/b2/',
+        canonicalUrl: 'https://example.com/marktl/beta/',
+        sourcePathKey: 'notes/beta.md',
+        updatedAt: '2026-06-18T00:00:00.000Z',
+      },
+      {
+        slug: 'gamma',
+        shortId: 'g3',
+        title: 'Gamma',
+        url: 'https://example.com/marktl/s/g3/',
+        canonicalUrl: 'https://example.com/marktl/gamma/',
+        sourcePathKey: 'notes/gamma.md',
+        updatedAt: '2026-06-17T00:00:00.000Z',
+      },
+    ],
+  });
+
+  const result = removeShareIndexItems(index, [
+    { shortId: 'a1' },
+    { canonicalUrl: 'https://example.com/marktl/beta' },
+  ]);
+
+  assert.deepEqual(result.removed.map((item) => item.slug).sort(), ['alpha', 'beta']);
+  assert.deepEqual(result.index.items.map((item) => item.slug), ['gamma']);
+  assert.deepEqual(shareDeleteKeys(index.items[0]), [
+    'short:a1',
+    'url:https://example.com/marktl/s/a1',
+    'canonical:https://example.com/marktl/alpha',
+    'source:notes/alpha.md',
+    'slug:alpha',
+  ]);
 });
 
 test('renders share home page with published links', () => {

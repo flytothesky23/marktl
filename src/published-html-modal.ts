@@ -66,6 +66,26 @@ export class MarktlPublishedHtmlModal extends Modal {
           } catch (error) {
             statusEl.setText(error instanceof Error ? error.message : String(error));
           }
+        }))
+      .addButton((button) => button
+        .setButtonText('현재 허브 전체 삭제')
+        .setWarning()
+        .onClick(async () => {
+          const confirmed = window.confirm('현재 선택된 공유 허브의 게시물 인덱스를 비우고, 허브 폴더에 남은 서브페이지 폴더를 모두 삭제할까요?\n\n이 작업은 되돌릴 수 없습니다.');
+          if (!confirmed) {
+            return;
+          }
+          button.setDisabled(true);
+          statusEl.setText('현재 공유 허브의 게시물과 남은 서브페이지 폴더를 삭제하는 중...');
+          try {
+            const result = await this.plugin.deleteAllPublishedShareItems(this.shareHomeProfileId);
+            new Notice(`현재 허브 게시물 ${result.removedCount}개와 서브페이지 폴더 ${result.removedPathCount}개를 삭제했습니다.`);
+            await this.render();
+          } catch (error) {
+            statusEl.setText(error instanceof Error ? error.message : String(error));
+          } finally {
+            button.setDisabled(false);
+          }
         }));
 
     const listEl = contentEl.createDiv();
@@ -121,11 +141,14 @@ export class MarktlPublishedHtmlModal extends Modal {
             return;
           }
           try {
+            button.setDisabled(true);
             const result = await this.plugin.deletePublishedShareItem(item, this.shareHomeProfileId);
             new Notice(`아카이브 항목 ${result.removedCount}개를 삭제했습니다.`);
             await this.render();
           } catch (error) {
             new Notice(error instanceof Error ? error.message : String(error));
+          } finally {
+            button.setDisabled(false);
           }
         }));
   }

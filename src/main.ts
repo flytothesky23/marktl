@@ -16,7 +16,7 @@ const { buildContextPackMarkdown, extractMarkdownContextTargets } = require('./c
 const { basenameFromHtmlFileName, externalThumbnailAssetName, externalThumbnailExtension, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require('./core/external-html.js');
 const { normalizeExportSelection } = require('./core/export-profiles.js');
 const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require('./core/feedback.js');
-const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
+const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, normalizePublishPath, parseRepo, repairShareIndex, removeShareIndexItems, renderShareIndexHtml, shareDeleteKeys: buildShareDeleteKeys, updateShareIndex } = require('./core/github-pages.js');
 const { repairObsidianSyntaxResidue } = require('./core/html-repair.js');
 const { validateHtmlArtifact } = require('./core/html-qa.js');
 const { injectShareHomeLink } = require('./core/share-navigation.js');
@@ -274,6 +274,7 @@ function runCliPreflight(command: string, args: string[], timeoutMs = 15000): Pr
 
 export default class MarktlPlugin extends Plugin {
   settings: MarktlSettings = DEFAULT_SETTINGS;
+  private publishedShareMutationQueue: Promise<unknown> = Promise.resolve();
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -1588,38 +1589,98 @@ ${value}
     await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html);
   }
 
+  private enqueuePublishedShareMutation<T>(operation: () => Promise<T>): Promise<T> {
+    const next = this.publishedShareMutationQueue.then(operation, operation);
+    this.publishedShareMutationQueue = next.catch(() => undefined);
+    return next;
+  }
+
   async deletePublishedShareItem(target: PublishedShareItem, shareHomeProfileId = ''): Promise<{ removedCount: number; index: PublishedShareIndex }> {
+    return this.deletePublishedShareItems([target], shareHomeProfileId);
+  }
+
+  async deletePublishedShareItems(targets: PublishedShareItem[], shareHomeProfileId = ''): Promise<{ removedCount: number; index: PublishedShareIndex }> {
+    return this.enqueuePublishedShareMutation(() => this.deletePublishedShareItemsNow(targets, shareHomeProfileId));
+  }
+
+  async deleteAllPublishedShareItems(shareHomeProfileId = ''): Promise<{ removedCount: number; removedPathCount: number; index: PublishedShareIndex }> {
+    return this.enqueuePublishedShareMutation(async () => {
+      const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
+      const nextIndex = repairShareIndex({
+        ...index,
+        updatedAt: new Date().toISOString(),
+        items: [],
+      });
+      const removed = [...index.items];
+      await this.deletePublishedShareArtifacts(context, removed);
+      const removedPathCount = await this.deleteShareHomeSubpageFolders(context);
+      await this.writePublishedShareIndex(context, nextIndex);
+      return { removedCount: removed.length, removedPathCount, index: nextIndex };
+    });
+  }
+
+  private async deletePublishedShareItemsNow(targets: PublishedShareItem[], shareHomeProfileId = ''): Promise<{ removedCount: number; index: PublishedShareIndex }> {
     const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
-    const targetKeys = this.shareDeleteKeys(target);
-    const removed: PublishedShareItem[] = [];
-    const kept: PublishedShareItem[] = [];
-    for (const item of index.items) {
-      const keys = this.shareDeleteKeys(item);
-      const matches = keys.some((key) => targetKeys.includes(key));
-      if (matches) {
-        removed.push(item);
-      } else {
-        kept.push(item);
-      }
-    }
+    const { removed, index: nextIndex } = removeShareIndexItems(index, targets) as { removed: PublishedShareItem[]; index: PublishedShareIndex };
     if (!removed.length) {
       throw new Error('No matching published artifact was found.');
     }
-    const nextIndex = repairShareIndex({
-      ...index,
-      updatedAt: new Date().toISOString(),
-      items: kept,
-    });
-    for (const item of removed) {
-      if (item.slug) {
-        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, item.slug, ''));
-      }
-      if (item.shortId) {
-        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, `s/${item.shortId}`, ''));
-      }
-    }
+    await this.deletePublishedShareArtifacts(context, removed);
     await this.writePublishedShareIndex(context, nextIndex);
     return { removedCount: removed.length, index: nextIndex };
+  }
+
+  private async deletePublishedShareArtifacts(context: GithubPagesContext, items: PublishedShareItem[]): Promise<void> {
+    const publishPaths = new Set<string>();
+    for (const item of items) {
+      if (item.slug) {
+        publishPaths.add(buildPublishPath(context.basePath, item.slug, ''));
+      }
+      if (item.shortId) {
+        publishPaths.add(buildPublishPath(context.basePath, `s/${item.shortId}`, ''));
+      }
+    }
+    for (const publishPath of publishPaths) {
+      await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, publishPath);
+    }
+  }
+
+  private async deleteShareHomeSubpageFolders(context: GithubPagesContext): Promise<number> {
+    const basePath = normalizePublishPath(context.basePath);
+    if (!basePath) {
+      return 0;
+    }
+    const token = this.settings.githubToken.trim();
+    const existing = await requestUrl({
+      url: `${this.githubContentsUrl(context.owner, context.repo, basePath)}?ref=${encodeURIComponent(context.branch)}`,
+      method: 'GET',
+      headers: this.githubHeaders(token),
+      throw: false,
+    });
+    if (existing.status === 404) {
+      return 0;
+    }
+    if (existing.status < 200 || existing.status >= 300) {
+      const message = existing.json?.message || existing.text || `GitHub lookup failed with HTTP ${existing.status}`;
+      throw new Error(`GitHub lookup failed for ${basePath}: ${message}`);
+    }
+    const content = existing.json;
+    if (!Array.isArray(content)) {
+      return 0;
+    }
+    let removedPathCount = 0;
+    for (const child of content) {
+      const name = String(child?.name || '').trim().toLowerCase();
+      const path = String(child?.path || '').trim();
+      if (!path || name === 'index.html' || name === 'index.json') {
+        continue;
+      }
+      if (child?.type === 'dir') {
+        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, path);
+        removedPathCount += 1;
+      }
+    }
+    return removedPathCount;
   }
 
   async replacePublishedShareThumbnail(target: PublishedShareItem, file: File, shareHomeProfileId = ''): Promise<{ updatedCount: number; index: PublishedShareIndex; thumbnailUrl: string }> {
@@ -1674,13 +1735,7 @@ ${value}
   }
 
   shareDeleteKeys(item: PublishedShareItem): string[] {
-    return [
-      item?.shortId ? `short:${item.shortId}` : '',
-      item?.url ? `url:${String(item.url).replace(/\/+$/g, '')}` : '',
-      item?.canonicalUrl ? `canonical:${String(item.canonicalUrl).replace(/\/+$/g, '')}` : '',
-      item?.sourcePathKey ? `source:${item.sourcePathKey}` : '',
-      item?.slug ? `slug:${item.slug}` : '',
-    ].filter(Boolean);
+    return buildShareDeleteKeys(item);
   }
 
   private async deleteGithubPathRecursive(owner: string, repo: string, branch: string, publishPath: string): Promise<void> {
@@ -1734,6 +1789,9 @@ ${value}
       }),
       throw: false,
     });
+    if (response.status === 404) {
+      return;
+    }
     if (response.status < 200 || response.status >= 300) {
       const message = response.json?.message || response.text || `GitHub delete failed with HTTP ${response.status}`;
       throw new Error(`GitHub delete failed for ${publishPath}: ${message}`);

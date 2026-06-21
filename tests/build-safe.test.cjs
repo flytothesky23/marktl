@@ -36,6 +36,7 @@ test('checked-in bundle is generated from source and keeps release markers', () 
       'Manage published MarkTL HTML',
       'Repair all MarkTL share hub indexes',
       'replacePublishedShareThumbnail',
+      'deleteAllPublishedShareItems',
       'shareHomeProfileId',
       'deleteGithubPathRecursive',
       'repairShareIndex',
@@ -74,6 +75,9 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.doesNotMatch(modalSource, /item\.sourcePath \|\|/);
   assert.match(modalSource, /인덱스 메타데이터 복구/);
   assert.match(modalSource, /모든 허브 메인페이지 복구/);
+  assert.match(modalSource, /현재 허브 전체 삭제/);
+  assert.match(mainSource, /deleteAllPublishedShareItems/);
+  assert.match(rendererSource, /function removeShareIndexItems/);
   assert.match(rendererSource, /function repairShareIndex/);
   assert.match(rendererSource, /통합선별공장 Archive/);
   assert.match(rendererSource, /repeat\(4,minmax\(0,1fr\)\)/);

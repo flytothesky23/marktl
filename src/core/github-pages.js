@@ -119,6 +119,48 @@ function repairShareIndex(existingIndex) {
   };
 }
 
+function shareDeleteKeys(item) {
+  return [
+    item?.shortId ? `short:${item.shortId}` : '',
+    item?.url ? `url:${String(item.url).replace(/\/+$/g, '')}` : '',
+    item?.canonicalUrl ? `canonical:${String(item.canonicalUrl).replace(/\/+$/g, '')}` : '',
+    item?.sourcePathKey ? `source:${item.sourcePathKey}` : '',
+    item?.slug ? `slug:${item.slug}` : '',
+  ].filter(Boolean);
+}
+
+function removeShareIndexItems(existingIndex, targets) {
+  const repaired = repairShareIndex(existingIndex || { items: [] });
+  const targetList = Array.isArray(targets) ? targets : [targets];
+  const targetKeys = new Set(targetList.flatMap(shareDeleteKeys));
+  if (!targetKeys.size) {
+    return {
+      removed: [],
+      index: repaired,
+    };
+  }
+
+  const removed = [];
+  const kept = [];
+  for (const item of repaired.items) {
+    const matches = shareDeleteKeys(item).some((key) => targetKeys.has(key));
+    if (matches) {
+      removed.push(item);
+    } else {
+      kept.push(item);
+    }
+  }
+
+  return {
+    removed,
+    index: repairShareIndex({
+      ...repaired,
+      updatedAt: new Date().toISOString(),
+      items: kept,
+    }),
+  };
+}
+
 function renderShareIndexHtml(index, options = {}) {
   const title = cleanArchiveText(options.title || '유네코 지수 통합선별공장 프로젝트', '유네코 지수 통합선별공장 프로젝트');
   const eyebrow = cleanArchiveText(options.eyebrow || '통합선별공장 Archive', '통합선별공장 Archive');
@@ -588,6 +630,8 @@ module.exports = {
   normalizePublishPath,
   parseRepo,
   repairShareIndex,
+  removeShareIndexItems,
   renderShareIndexHtml,
+  shareDeleteKeys,
   updateShareIndex,
 };

@@ -1758,18 +1758,18 @@ var require_github_pages = __commonJS({
       }
       return { owner, repo };
     }
-    function normalizePublishPath(value) {
+    function normalizePublishPath2(value) {
       return String(value || "").trim().replace(/^\/+|\/+$/g, "").replace(/\\/g, "/").replace(/\/+/g, "/");
     }
     function buildPublishPath2(basePath, slug, filePath) {
-      return [normalizePublishPath(basePath), slug, filePath].filter(Boolean).join("/").replace(/\/+/g, "/");
+      return [normalizePublishPath2(basePath), slug, filePath].filter(Boolean).join("/").replace(/\/+/g, "/");
     }
     function buildPagesUrl2(baseUrl, basePath, slug) {
       const root = String(baseUrl || "").trim().replace(/\/+$/g, "");
       if (!root) {
         return "";
       }
-      const suffix = [normalizePublishPath(basePath), slug].filter(Boolean).map((part) => encodePathPart(part)).join("/");
+      const suffix = [normalizePublishPath2(basePath), slug].filter(Boolean).map((part) => encodePathPart(part)).join("/");
       return `${root}/${suffix ? `${suffix}/` : ""}`;
     }
     function buildShortPagesUrl2(baseUrl, basePath, shortId) {
@@ -1780,7 +1780,7 @@ var require_github_pages = __commonJS({
       if (!root) {
         return "";
       }
-      const suffix = normalizePublishPath(basePath);
+      const suffix = normalizePublishPath2(basePath);
       return `${root}/${suffix ? `${encodePathPart(suffix)}/` : ""}`;
     }
     function encodePathPart(value) {
@@ -1833,6 +1833,44 @@ var require_github_pages = __commonJS({
         version: 2,
         updatedAt: (existingIndex == null ? void 0 : existingIndex.updatedAt) || now,
         items
+      };
+    }
+    function shareDeleteKeys(item) {
+      return [
+        (item == null ? void 0 : item.shortId) ? `short:${item.shortId}` : "",
+        (item == null ? void 0 : item.url) ? `url:${String(item.url).replace(/\/+$/g, "")}` : "",
+        (item == null ? void 0 : item.canonicalUrl) ? `canonical:${String(item.canonicalUrl).replace(/\/+$/g, "")}` : "",
+        (item == null ? void 0 : item.sourcePathKey) ? `source:${item.sourcePathKey}` : "",
+        (item == null ? void 0 : item.slug) ? `slug:${item.slug}` : ""
+      ].filter(Boolean);
+    }
+    function removeShareIndexItems2(existingIndex, targets) {
+      const repaired = repairShareIndex2(existingIndex || { items: [] });
+      const targetList = Array.isArray(targets) ? targets : [targets];
+      const targetKeys = new Set(targetList.flatMap(shareDeleteKeys));
+      if (!targetKeys.size) {
+        return {
+          removed: [],
+          index: repaired
+        };
+      }
+      const removed = [];
+      const kept = [];
+      for (const item of repaired.items) {
+        const matches = shareDeleteKeys(item).some((key) => targetKeys.has(key));
+        if (matches) {
+          removed.push(item);
+        } else {
+          kept.push(item);
+        }
+      }
+      return {
+        removed,
+        index: repairShareIndex2({
+          ...repaired,
+          updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+          items: kept
+        })
       };
     }
     function renderShareIndexHtml2(index, options = {}) {
@@ -2219,10 +2257,12 @@ document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new D
       buildShortPagesUrl: buildShortPagesUrl2,
       inferPagesBaseUrl: inferPagesBaseUrl3,
       mimeTypeForPath,
-      normalizePublishPath,
+      normalizePublishPath: normalizePublishPath2,
       parseRepo: parseRepo2,
       repairShareIndex: repairShareIndex2,
+      removeShareIndexItems: removeShareIndexItems2,
       renderShareIndexHtml: renderShareIndexHtml2,
+      shareDeleteKeys,
       updateShareIndex: updateShareIndex2
     };
   }
@@ -2232,7 +2272,7 @@ document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new D
 var require_share_home_profiles = __commonJS({
   "src/core/share-home-profiles.js"(exports2, module2) {
     "use strict";
-    var { buildShareHomeUrl: buildShareHomeUrl2, inferPagesBaseUrl: inferPagesBaseUrl3, normalizePublishPath } = require_github_pages();
+    var { buildShareHomeUrl: buildShareHomeUrl2, inferPagesBaseUrl: inferPagesBaseUrl3, normalizePublishPath: normalizePublishPath2 } = require_github_pages();
     var DEFAULT_SHARE_HOME_PROFILE_ID2 = "jisu-construction";
     var DEFAULT_SHARE_HOME_TITLE = "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8";
     var DEFAULT_SHARE_HOME_EYEBROW = "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive";
@@ -2249,7 +2289,7 @@ var require_share_home_profiles = __commonJS({
       return {
         id: DEFAULT_SHARE_HOME_PROFILE_ID2,
         title: cleanProfileText(settings.githubShareHomeTitle, DEFAULT_SHARE_HOME_TITLE),
-        basePath: normalizePublishPath(
+        basePath: normalizePublishPath2(
           Object.prototype.hasOwnProperty.call(settings, "githubPublishPath") ? settings.githubPublishPath : "marktl"
         ),
         eyebrow: DEFAULT_SHARE_HOME_EYEBROW,
@@ -2264,7 +2304,7 @@ var require_share_home_profiles = __commonJS({
       const normalized = {
         id: normalizeShareHomeProfileId(raw.id || raw.key || raw.name, idFallback),
         title: cleanProfileText(raw.title || raw.name, index === 0 ? fallback.title : `\uACF5\uC720 \uD5C8\uBE0C ${index + 1}`),
-        basePath: Object.prototype.hasOwnProperty.call(raw, "basePath") ? normalizePublishPath(raw.basePath) : baseFallback,
+        basePath: Object.prototype.hasOwnProperty.call(raw, "basePath") ? normalizePublishPath2(raw.basePath) : baseFallback,
         eyebrow: cleanProfileText(raw.eyebrow || raw.badge, index === 0 ? fallback.eyebrow : "MarkTL Archive"),
         description: cleanProfileText(raw.description, index === 0 ? fallback.description : DEFAULT_SHARE_HOME_DESCRIPTION)
       };
@@ -3716,6 +3756,22 @@ var MarktlPublishedHtmlModal = class extends import_obsidian2.Modal {
       } catch (error) {
         statusEl.setText(error instanceof Error ? error.message : String(error));
       }
+    })).addButton((button) => button.setButtonText("\uD604\uC7AC \uD5C8\uBE0C \uC804\uCCB4 \uC0AD\uC81C").setWarning().onClick(async () => {
+      const confirmed = window.confirm("\uD604\uC7AC \uC120\uD0DD\uB41C \uACF5\uC720 \uD5C8\uBE0C\uC758 \uAC8C\uC2DC\uBB3C \uC778\uB371\uC2A4\uB97C \uBE44\uC6B0\uACE0, \uD5C8\uBE0C \uD3F4\uB354\uC5D0 \uB0A8\uC740 \uC11C\uBE0C\uD398\uC774\uC9C0 \uD3F4\uB354\uB97C \uBAA8\uB450 \uC0AD\uC81C\uD560\uAE4C\uC694?\n\n\uC774 \uC791\uC5C5\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+      if (!confirmed) {
+        return;
+      }
+      button.setDisabled(true);
+      statusEl.setText("\uD604\uC7AC \uACF5\uC720 \uD5C8\uBE0C\uC758 \uAC8C\uC2DC\uBB3C\uACFC \uB0A8\uC740 \uC11C\uBE0C\uD398\uC774\uC9C0 \uD3F4\uB354\uB97C \uC0AD\uC81C\uD558\uB294 \uC911...");
+      try {
+        const result = await this.plugin.deleteAllPublishedShareItems(this.shareHomeProfileId);
+        new import_obsidian2.Notice(`\uD604\uC7AC \uD5C8\uBE0C \uAC8C\uC2DC\uBB3C ${result.removedCount}\uAC1C\uC640 \uC11C\uBE0C\uD398\uC774\uC9C0 \uD3F4\uB354 ${result.removedPathCount}\uAC1C\uB97C \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4.`);
+        await this.render();
+      } catch (error) {
+        statusEl.setText(error instanceof Error ? error.message : String(error));
+      } finally {
+        button.setDisabled(false);
+      }
     }));
     const listEl = contentEl.createDiv();
     statusEl.setText("\uAC8C\uC2DC \uC778\uB371\uC2A4\uB97C \uBD88\uB7EC\uC624\uB294 \uC911...");
@@ -3756,11 +3812,14 @@ ${title}`);
         return;
       }
       try {
+        button.setDisabled(true);
         const result = await this.plugin.deletePublishedShareItem(item, this.shareHomeProfileId);
         new import_obsidian2.Notice(`\uC544\uCE74\uC774\uBE0C \uD56D\uBAA9 ${result.removedCount}\uAC1C\uB97C \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4.`);
         await this.render();
       } catch (error) {
         new import_obsidian2.Notice(error instanceof Error ? error.message : String(error));
+      } finally {
+        button.setDisabled(false);
       }
     }));
   }
@@ -4787,7 +4846,7 @@ var { buildContextPackMarkdown, extractMarkdownContextTargets } = require_contex
 var { basenameFromHtmlFileName, externalThumbnailAssetName, externalThumbnailExtension, extractExternalHtmlMetadata, findExternalHtmlAssetWarnings, isSupportedExternalThumbnailFileName } = require_external_html();
 var { normalizeExportSelection } = require_export_profiles();
 var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } = require_feedback();
-var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
+var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, normalizePublishPath, parseRepo, repairShareIndex, removeShareIndexItems, renderShareIndexHtml, shareDeleteKeys: buildShareDeleteKeys, updateShareIndex } = require_github_pages();
 var { repairObsidianSyntaxResidue } = require_html_repair();
 var { validateHtmlArtifact } = require_html_qa();
 var { injectShareHomeLink } = require_share_navigation();
@@ -4975,6 +5034,7 @@ var MarktlPlugin = class extends import_obsidian8.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
+    this.publishedShareMutationQueue = Promise.resolve();
   }
   async onload() {
     await this.loadSettings();
@@ -6168,38 +6228,93 @@ ${value}`;
     await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2));
     await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html);
   }
+  enqueuePublishedShareMutation(operation) {
+    const next = this.publishedShareMutationQueue.then(operation, operation);
+    this.publishedShareMutationQueue = next.catch(() => void 0);
+    return next;
+  }
   async deletePublishedShareItem(target, shareHomeProfileId = "") {
+    return this.deletePublishedShareItems([target], shareHomeProfileId);
+  }
+  async deletePublishedShareItems(targets, shareHomeProfileId = "") {
+    return this.enqueuePublishedShareMutation(() => this.deletePublishedShareItemsNow(targets, shareHomeProfileId));
+  }
+  async deleteAllPublishedShareItems(shareHomeProfileId = "") {
+    return this.enqueuePublishedShareMutation(async () => {
+      const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
+      const nextIndex = repairShareIndex({
+        ...index,
+        updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        items: []
+      });
+      const removed = [...index.items];
+      await this.deletePublishedShareArtifacts(context, removed);
+      const removedPathCount = await this.deleteShareHomeSubpageFolders(context);
+      await this.writePublishedShareIndex(context, nextIndex);
+      return { removedCount: removed.length, removedPathCount, index: nextIndex };
+    });
+  }
+  async deletePublishedShareItemsNow(targets, shareHomeProfileId = "") {
     const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
-    const targetKeys = this.shareDeleteKeys(target);
-    const removed = [];
-    const kept = [];
-    for (const item of index.items) {
-      const keys = this.shareDeleteKeys(item);
-      const matches = keys.some((key) => targetKeys.includes(key));
-      if (matches) {
-        removed.push(item);
-      } else {
-        kept.push(item);
-      }
-    }
+    const { removed, index: nextIndex } = removeShareIndexItems(index, targets);
     if (!removed.length) {
       throw new Error("No matching published artifact was found.");
     }
-    const nextIndex = repairShareIndex({
-      ...index,
-      updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      items: kept
-    });
-    for (const item of removed) {
-      if (item.slug) {
-        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, item.slug, ""));
-      }
-      if (item.shortId) {
-        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, buildPublishPath(context.basePath, `s/${item.shortId}`, ""));
-      }
-    }
+    await this.deletePublishedShareArtifacts(context, removed);
     await this.writePublishedShareIndex(context, nextIndex);
     return { removedCount: removed.length, index: nextIndex };
+  }
+  async deletePublishedShareArtifacts(context, items) {
+    const publishPaths = /* @__PURE__ */ new Set();
+    for (const item of items) {
+      if (item.slug) {
+        publishPaths.add(buildPublishPath(context.basePath, item.slug, ""));
+      }
+      if (item.shortId) {
+        publishPaths.add(buildPublishPath(context.basePath, `s/${item.shortId}`, ""));
+      }
+    }
+    for (const publishPath of publishPaths) {
+      await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, publishPath);
+    }
+  }
+  async deleteShareHomeSubpageFolders(context) {
+    var _a;
+    const basePath = normalizePublishPath(context.basePath);
+    if (!basePath) {
+      return 0;
+    }
+    const token = this.settings.githubToken.trim();
+    const existing = await (0, import_obsidian8.requestUrl)({
+      url: `${this.githubContentsUrl(context.owner, context.repo, basePath)}?ref=${encodeURIComponent(context.branch)}`,
+      method: "GET",
+      headers: this.githubHeaders(token),
+      throw: false
+    });
+    if (existing.status === 404) {
+      return 0;
+    }
+    if (existing.status < 200 || existing.status >= 300) {
+      const message = ((_a = existing.json) == null ? void 0 : _a.message) || existing.text || `GitHub lookup failed with HTTP ${existing.status}`;
+      throw new Error(`GitHub lookup failed for ${basePath}: ${message}`);
+    }
+    const content = existing.json;
+    if (!Array.isArray(content)) {
+      return 0;
+    }
+    let removedPathCount = 0;
+    for (const child of content) {
+      const name = String((child == null ? void 0 : child.name) || "").trim().toLowerCase();
+      const path = String((child == null ? void 0 : child.path) || "").trim();
+      if (!path || name === "index.html" || name === "index.json") {
+        continue;
+      }
+      if ((child == null ? void 0 : child.type) === "dir") {
+        await this.deleteGithubPathRecursive(context.owner, context.repo, context.branch, path);
+        removedPathCount += 1;
+      }
+    }
+    return removedPathCount;
   }
   async replacePublishedShareThumbnail(target, file, shareHomeProfileId = "") {
     if (!this.isSupportedExternalThumbnail(file)) {
@@ -6247,13 +6362,7 @@ ${value}`;
     return { updatedCount, index: nextIndex, thumbnailUrl: lastThumbnailUrl };
   }
   shareDeleteKeys(item) {
-    return [
-      (item == null ? void 0 : item.shortId) ? `short:${item.shortId}` : "",
-      (item == null ? void 0 : item.url) ? `url:${String(item.url).replace(/\/+$/g, "")}` : "",
-      (item == null ? void 0 : item.canonicalUrl) ? `canonical:${String(item.canonicalUrl).replace(/\/+$/g, "")}` : "",
-      (item == null ? void 0 : item.sourcePathKey) ? `source:${item.sourcePathKey}` : "",
-      (item == null ? void 0 : item.slug) ? `slug:${item.slug}` : ""
-    ].filter(Boolean);
+    return buildShareDeleteKeys(item);
   }
   async deleteGithubPathRecursive(owner, repo, branch, publishPath) {
     var _a;
@@ -6307,6 +6416,9 @@ ${value}`;
       }),
       throw: false
     });
+    if (response.status === 404) {
+      return;
+    }
     if (response.status < 200 || response.status >= 300) {
       const message = ((_a = response.json) == null ? void 0 : _a.message) || response.text || `GitHub delete failed with HTTP ${response.status}`;
       throw new Error(`GitHub delete failed for ${publishPath}: ${message}`);
