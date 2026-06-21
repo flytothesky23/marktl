@@ -39,8 +39,9 @@ test('checked-in bundle is generated from source and keeps release markers', () 
       'shareHomeProfileId',
       'deleteGithubPathRecursive',
       'repairShareIndex',
-      'construction-daily-report',
-      'construction-daily',
+      'saas-brief',
+      'community-blog',
+      'data-marktl-share-home',
     ]) {
       assert.match(generated, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }

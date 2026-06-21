@@ -1,3 +1,4 @@
+const { normalizeExportSelection } = require('./export-profiles.js');
 const { normalizeShareHomeSettings, sameShareHomeSettings } = require('./share-home-profiles.js');
 
 function firstString(...values) {
@@ -42,6 +43,19 @@ function migrateSettings(defaultSettings, rawSettings) {
     settings.shareHomeProfiles = [];
     settings.activeShareHomeProfileId = '';
   }
+
+  const normalizedSelection = normalizeExportSelection(settings);
+  if (
+    settings.exportGenre !== normalizedSelection.exportGenre
+    || settings.exportDepth !== normalizedSelection.exportDepth
+    || settings.exportPurpose !== normalizedSelection.exportPurpose
+  ) {
+    settings.exportGenre = normalizedSelection.exportGenre;
+    settings.exportDepth = normalizedSelection.exportDepth;
+    settings.exportPurpose = normalizedSelection.exportPurpose;
+    migrated = true;
+  }
+
   const shareHomeSettings = normalizeShareHomeSettings(settings);
   if (!sameShareHomeSettings(settings, shareHomeSettings)) {
     settings.shareHomeProfiles = shareHomeSettings.shareHomeProfiles;

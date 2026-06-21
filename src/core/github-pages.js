@@ -122,7 +122,7 @@ function repairShareIndex(existingIndex) {
 function renderShareIndexHtml(index, options = {}) {
   const title = cleanArchiveText(options.title || '유네코 지수 통합선별공장 프로젝트', '유네코 지수 통합선별공장 프로젝트');
   const eyebrow = cleanArchiveText(options.eyebrow || '통합선별공장 Archive', '통합선별공장 Archive');
-  const description = cleanArchiveText(options.description || '공사일보, 회의록, 보고서를 스트리밍 콘텐츠처럼 빠르게 고르고 바로 여는 MarkTL 공유 아카이브.', '공유 HTML을 빠르게 찾고 여는 MarkTL 아카이브.');
+  const description = cleanArchiveText(options.description || '노트, 회의록, 보고서, 기사형 HTML을 허브별로 빠르게 찾고 여는 MarkTL 공유 아카이브.', '공유 HTML을 빠르게 찾고 여는 MarkTL 아카이브.');
   const baseUrl = String(options.baseUrl || '').replace(/\/+$/g, '');
   const items = repairShareItems(Array.isArray(index?.items) ? index.items : [])
     .map((item, itemIndex) => normalizeArchiveItem(item, itemIndex, baseUrl));
@@ -134,7 +134,7 @@ function renderShareIndexHtml(index, options = {}) {
       tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
     }
   }
-  const preferredTypes = ['공사일보', '통합노트', '회의록', '노트', '보고서'];
+  const preferredTypes = ['통합노트', '회의록', '보고서', '노트', '기사', '브리핑', '비교검토'];
   const typeButtons = preferredTypes
     .filter((type) => typeCounts.has(type))
     .concat([...typeCounts.keys()].filter((type) => !preferredTypes.includes(type)).sort((left, right) => left.localeCompare(right)))

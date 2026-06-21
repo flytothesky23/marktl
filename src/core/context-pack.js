@@ -74,7 +74,7 @@ function buildContextPackMarkdown(items, options = {}) {
 
   const kind = options.kind === 'reference' ? 'reference' : 'linked';
   const intro = kind === 'reference'
-    ? 'Reference context note is available. Treat the active note as today/current facts, and use this reference note only for continuing project context such as schedule, process order, Mermaid/Gantt diagrams, recurring risks, and baseline assumptions.'
+    ? 'Reference context note is available. Treat the active note as the primary source, and use this reference note only for background, definitions, prior decisions, terminology, stable constraints, and relevant diagram or data snippets.'
     : 'Additional vault context is available. Use it only to clarify the active note; do not let it override the source note.';
 
   return [

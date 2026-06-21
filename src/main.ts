@@ -19,6 +19,7 @@ const { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig }
 const { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require('./core/github-pages.js');
 const { repairObsidianSyntaxResidue } = require('./core/html-repair.js');
 const { validateHtmlArtifact } = require('./core/html-qa.js');
+const { injectShareHomeLink } = require('./core/share-navigation.js');
 const { slugify } = require('./core/html.js');
 const { migrateSettings } = require('./core/settings.js');
 const { DEFAULT_SHARE_HOME_PROFILE_ID, buildDefaultShareHomeProfile, normalizeShareHomeProfiles, resolveShareHomeProfile } = require('./core/share-home-profiles.js');
@@ -36,9 +37,9 @@ const DEFAULT_SETTINGS: MarktlSettings = {
   artifactGoal: 'read',
   artifactType: 'faithful-note',
   template: 'minimal',
-  exportGenre: 'construction-daily',
+  exportGenre: 'integrated-note',
   exportDepth: 'standard',
-  exportPurpose: 'field-review',
+  exportPurpose: 'internal-share',
   referenceContextNotePath: '',
   aiProvider: 'none',
   conversionMode: 'preserve',
@@ -762,8 +763,12 @@ ${value}
       progress.addStep(result.usedFallback ? 'Generated local fallback HTML.' : 'Generated AI HTML.');
       const shareMetadata = this.extractShareMetadata(markdown, outputPlan.basename);
       const shortId = buildShortId(outputPlan.basename);
+      const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
       const socialUrl = options.shareTarget === 'github-pages'
-        ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo), shareHomeProfile.basePath, shortId)
+        ? buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId)
+        : '';
+      const shareHomeReturnUrl = options.shareTarget === 'github-pages'
+        ? buildShareHomeUrl(pagesBaseUrl, shareHomeProfile.basePath)
         : '';
       const socialImage = options.shareTarget === 'github-pages' && assetResult.mappings[0]
         ? `${socialUrl}assets/${assetResult.mappings[0].destinationPath.split('/').pop() || ''}`
@@ -784,6 +789,13 @@ ${value}
       html = this.repairHtmlHead(mermaidResult.html);
       if (mermaidResult.rendered > 0) {
         progress.addStep(`Rendered ${mermaidResult.rendered} Mermaid diagram(s) to static HTML/SVG.`);
+      }
+      if (shareHomeReturnUrl) {
+        html = this.repairHtmlHead(injectShareHomeLink(html, {
+          homeUrl: shareHomeReturnUrl,
+          label: '공유 홈',
+        }));
+        progress.addStep('Added share hub home link.');
       }
       const repairedHtml = repairObsidianSyntaxResidue(html);
       if (repairedHtml !== html) {
@@ -991,6 +1003,7 @@ ${value}
       const shortId = buildShortId(outputPlan.basename);
       const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
       const socialUrl = buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId);
+      const shareHomeReturnUrl = buildShareHomeUrl(pagesBaseUrl, shareHomeProfile.basePath);
       const thumbnailMapping = thumbnailFile
         ? await this.writeExternalThumbnailAsset(outputPlan, thumbnailFile)
         : null;
@@ -1016,6 +1029,11 @@ ${value}
       if (feedbackResult.injected) {
         progress.addStep('Added Giscus reader feedback.');
       }
+      html = this.repairHtmlHead(injectShareHomeLink(html, {
+        homeUrl: shareHomeReturnUrl,
+        label: '공유 홈',
+      }));
+      progress.addStep('Added share hub home link.');
       const repairedHtml = repairObsidianSyntaxResidue(html);
       if (repairedHtml !== html) {
         html = this.repairHtmlHead(repairedHtml);

@@ -10,9 +10,9 @@ const defaults = {
   activeShareHomeProfileId: '',
   shareHomeProfiles: [],
   shareTarget: 'local-link',
-  exportGenre: 'construction-daily',
+  exportGenre: 'integrated-note',
   exportDepth: 'standard',
-  exportPurpose: 'field-review',
+  exportPurpose: 'internal-share',
   referenceContextNotePath: '',
   codexPath: '',
   giscusRepo: '',
@@ -34,7 +34,7 @@ test('migrates legacy GitHub Pages setting names', () => {
   assert.equal(settings.shareHomeProfiles[0].basePath, 'marktl');
 });
 
-test('preserves new selection defaults and existing operational settings', () => {
+test('normalizes retired selection ids while preserving operational settings', () => {
   const { settings, migrated } = migrateSettings(defaults, {
     exportGenre: 'construction-daily',
     exportDepth: 'milestone',
@@ -45,7 +45,9 @@ test('preserves new selection defaults and existing operational settings', () =>
   });
 
   assert.equal(migrated, true);
-  assert.equal(settings.exportDepth, 'milestone');
+  assert.equal(settings.exportGenre, 'integrated-note');
+  assert.equal(settings.exportDepth, 'deep');
+  assert.equal(settings.exportPurpose, 'external-report');
   assert.equal(settings.referenceContextNotePath, 'Projects/2026-06-11 공사일보.md');
   assert.equal(settings.codexPath, '~/.local/bin/marktl-codex');
   assert.equal(settings.giscusRepo, 'flytothesky23/marktl-shares');

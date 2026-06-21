@@ -353,7 +353,7 @@ export class MarktlExportModal extends Modal {
     header.createEl('span', { cls: 'marktl-choice-step', text: '4' });
     const copy = header.createDiv();
     copy.createEl('h3', { text: '기준 맥락 노트' });
-    copy.createEl('p', { text: '현재 노트만 사용할지, 사용자가 지정한 기준 노트의 일정·공정 맥락을 함께 사용할지 정합니다.' });
+    copy.createEl('p', { text: '현재 노트만 사용할지, 사용자가 지정한 기준 노트의 배경·결정·용어·맥락을 함께 사용할지 정합니다.' });
 
     const modeGrid = section.createDiv({ cls: 'marktl-choice-grid marktl-context-grid' });
     const activeOnly = modeGrid.createEl('button', {
@@ -361,9 +361,9 @@ export class MarktlExportModal extends Modal {
       type: 'button',
     });
     activeOnly.setAttr('aria-pressed', String(this.options.contextPackMode !== 'reference-note'));
-    activeOnly.setAttr('title', '현재 노트만 사용: 당일 노트의 내용만으로 HTML을 만듭니다.');
+    activeOnly.setAttr('title', '현재 노트만 사용: 현재 노트의 내용만으로 HTML을 만듭니다.');
     activeOnly.createEl('strong', { text: '현재 노트만 사용' });
-    activeOnly.createEl('span', { text: '당일 노트의 내용만으로 HTML을 만듭니다.' });
+    activeOnly.createEl('span', { text: '현재 노트의 내용만으로 HTML을 만듭니다.' });
     activeOnly.addEventListener('click', () => {
       this.options.contextPackMode = 'none';
       this.onOpen();
@@ -374,9 +374,9 @@ export class MarktlExportModal extends Modal {
       type: 'button',
     });
     reference.setAttr('aria-pressed', String(this.options.contextPackMode === 'reference-note'));
-    reference.setAttr('title', '지정 기준 노트 사용: 선택한 종합/마일스톤 노트의 일정, 간트, 공정 맥락을 참고합니다.');
+    reference.setAttr('title', '지정 기준 노트 사용: 선택한 노트의 배경, 결정, 용어, 기준 맥락을 참고합니다.');
     reference.createEl('strong', { text: '지정 기준 노트 사용' });
-    reference.createEl('span', { text: '선택한 종합/마일스톤 노트의 일정, 간트, 공정 맥락을 참고합니다.' });
+    reference.createEl('span', { text: '선택한 노트의 배경, 결정, 용어, 기준 맥락을 참고합니다.' });
     reference.addEventListener('click', () => {
       this.options.contextPackMode = 'reference-note';
       if (!this.options.referenceContextNotePath) {

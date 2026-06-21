@@ -487,25 +487,109 @@ var require_templates = __commonJS({
     `
       },
       {
-        id: "construction-daily",
-        name: "Construction Daily",
-        description: "Field-report layout with large lead visual, concise flow maps, and execution-gate Gantt sections.",
+        id: "saas-brief",
+        name: "SaaS Brief",
+        description: "Modern product-report surface with design tokens, strong hero, summary cards, and dense scan-friendly sections.",
         css: `
-      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f7f3eb; }
-      main { max-width: 1180px; margin: 0 auto; padding: 34px 24px 72px; }
-      article { background: rgba(255,255,255,.74); border: 1px solid #d9cfc0; border-radius: 8px; padding: 30px; box-shadow: 0 18px 44px rgba(23,32,51,.08); }
-      h1 { font-size: clamp(2.4rem, 5vw, 5.5rem); line-height: .98; letter-spacing: 0; margin: 0 0 22px; color: #172033; }
-      h2 { margin: 42px 0 16px; color: #174ea6; border-left: 6px solid #f97316; padding-left: 12px; font-size: clamp(1.5rem, 3vw, 2.4rem); }
-      h3 { margin: 24px 0 10px; color: #1f2937; }
-      p, li { line-height: 1.68; }
-      table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d9e2ec; border-radius: 8px; overflow: hidden; }
-      th, td { border-bottom: 1px solid #d9e2ec; padding: 10px 12px; text-align: left; vertical-align: top; }
-      th { background: #10233f; color: #fff; }
+      :root { color-scheme: light; --bg:#f4f7fb; --surface:#ffffff; --surface-2:#eef6ff; --text:#0f172a; --muted:#56657a; --line:#d9e2ef; --accent:#0ea5e9; --accent-2:#22c55e; --warn:#f97316; --radius:8px; }
+      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 8% 0%, #e0f2fe, transparent 30%), var(--bg); }
+      main { max-width: 1180px; margin: 0 auto; padding: 34px 22px 72px; }
+      article { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+      article > * { grid-column: 1 / -1; background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; box-shadow: 0 12px 34px rgba(15, 23, 42, .06); }
+      h1 { font-size: clamp(2.2rem, 6vw, 5.4rem); line-height: 1; margin: 0; border-top: 5px solid var(--accent); }
+      h2 { font-size: clamp(1.45rem, 3vw, 2.4rem); color: #075985; }
+      h3 { color: #164e63; }
+      p, li { line-height: 1.65; color: var(--muted); }
+      strong { color: var(--text); }
+      table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+      th, td { border-bottom: 1px solid var(--line); padding: 11px 12px; text-align: left; vertical-align: top; }
+      th { background: #0f172a; color: #f8fafc; }
+      img { max-width: 100%; height: auto; border-radius: var(--radius); display: block; }
+      pre { overflow: auto; background: #0f172a; color: #f8fafc; border-radius: var(--radius); padding: 16px; }
+      blockquote, .callout { border-left: 5px solid var(--accent); background: var(--surface-2); border-radius: var(--radius); padding: 14px 18px; }
+      @media (min-width: 860px) { article > h2 + p, article > h2 + ul, article > h2 + ol, article > h2 + table { grid-column: span 6; } }
+      @media (max-width: 760px) { main { padding: 18px 12px 56px; } article > * { padding: 18px; } table { display: block; overflow-x: auto; } }
+    `
+      },
+      {
+        id: "paper",
+        name: "Paper",
+        description: "Restrained research-paper layout for source-heavy technical notes and thesis-driven writing.",
+        css: `
+      :root { --bg:#f7f7f4; --paper:#fffefb; --text:#111827; --muted:#4b5563; --line:#d6d3cc; --accent:#374151; }
+      body { margin: 0; font-family: "Source Serif 4", Georgia, "Times New Roman", serif; color: var(--text); background: var(--bg); }
+      main { max-width: 940px; margin: 0 auto; padding: 58px 28px 86px; }
+      article { background: var(--paper); border: 1px solid var(--line); padding: clamp(28px, 5vw, 58px); }
+      h1 { font-size: clamp(2.2rem, 6vw, 4.8rem); line-height: 1.04; margin-top: 0; }
+      h2 { margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--accent); }
+      p, li { font-size: 18px; line-height: 1.78; color: var(--muted); }
+      blockquote, .callout { border-left: 4px solid var(--accent); background: #f1f5f9; padding: 14px 18px; }
+      table { width: 100%; border-collapse: collapse; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 15px; background: white; }
+      th, td { border: 1px solid var(--line); padding: 10px; }
+      pre { overflow: auto; background: #111827; color: #f8fafc; padding: 16px; border-radius: 8px; }
+      img { max-width: 100%; height: auto; display: block; margin: 22px auto; }
+    `
+      },
+      {
+        id: "newspaper",
+        name: "Newspaper",
+        description: "Newsletter/newspaper layout with headline hierarchy, decks, sidebars, and article rhythm.",
+        css: `
+      :root { --ink:#171717; --muted:#525252; --paper:#fffaf0; --line:#d7c7a5; --accent:#b45309; }
+      body { margin: 0; background: #ede5d4; color: var(--ink); font-family: Georgia, "Times New Roman", serif; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 18px 72px; }
+      article { background: var(--paper); border: 1px solid var(--line); padding: clamp(24px, 4vw, 48px); column-gap: 32px; }
+      h1 { font-size: clamp(2.4rem, 7vw, 6rem); line-height: .96; margin: 0 0 18px; border-bottom: 4px double var(--ink); padding-bottom: 16px; }
+      h2 { break-after: avoid; margin-top: 36px; color: var(--accent); font-size: 1.8rem; }
+      h3 { font-family: ui-sans-serif, system-ui, sans-serif; text-transform: uppercase; font-size: .85rem; letter-spacing: .12em; }
+      p, li { font-size: 18px; line-height: 1.72; color: var(--muted); }
+      blockquote, .callout { border: 1px solid var(--line); background: #fff4d6; padding: 16px; font-size: 1.15rem; }
+      table { width: 100%; border-collapse: collapse; background: #fff; font-family: ui-sans-serif, system-ui, sans-serif; }
+      th, td { border-bottom: 1px solid var(--line); padding: 10px; text-align: left; }
+      img { max-width: 100%; height: auto; display: block; margin: 22px auto; filter: saturate(.92); }
+      pre { overflow: auto; background: #1c1917; color: #fff7ed; padding: 16px; }
+      @media (min-width: 980px) { article { column-count: 2; } h1, h2, h3, table, pre, img, blockquote, .callout { column-span: all; } }
+    `
+      },
+      {
+        id: "social-feed",
+        name: "Social Feed",
+        description: "Compact feed-style layout for short updates, reusable snippets, and tag-driven summaries.",
+        css: `
+      :root { --bg:#f8fafc; --surface:#ffffff; --text:#111827; --muted:#64748b; --line:#e2e8f0; --accent:#7c3aed; --accent-2:#06b6d4; }
+      body { margin: 0; background: linear-gradient(180deg, #eef2ff, var(--bg)); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { max-width: 860px; margin: 0 auto; padding: 28px 16px 70px; }
+      article { display: grid; gap: 14px; }
+      article > * { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; box-shadow: 0 10px 28px rgba(15, 23, 42, .05); }
+      h1 { font-size: clamp(2rem, 7vw, 4.6rem); line-height: 1; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; }
+      h2 { font-size: 1.25rem; color: var(--accent); }
+      p, li { line-height: 1.55; color: var(--muted); }
+      ul, ol { padding-left: 26px; }
+      blockquote, .callout { border: 1px solid #ddd6fe; background: #f5f3ff; }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th, td { border-bottom: 1px solid var(--line); padding: 8px; }
       img { max-width: 100%; height: auto; border-radius: 8px; display: block; }
-      pre { overflow: auto; background: #111827; color: #f8fafc; border-radius: 8px; padding: 16px; }
-      .callout { border-left: 5px solid #174ea6; background: #eff6ff; border-radius: 8px; padding: 14px 18px; }
-      .marktl-mermaid-rendered, .marktl-mermaid-source { margin: 22px 0; }
-      @media (max-width: 760px) { main { padding: 18px 12px 52px; } article { padding: 20px; } table { display: block; overflow-x: auto; } }
+      pre { overflow: auto; background: #111827; color: #f8fafc; border-radius: 8px; padding: 14px; }
+    `
+      },
+      {
+        id: "community-blog",
+        name: "Community Blog",
+        description: "Readable community post layout for lessons, examples, comments, and follow-up questions.",
+        css: `
+      :root { --bg:#f4f8f7; --surface:#ffffff; --text:#10201b; --muted:#52645f; --line:#d8e5e1; --accent:#0f766e; --accent-2:#f59e0b; }
+      body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { max-width: 980px; margin: 0 auto; padding: 36px 18px 76px; }
+      article { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: clamp(22px, 4vw, 44px); }
+      h1 { font-size: clamp(2.2rem, 7vw, 5rem); line-height: 1.02; margin-top: 0; }
+      h2 { margin-top: 40px; color: var(--accent); }
+      h3 { color: #134e4a; }
+      p, li { font-size: 17px; line-height: 1.7; color: var(--muted); }
+      blockquote, .callout { border-left: 5px solid var(--accent-2); background: #fffbeb; border-radius: 8px; padding: 14px 18px; }
+      table { width: 100%; border-collapse: collapse; background: #fbfefd; }
+      th, td { border-bottom: 1px solid var(--line); padding: 10px; text-align: left; }
+      img { max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 20px auto; }
+      pre { overflow: auto; background: #10201b; color: #ecfdf5; border-radius: 8px; padding: 16px; }
     `
       },
       {
@@ -793,9 +877,14 @@ var require_export_profiles = __commonJS({
     "use strict";
     var exportGenres = [
       {
-        id: "construction-daily",
-        label: "\uACF5\uC0AC\uC77C\uBCF4",
-        description: "\uD604\uC7A5 \uC0AC\uC9C4, \uB2F9\uC77C \uC791\uC5C5, \uB9AC\uC2A4\uD06C \uC911\uC2EC"
+        id: "integrated-note",
+        label: "\uD1B5\uD569 \uB178\uD2B8",
+        description: "\uC5EC\uB7EC \uD750\uB984\uC744 \uD55C \uD654\uBA74\uC5D0 \uC815\uB9AC"
+      },
+      {
+        id: "general-note",
+        label: "\uC77C\uBC18 \uB178\uD2B8",
+        description: "\uC6D0\uBB38 \uAD6C\uC870\uB97C \uC77D\uAE30 \uC88B\uAC8C \uBCF4\uC874"
       },
       {
         id: "meeting-notes",
@@ -803,19 +892,9 @@ var require_export_profiles = __commonJS({
         description: "\uC548\uAC74, \uACB0\uC815\uC0AC\uD56D, \uD6C4\uC18D \uC870\uCE58"
       },
       {
-        id: "integrated-note",
-        label: "\uD1B5\uD569\uB178\uD2B8",
-        description: "\uC5EC\uB7EC \uD750\uB984\uC744 \uD55C \uD654\uBA74\uC5D0 \uC815\uB9AC"
-      },
-      {
         id: "report",
-        label: "\uBCF4\uACE0\uC11C",
+        label: "\uC5C5\uBB34 \uBCF4\uACE0\uC11C",
         description: "\uC694\uC57D, \uADFC\uAC70, \uC2DC\uC0AC\uC810 \uC911\uC2EC"
-      },
-      {
-        id: "general-note",
-        label: "\uC77C\uBC18 \uB178\uD2B8",
-        description: "\uC6D0\uBB38 \uAD6C\uC870\uB97C \uC77D\uAE30 \uC88B\uAC8C \uBCF4\uC874"
       },
       {
         id: "compare-review",
@@ -828,26 +907,51 @@ var require_export_profiles = __commonJS({
         description: "\uBCF4\uACE0/\uBC1C\uD45C\uC6A9 \uC139\uC158 \uD654\uBA74"
       },
       {
+        id: "research-paper",
+        label: "\uB9AC\uC11C\uCE58/\uB17C\uBB38",
+        description: "\uADFC\uAC70, \uBC29\uBC95, \uC778\uC6A9 \uC911\uC2EC"
+      },
+      {
         id: "share-article",
         label: "\uACF5\uC720 \uAE30\uC0AC",
         description: "\uACF5\uAC1C \uACF5\uC720\uC6A9 \uAE30\uC0AC\uD615 HTML"
+      },
+      {
+        id: "newspaper",
+        label: "\uB274\uC2A4\uB808\uD130",
+        description: "\uD5E4\uB4DC\uB77C\uC778\uACFC \uC139\uC158 \uD750\uB984"
+      },
+      {
+        id: "social-feed",
+        label: "SNS \uD53C\uB4DC",
+        description: "\uC9E7\uC740 \uCE74\uB4DC\uC640 \uACF5\uC720 \uBB38\uAD6C"
+      },
+      {
+        id: "community-blog",
+        label: "\uCEE4\uBBA4\uB2C8\uD2F0 \uBE14\uB85C\uADF8",
+        description: "\uACBD\uD5D8, \uC758\uACAC, \uD6C4\uC18D \uC9C8\uBB38"
       }
     ];
     var exportDepths = [
       {
         id: "brief",
-        label: "\uAC04\uB2E8 \uAE30\uB85D",
-        description: "\uC0AC\uC9C4\uACFC \uB2F9\uC77C \uC791\uC5C5 \uC911\uC2EC"
+        label: "\uBE60\uB978 \uC694\uC57D",
+        description: "\uD575\uC2EC\uB9CC 1\uD654\uBA74\uC5D0 \uC815\uB9AC"
       },
       {
         id: "standard",
-        label: "\uD45C\uC900 \uC77C\uBCF4",
-        description: "\uC791\uC5C5, \uC99D\uBE59, \uB9AC\uC2A4\uD06C, \uB2E4\uC74C \uC791\uC5C5"
+        label: "\uD45C\uC900 \uBB38\uC11C",
+        description: "\uBCF8\uBB38, \uADFC\uAC70, \uB2E4\uC74C \uD589\uB3D9 \uADE0\uD615"
       },
       {
-        id: "milestone",
-        label: "\uC885\uD569\xB7\uB9C8\uC77C\uC2A4\uD1A4",
-        description: "\uC77C\uC815, \uACF5\uC815 \uD750\uB984, \uACC4\uD68D \uB300\uBE44 \uC2E4\uC801"
+        id: "deep",
+        label: "\uC2EC\uCE35 \uBD84\uC11D",
+        description: "\uB9E5\uB77D, \uB9AC\uC2A4\uD06C, \uB300\uC548\uAE4C\uC9C0 \uD655\uC7A5"
+      },
+      {
+        id: "visual",
+        label: "\uC2DC\uAC01\uD654 \uC911\uC2EC",
+        description: "\uD45C, \uCE74\uB4DC, \uD750\uB984\uB3C4, \uCC28\uD2B8 \uC6B0\uC120"
       }
     ];
     var exportPurposes = [
@@ -857,9 +961,9 @@ var require_export_profiles = __commonJS({
         description: "\uD300 \uC0C1\uD669 \uACF5\uC720"
       },
       {
-        id: "field-review",
-        label: "\uD604\uC7A5 \uAC80\uD1A0",
-        description: "\uC99D\uBE59, \uB9AC\uC2A4\uD06C, \uB2E4\uC74C \uC870\uCE58 \uD655\uC778"
+        id: "review",
+        label: "\uAC80\uD1A0",
+        description: "\uC7C1\uC810, \uB9AC\uC2A4\uD06C, \uD53C\uB4DC\uBC31 \uD655\uC778"
       },
       {
         id: "external-report",
@@ -869,12 +973,22 @@ var require_export_profiles = __commonJS({
       {
         id: "public-archive",
         label: "\uACF5\uAC1C \uC544\uCE74\uC774\uBE0C",
-        description: "\uACF5\uAC1C \uBAA9\uB85D\uACFC \uC7AC\uC5F4\uB78C \uAE30\uC900"
+        description: "\uAC80\uC0C9\uACFC \uC7AC\uC5F4\uB78C \uAE30\uC900"
       },
       {
         id: "presentation",
         label: "\uBC1C\uD45C",
         description: "\uD68C\uC758 \uD654\uBA74 \uACF5\uC720"
+      },
+      {
+        id: "executive-brief",
+        label: "\uC784\uC6D0 \uBE0C\uB9AC\uD551",
+        description: "\uD310\uB2E8, \uC218\uCE58, \uC758\uC0AC\uACB0\uC815 \uC911\uC2EC"
+      },
+      {
+        id: "community-share",
+        label: "\uCEE4\uBBA4\uB2C8\uD2F0 \uACF5\uC720",
+        description: "\uACBD\uD5D8, \uBC30\uACBD, \uD1A0\uB860\uAC70\uB9AC \uC911\uC2EC"
       },
       {
         id: "ai-rework",
@@ -883,36 +997,26 @@ var require_export_profiles = __commonJS({
       }
     ];
     var defaultSelection = {
-      exportGenre: "construction-daily",
+      exportGenre: "integrated-note",
       exportDepth: "standard",
-      exportPurpose: "field-review"
+      exportPurpose: "internal-share"
+    };
+    var legacyAliases = {
+      genre: {
+        "construction-daily": "integrated-note"
+      },
+      depth: {
+        milestone: "deep"
+      },
+      purpose: {
+        "field-review": "review"
+      }
     };
     var genreProfiles = {
-      "construction-daily": {
-        artifactGoal: "review",
-        artifactType: "research-report",
-        template: "construction-daily",
-        conversionMode: "presentation",
-        previewSecurity: "trusted"
-      },
-      "meeting-notes": {
-        artifactGoal: "review",
-        artifactType: "interactive-explainer",
-        template: "interactive-report",
-        conversionMode: "presentation",
-        previewSecurity: "trusted"
-      },
       "integrated-note": {
         artifactGoal: "read",
         artifactType: "strategy-brief",
         template: "dashboard",
-        conversionMode: "presentation",
-        previewSecurity: "trusted"
-      },
-      report: {
-        artifactGoal: "review",
-        artifactType: "research-report",
-        template: "research-memo",
         conversionMode: "presentation",
         previewSecurity: "trusted"
       },
@@ -922,6 +1026,20 @@ var require_export_profiles = __commonJS({
         template: "editorial",
         conversionMode: "preserve",
         previewSecurity: "sanitized"
+      },
+      "meeting-notes": {
+        artifactGoal: "review",
+        artifactType: "interactive-explainer",
+        template: "interactive-report",
+        conversionMode: "presentation",
+        previewSecurity: "trusted"
+      },
+      report: {
+        artifactGoal: "review",
+        artifactType: "research-report",
+        template: "research-memo",
+        conversionMode: "presentation",
+        previewSecurity: "trusted"
       },
       "compare-review": {
         artifactGoal: "compare",
@@ -937,10 +1055,38 @@ var require_export_profiles = __commonJS({
         conversionMode: "presentation",
         previewSecurity: "trusted"
       },
+      "research-paper": {
+        artifactGoal: "read",
+        artifactType: "research-report",
+        template: "paper",
+        conversionMode: "presentation",
+        previewSecurity: "sanitized"
+      },
       "share-article": {
         artifactGoal: "publish",
         artifactType: "research-report",
         template: "editorial",
+        conversionMode: "blog",
+        previewSecurity: "sanitized"
+      },
+      newspaper: {
+        artifactGoal: "publish",
+        artifactType: "research-report",
+        template: "newspaper",
+        conversionMode: "blog",
+        previewSecurity: "sanitized"
+      },
+      "social-feed": {
+        artifactGoal: "publish",
+        artifactType: "interactive-explainer",
+        template: "social-feed",
+        conversionMode: "blog",
+        previewSecurity: "sanitized"
+      },
+      "community-blog": {
+        artifactGoal: "publish",
+        artifactType: "research-report",
+        template: "community-blog",
         conversionMode: "blog",
         previewSecurity: "sanitized"
       }
@@ -954,14 +1100,21 @@ var require_export_profiles = __commonJS({
     function listExportPurposes3() {
       return exportPurposes.slice();
     }
+    function normalizeId(id, aliases) {
+      const value = String(id || "").trim();
+      return aliases[value] || value;
+    }
     function findExportGenre(id) {
-      return exportGenres.find((item) => item.id === id) || exportGenres[0];
+      const value = normalizeId(id, legacyAliases.genre);
+      return exportGenres.find((item) => item.id === value) || exportGenres[0];
     }
     function findExportDepth(id) {
-      return exportDepths.find((item) => item.id === id) || exportDepths[1];
+      const value = normalizeId(id, legacyAliases.depth);
+      return exportDepths.find((item) => item.id === value) || exportDepths[1];
     }
     function findExportPurpose(id) {
-      return exportPurposes.find((item) => item.id === id) || exportPurposes[1];
+      const value = normalizeId(id, legacyAliases.purpose);
+      return exportPurposes.find((item) => item.id === value) || exportPurposes[0];
     }
     function normalizeExportSelection2(selection = {}) {
       return {
@@ -975,30 +1128,43 @@ var require_export_profiles = __commonJS({
       const profile = {
         ...genreProfiles[normalized.exportGenre] || genreProfiles[defaultSelection.exportGenre]
       };
-      if (normalized.exportGenre === "construction-daily") {
-        if (normalized.exportDepth === "brief") {
-          Object.assign(profile, {
-            artifactGoal: "read",
-            artifactType: "faithful-note",
-            conversionMode: "preserve",
-            previewSecurity: "sanitized"
-          });
-        }
-        if (normalized.exportDepth === "milestone") {
-          Object.assign(profile, {
-            artifactGoal: "review",
-            artifactType: "strategy-brief",
-            conversionMode: "presentation",
-            previewSecurity: "trusted"
-          });
+      if (normalized.exportDepth === "brief") {
+        profile.conversionMode = profile.conversionMode === "blog" ? "blog" : "preserve";
+        if (profile.artifactGoal === "review") {
+          profile.artifactGoal = "read";
         }
       }
+      if (normalized.exportDepth === "deep") {
+        profile.artifactType = ["faithful-note", "slide-deck"].includes(profile.artifactType) ? "research-report" : profile.artifactType;
+        profile.conversionMode = "presentation";
+      }
+      if (normalized.exportDepth === "visual") {
+        profile.template = ["editorial", "minimal", "paper"].includes(profile.template) ? "saas-brief" : profile.template;
+        profile.conversionMode = "presentation";
+        profile.previewSecurity = "trusted";
+      }
       if (normalized.exportPurpose === "public-archive") {
-        profile.artifactGoal = normalized.exportGenre === "construction-daily" ? profile.artifactGoal : "publish";
+        profile.artifactGoal = "publish";
+        profile.conversionMode = profile.conversionMode === "preserve" ? "blog" : profile.conversionMode;
+      }
+      if (normalized.exportPurpose === "review") {
+        profile.artifactGoal = profile.artifactGoal === "publish" ? "publish" : "review";
+        profile.previewSecurity = "trusted";
       }
       if (normalized.exportPurpose === "presentation") {
         profile.conversionMode = "presentation";
         profile.previewSecurity = "trusted";
+      }
+      if (normalized.exportPurpose === "executive-brief") {
+        profile.artifactGoal = "decide";
+        profile.artifactType = "strategy-brief";
+        profile.template = profile.template === "editorial" ? "saas-brief" : profile.template;
+        profile.previewSecurity = "trusted";
+      }
+      if (normalized.exportPurpose === "community-share") {
+        profile.artifactGoal = "publish";
+        profile.template = normalized.exportGenre === "social-feed" ? "social-feed" : "community-blog";
+        profile.conversionMode = "blog";
       }
       if (normalized.exportPurpose === "ai-rework") {
         Object.assign(profile, {
@@ -1071,86 +1237,98 @@ var require_prompt_composer = __commonJS({
         `- Writing depth: ${findExportDepth(selection.exportDepth).label}`,
         `- Reader purpose: ${findExportPurpose(selection.exportPurpose).label}`,
         `Genre instruction: ${getGenreInstruction(selection.exportGenre)}`,
-        `Depth instruction: ${getDepthInstruction(selection.exportGenre, selection.exportDepth)}`,
+        `Depth instruction: ${getDepthInstruction(selection.exportDepth)}`,
         `Audience instruction: ${getPurposeInstruction(selection.exportPurpose)}`,
-        `Context instruction: ${getContextInstruction(selection.exportGenre, selection.exportDepth, referencePath)}`,
+        `Context instruction: ${getContextInstruction(referencePath)}`,
+        `Design system instruction: ${getDesignSystemInstruction(selection.exportGenre, selection.exportDepth)}`,
         `Quality contract: ${getQualityContract(selection.exportGenre, selection.exportDepth)}`
       ];
       return blocks.join("\n");
     }
     function getGenreInstruction(genre) {
       return {
-        "construction-daily": "Create a Korean construction daily HTML report. The reader must quickly understand what happened today, where the work sits in the project sequence, what evidence exists, what risks remain, and what should happen next.",
-        "meeting-notes": "Create a Korean meeting note artifact with agenda, attendees if available, decisions, unresolved questions, owners, and next actions.",
-        "integrated-note": "Create an integrated project note that connects status, context, decisions, risks, and next steps without turning it into a generic article.",
-        report: "Create a structured report with executive summary, evidence, analysis, implications, and next actions.",
-        "general-note": "Create a faithful readable note. Preserve the original meaning and avoid unnecessary restructuring.",
-        "compare-review": "Create a comparison review with criteria, alternatives, pros and cons, risks, and a clear comparison matrix.",
-        presentation: "Create a presentation-ready artifact with strong section rhythm, concise slide-like grouping, and one main idea per section.",
-        "share-article": "Create a polished public-facing article with clear title, summary, body sections, and share-friendly framing."
+        "integrated-note": "Create an integrated note artifact that connects multiple flows, decisions, evidence, risks, and next actions into one coherent reader path. Use dashboard-like sections only when the source note contains multiple streams or metrics.",
+        "general-note": "Create a faithful readable note. Preserve the author's structure and meaning, improve typography and scan flow, and avoid turning the note into a different genre.",
+        "meeting-notes": "Create a meeting note artifact with agenda, key discussion, decisions, unresolved questions, owners, deadlines, and follow-up actions.",
+        report: "Create a structured business report with executive summary, evidence, analysis, implications, risks, and next actions.",
+        "compare-review": "Create a comparison review with alternatives, criteria, scorecard or matrix, tradeoffs, risks, and a clearly separated recommendation.",
+        presentation: "Create a presentation-ready artifact with concise slide-like sections, strong visual rhythm, and one main idea per section.",
+        "research-paper": "Create a research-paper or technical memo style artifact with thesis, method, evidence, citations or source notes when present, limitations, and conclusion.",
+        "share-article": "Create a polished public-facing article with a strong headline, summary deck, body sections, pull quotes or callouts when useful, and share-friendly framing.",
+        newspaper: "Create a newsletter/newspaper layout with headline, dek, short sections, sidebars, issue-style hierarchy, and reader-friendly summaries.",
+        "social-feed": "Create a social-feed style artifact with short cards, timeline/feed rhythm, post-ready snippets, tags, and a compact share summary.",
+        "community-blog": "Create a community blog artifact with context, practical lessons, examples, open questions, and discussion-friendly framing."
       }[genre] || "Create a useful HTML artifact from the note.";
     }
-    function getDepthInstruction(genre, depth) {
-      if (genre === "construction-daily") {
-        return {
-          brief: "Use a compact daily log structure. Prioritize date, location/work area, today work, image evidence, short comments, and next step. Do not force Gantt, Mermaid, or large baseline sections when the active note does not need them.",
-          standard: "Use a standard daily report structure. Include today work, image evidence, project context from the reference note when available, risks or blockers, next work, and a compact plan-versus-actual view. Include baseline Gantt/Mermaid only when the reference context provides enough material.",
-          milestone: "Use a full milestone report structure. Strongly integrate the reference note schedule, Mermaid/Gantt/process flow, plan-versus-actual status, major risks, decisions, and forward gates. Keep today facts visibly separated from continuing baseline context."
-        }[depth];
-      }
+    function getDepthInstruction(depth) {
       return {
-        brief: "Keep the artifact compact. Summarize only enough structure to make the note easy to scan.",
-        standard: "Create a balanced artifact with summary, main sections, evidence, and next actions.",
-        milestone: "Create a full artifact with context, detailed sections, implications, risks, and decision-ready next steps."
+        brief: "Keep the artifact compact. Use the smallest number of sections needed to make the note useful, and do not pad missing context.",
+        standard: "Create a balanced artifact with summary, main sections, supporting evidence, and next actions. Prefer clarity over visual density.",
+        deep: "Create a deep artifact with background, reasoning, implications, risks, alternatives, and decision-ready next steps. Separate facts from interpretation.",
+        visual: "Use a visual-first structure when the source supports it: cards, tables, timelines, diagrams, charts, comparison grids, or annotated media. Do not invent data just to fill a visualization."
       }[depth] || "Use a balanced level of detail.";
     }
     function getPurposeInstruction(purpose) {
       return {
         "internal-share": "Write for internal teammates. Be concise, operational, and explicit about next actions.",
-        "field-review": "Write for field review. Make evidence, risks, blockers, work sequence, and next site actions easy to inspect.",
+        review: "Write for review. Make evidence, assumptions, risks, blockers, decisions, and requested feedback easy to inspect.",
         "external-report": "Write for external stakeholders. Use polished Korean, avoid internal shorthand, and separate confirmed facts from assumptions.",
         "public-archive": "Write for a searchable public archive. Include a concise card-ready summary, reader-friendly tags, and stable section titles.",
         presentation: "Write for live presentation. Use short sections, strong headings, and visual hierarchy that can be scanned from a screen.",
+        "executive-brief": "Write for leadership. Lead with judgment, numbers, decision points, and consequences. Keep background subordinate.",
+        "community-share": "Write for a community audience. Preserve useful nuance, add context for outsiders, and surface discussion questions without becoming promotional.",
         "ai-rework": "Write for iterative AI review. Include copy-ready review notes, improvement prompts, and clear assumptions that can be brought into a next prompt."
       }[purpose] || "Make the intended reader action obvious.";
     }
-    function getContextInstruction(genre, depth, referencePath) {
+    function getContextInstruction(referencePath) {
       if (!referencePath) {
-        return "Use only the active note. Do not invent missing project context. If the note is brief, produce a brief artifact instead of padding it.";
-      }
-      if (genre === "construction-daily") {
-        const carryForward = depth === "brief" ? "Use the reference note lightly only for names, work sequence, and recurring context." : "Carry forward schedule, process order, Mermaid/Gantt diagrams, recurring risks, and baseline assumptions from the reference note when they help explain today.";
-        return [
-          `A user-selected reference note is attached: ${referencePath}.`,
-          "The active note is the source of today/current facts.",
-          "The reference note is continuing baseline context, not today evidence.",
-          "If the active note conflicts with the reference note, follow the active note and label the difference as \uAE30\uC900 \uB300\uBE44 \uBCC0\uACBD/\uD655\uC778 \uD544\uC694.",
-          "Do not fabricate progress, quantities, completion status, manpower, weather, dates, or inspection outcomes that are not present in either note.",
-          carryForward
-        ].join(" ");
+        return "Use only the active note. Do not invent missing context. If the note is brief, produce a compact artifact instead of padding it.";
       }
       return [
         `A user-selected reference note is attached: ${referencePath}.`,
-        "Use it only to clarify background, definitions, previous decisions, recurring risks, or baseline context.",
-        "The active note remains the primary source of current facts."
+        "Use it only for background, definitions, prior decisions, terminology, recurring risks, and baseline context.",
+        "The active note remains the primary source of current facts.",
+        "If the active note conflicts with the reference note, follow the active note and label the difference as a context change or item needing confirmation.",
+        "Do not fabricate progress, quantities, decisions, dates, or outcomes that are not present in either note."
       ].join(" ");
     }
+    function getDesignSystemInstruction(genre, depth) {
+      const visualBias = depth === "visual" ? "Because visual depth is selected, use stronger spatial hierarchy and visualization where the source contains structured material." : "Use visuals only when they clarify the source material.";
+      return [
+        "Build a self-contained HTML document with semantic sections, responsive layout, and CSS custom properties for design tokens.",
+        "Use modern, stable CSS patterns such as grid, flex, container-aware sizing, sticky local navigation, and accessible focus states when appropriate.",
+        "Pick a visual language that matches the selected genre; do not reuse one fixed project-report layout for every note.",
+        "For dashboards or SaaS-like views, use dense but readable cards and tables. For articles, prioritize editorial hierarchy. For feeds, use compact repeated cards.",
+        genre === "research-paper" ? "For research artifacts, prioritize footnote/source clarity and restrained typography over decorative cards." : "",
+        visualBias
+      ].filter(Boolean).join(" ");
+    }
     function getQualityContract(genre, depth) {
-      const common = "Never show raw Obsidian-only syntax such as frontmatter, dataviewjs, [!callout] markers, or code that exists only to render inside Obsidian. Keep Korean documents in Korean.";
-      if (genre !== "construction-daily") {
-        return common;
-      }
+      const common = [
+        "Never show raw Obsidian-only syntax such as frontmatter, dataviewjs, [!callout] markers, wiki links, or code that exists only to render inside Obsidian.",
+        "Keep Korean documents in Korean.",
+        "Do not make up data, citations, dates, names, or measurements.",
+        "Keep controls self-contained and local-only; no remote scripts, trackers, or external assets unless the source note already provides them.",
+        "Every visual element must be explainable from the note content."
+      ].join(" ");
       const byDepth = {
-        brief: "Construction daily brief must include a clear title/date, today work summary, and photo/evidence section when images exist.",
-        standard: "Construction daily standard must include title/date, today work, evidence/photos, baseline context when supplied, risks/blockers, and next work.",
-        milestone: "Construction daily milestone must include title/date, today work, baseline schedule/process context, plan-versus-actual or execution-gate view, risks/issues, decisions, and next gates."
+        brief: "Brief output must include a clear title, compact summary, and one obvious next action or conclusion when present.",
+        standard: "Standard output must include a title, summary, main body, evidence or source-derived details, and next actions or conclusion.",
+        deep: "Deep output must include context, reasoning, evidence, risks or limitations, and a decision-ready ending.",
+        visual: "Visual output must include textual fallbacks or labels for visual sections so the page remains understandable without inspecting graphics."
       };
-      return `${byDepth[depth] || byDepth.standard} ${common}`;
+      const byGenre = {
+        "social-feed": "Do not turn the feed into a long report; keep repeated cards short and scannable.",
+        newspaper: "Use article hierarchy and section rhythm, not a dashboard grid for every section.",
+        "compare-review": "Always expose comparison criteria before presenting a recommendation."
+      };
+      return [byDepth[depth], byGenre[genre], common].filter(Boolean).join(" ");
     }
     module2.exports = {
       buildSelectionPrompt,
       getContextInstruction,
       getDepthInstruction,
+      getDesignSystemInstruction,
       getGenreInstruction,
       getPurposeInstruction,
       getQualityContract
@@ -1430,17 +1608,14 @@ ${markdown}`;
       if (!trusted) {
         return "Keep interaction affordances static: anchors, tables, checklists, and copy-ready text blocks only. Do not add editable playground controls, state JSON panels, or scripts.";
       }
-      if (template === "construction-daily") {
-        const depth = options.exportDepth || "standard";
-        const depthInstruction = {
-          brief: "For brief daily logs, keep the page compact and do not force Mermaid, Gantt, execution gates, or large baseline sections unless the active note explicitly contains them.",
-          standard: "For standard daily reports, include compact Mermaid/Gantt/process context only when the active or reference note provides enough schedule/process material.",
-          milestone: "For milestone reports, include a visible baseline schedule/process section and an HTML/CSS execution-gate or Gantt-style view when the reference note provides schedule or process material."
-        }[depth] || "";
-        return `Build a Korean construction daily report, not a generic article. On desktop, use a first-screen two-column hero where the left side contains the title and concise project summary and the right side renders the primary infographic or lead image at comparable visual weight when an image exists. On mobile, do not preserve the desktop side-by-side composition; stack the hero in this reader order: kicker/date, primary infographic or lead image, title, then summary. Convert Obsidian callouts, DataviewJS, and raw markdown syntax into clean reader-facing HTML; never show raw markers such as [!abstract]+, dataviewjs, frontmatter, or code used only for Obsidian rendering. ${depthInstruction} Use Korean-only reader tags and card-ready summary text around 50 characters. Keep all controls local-only and self-contained.`;
-      }
       if (artifactGoal === "tune" || template === "playground") {
         return "Use local-only editable controls, state JSON, and copy-next-prompt affordances, but label why the controls exist and what the reader should do next. Keep everything self-contained.";
+      }
+      if (template === "saas-brief") {
+        return "Use a polished SaaS/product-brief style only when it clarifies the selected genre: strong hero, compact KPI or summary cards, responsive grids, and concise evidence blocks. Do not force operational metrics when the note does not provide them.";
+      }
+      if (["newspaper", "social-feed", "community-blog", "paper"].includes(template)) {
+        return "Respect the selected editorial genre. Use local-only navigation or copy buttons only when they help reading or sharing; otherwise prioritize typography, section rhythm, and source-faithful content.";
       }
       return "Use local-only navigation, section collapse, copy summary/outline/prompt buttons, filters, or annotations only when they directly help the selected artifact goal. Do not add generic tuning playgrounds, state JSON panels, sliders, or editable fields unless the artifact goal is tune or the template is playground. Any control must have a visible purpose label and an obvious next action.";
     }
@@ -1664,7 +1839,7 @@ var require_github_pages = __commonJS({
       var _a;
       const title = cleanArchiveText(options.title || "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8", "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8");
       const eyebrow = cleanArchiveText(options.eyebrow || "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive", "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive");
-      const description = cleanArchiveText(options.description || "\uACF5\uC0AC\uC77C\uBCF4, \uD68C\uC758\uB85D, \uBCF4\uACE0\uC11C\uB97C \uC2A4\uD2B8\uB9AC\uBC0D \uCF58\uD150\uCE20\uCC98\uB7FC \uBE60\uB974\uAC8C \uACE0\uB974\uACE0 \uBC14\uB85C \uC5EC\uB294 MarkTL \uACF5\uC720 \uC544\uCE74\uC774\uBE0C.", "\uACF5\uC720 HTML\uC744 \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uC544\uCE74\uC774\uBE0C.");
+      const description = cleanArchiveText(options.description || "\uB178\uD2B8, \uD68C\uC758\uB85D, \uBCF4\uACE0\uC11C, \uAE30\uC0AC\uD615 HTML\uC744 \uD5C8\uBE0C\uBCC4\uB85C \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uACF5\uC720 \uC544\uCE74\uC774\uBE0C.", "\uACF5\uC720 HTML\uC744 \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uC544\uCE74\uC774\uBE0C.");
       const baseUrl = String(options.baseUrl || "").replace(/\/+$/g, "");
       const items = repairShareItems(Array.isArray(index == null ? void 0 : index.items) ? index.items : []).map((item, itemIndex) => normalizeArchiveItem(item, itemIndex, baseUrl));
       const tagCounts = /* @__PURE__ */ new Map();
@@ -1675,7 +1850,7 @@ var require_github_pages = __commonJS({
           tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
         }
       }
-      const preferredTypes = ["\uACF5\uC0AC\uC77C\uBCF4", "\uD1B5\uD569\uB178\uD2B8", "\uD68C\uC758\uB85D", "\uB178\uD2B8", "\uBCF4\uACE0\uC11C"];
+      const preferredTypes = ["\uD1B5\uD569\uB178\uD2B8", "\uD68C\uC758\uB85D", "\uBCF4\uACE0\uC11C", "\uB178\uD2B8", "\uAE30\uC0AC", "\uBE0C\uB9AC\uD551", "\uBE44\uAD50\uAC80\uD1A0"];
       const typeButtons = preferredTypes.filter((type) => typeCounts.has(type)).concat([...typeCounts.keys()].filter((type) => !preferredTypes.includes(type)).sort((left, right) => left.localeCompare(right))).map((type) => `<button type="button" data-filter="${escapeHtml(type)}">${escapeHtml(type)}</button>`).join("");
       const tagButtons = [...tagCounts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).slice(0, 10).map(([tag, count]) => `<button type="button" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)} ${count}</button>`).join("");
       const list = items.map(renderArchiveTile).join("\n");
@@ -2061,7 +2236,7 @@ var require_share_home_profiles = __commonJS({
     var DEFAULT_SHARE_HOME_PROFILE_ID2 = "jisu-construction";
     var DEFAULT_SHARE_HOME_TITLE = "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8";
     var DEFAULT_SHARE_HOME_EYEBROW = "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive";
-    var DEFAULT_SHARE_HOME_DESCRIPTION = "\uACF5\uC0AC\uC77C\uBCF4, \uD68C\uC758\uB85D, \uBCF4\uACE0\uC11C\uB97C \uD504\uB85C\uC81D\uD2B8\uBCC4 \uD5C8\uBE0C\uC5D0\uC11C \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uACF5\uC720 \uC544\uCE74\uC774\uBE0C.";
+    var DEFAULT_SHARE_HOME_DESCRIPTION = "\uB178\uD2B8, \uD68C\uC758\uB85D, \uBCF4\uACE0\uC11C, \uAE30\uC0AC\uD615 HTML\uC744 \uD5C8\uBE0C\uBCC4\uB85C \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uACF5\uC720 \uC544\uCE74\uC774\uBE0C.";
     function cleanProfileText(value, fallback = "") {
       const text = String(value || "").replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
       return text || fallback;
@@ -2401,7 +2576,7 @@ ${source}
         return "";
       }
       const kind = options.kind === "reference" ? "reference" : "linked";
-      const intro = kind === "reference" ? "Reference context note is available. Treat the active note as today/current facts, and use this reference note only for continuing project context such as schedule, process order, Mermaid/Gantt diagrams, recurring risks, and baseline assumptions." : "Additional vault context is available. Use it only to clarify the active note; do not let it override the source note.";
+      const intro = kind === "reference" ? "Reference context note is available. Treat the active note as the primary source, and use this reference note only for background, definitions, prior decisions, terminology, stable constraints, and relevant diagram or data snippets." : "Additional vault context is available. Use it only to clarify the active note; do not let it override the source note.";
       return [
         intro,
         ...usable.map((item, index) => [
@@ -2698,26 +2873,14 @@ var require_html_qa = __commonJS({
       if (/```(?:dataviewjs|dataview)\b|<code\b[^>]*>\s*(?:dataviewjs|dataview)\b|\[![-\w]+][+-]?|\[\[[^\]]+]]|(?:^|\n)\s*---\s*(?:\n|$)/i.test(value)) {
         warnings.push("HTML QA fatal: raw Obsidian-only syntax remains in the HTML.");
       }
-      if (!externalHtml && options.exportGenre === "construction-daily") {
-        const depth = options.exportDepth || "standard";
+      if (!externalHtml) {
+        const depth = String(options.exportDepth || "standard");
         const text = value.replace(/<[^>]+>/g, " ");
-        if (!/(공사일보|공사 일보|daily)/i.test(text)) {
-          warnings.push("HTML QA: construction daily output does not clearly identify itself as a construction daily report.");
+        if (depth === "deep" && !/(리스크|위험|한계|대안|시사점|implication|risk|limitation|alternative)/i.test(text)) {
+          warnings.push("HTML QA: deep output should expose risks, limitations, alternatives, or implications when source material supports them.");
         }
-        if (depth === "brief") {
-          if (!/(오늘|당일|작업|공정|사진|증빙)/.test(text)) {
-            warnings.push("HTML QA: brief construction daily should include today work or evidence.");
-          }
-        }
-        if (depth === "standard") {
-          if (!/(리스크|위험|이슈|다음|후속|예정|계획|공정|일정)/.test(text)) {
-            warnings.push("HTML QA: standard construction daily should include risk/next-work or schedule context.");
-          }
-        }
-        if (depth === "milestone") {
-          if (!/(간트|gantt|mermaid|실행\s*게이트|계획\s*대비|공정\s*흐름|마일스톤)/i.test(text)) {
-            warnings.push("HTML QA: milestone construction daily should include schedule/process or plan-versus-actual context.");
-          }
+        if (depth === "visual" && !/(<table\b|<svg\b|class=["'][^"']*(?:card|grid|chart|timeline|matrix)|mermaid|diagram|차트|표|타임라인|매트릭스)/i.test(value)) {
+          warnings.push("HTML QA: visual output has no obvious visual structure.");
         }
       }
       return warnings;
@@ -2728,10 +2891,83 @@ var require_html_qa = __commonJS({
   }
 });
 
+// src/core/share-navigation.js
+var require_share_navigation = __commonJS({
+  "src/core/share-navigation.js"(exports2, module2) {
+    "use strict";
+    function escapeHtml(value) {
+      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+    function injectShareHomeLink2(html, options = {}) {
+      const homeUrl = String(options.homeUrl || "").trim();
+      if (!homeUrl || !/^https?:\/\//i.test(homeUrl)) {
+        return String(html || "");
+      }
+      let value = String(html || "");
+      if (/data-marktl-share-home\b/i.test(value)) {
+        return value;
+      }
+      const label = escapeHtml(options.label || "\uACF5\uC720 \uD648");
+      const safeUrl = escapeHtml(homeUrl);
+      const style = `
+<style data-marktl-share-home-style>
+  .marktl-share-home-button {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    right: max(14px, env(safe-area-inset-right));
+    z-index: 2147483000;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, .42);
+    background: rgba(255, 255, 255, .88);
+    color: #0f172a;
+    box-shadow: 0 12px 34px rgba(15, 23, 42, .16);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    font: 700 13px/1.1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    text-decoration: none;
+  }
+  .marktl-share-home-button:hover { transform: translateY(-1px); box-shadow: 0 16px 38px rgba(15, 23, 42, .2); }
+  .marktl-share-home-button:focus-visible { outline: 3px solid rgba(59, 130, 246, .45); outline-offset: 3px; }
+  @media (prefers-color-scheme: dark) {
+    .marktl-share-home-button {
+      background: rgba(15, 23, 42, .86);
+      color: #f8fafc;
+      border-color: rgba(148, 163, 184, .36);
+    }
+  }
+  @media print { .marktl-share-home-button { display: none !important; } }
+</style>`;
+      const link = `<a class="marktl-share-home-button" data-marktl-share-home href="${safeUrl}" rel="home">\u2190 ${label}</a>`;
+      if (/<\/head>/i.test(value)) {
+        value = value.replace(/<\/head>/i, `${style}
+</head>`);
+      } else {
+        value = `${style}
+${value}`;
+      }
+      if (/<body\b([^>]*)>/i.test(value)) {
+        return value.replace(/<body\b([^>]*)>/i, `<body$1>
+${link}`);
+      }
+      return `${link}
+${value}`;
+    }
+    module2.exports = {
+      injectShareHomeLink: injectShareHomeLink2
+    };
+  }
+});
+
 // src/core/settings.js
 var require_settings = __commonJS({
   "src/core/settings.js"(exports2, module2) {
     "use strict";
+    var { normalizeExportSelection: normalizeExportSelection2 } = require_export_profiles();
     var { normalizeShareHomeSettings, sameShareHomeSettings } = require_share_home_profiles();
     function firstString(...values) {
       for (const value of values) {
@@ -2763,6 +2999,13 @@ var require_settings = __commonJS({
       if (!Array.isArray(raw.shareHomeProfiles) || raw.shareHomeProfiles.length === 0) {
         settings.shareHomeProfiles = [];
         settings.activeShareHomeProfileId = "";
+      }
+      const normalizedSelection = normalizeExportSelection2(settings);
+      if (settings.exportGenre !== normalizedSelection.exportGenre || settings.exportDepth !== normalizedSelection.exportDepth || settings.exportPurpose !== normalizedSelection.exportPurpose) {
+        settings.exportGenre = normalizedSelection.exportGenre;
+        settings.exportDepth = normalizedSelection.exportDepth;
+        settings.exportPurpose = normalizedSelection.exportPurpose;
+        migrated = true;
       }
       const shareHomeSettings = normalizeShareHomeSettings(settings);
       if (!sameShareHomeSettings(settings, shareHomeSettings)) {
@@ -2852,12 +3095,12 @@ var require_presets = __commonJS({
         previewSecurity: "trusted"
       },
       {
-        id: "construction-daily-report",
-        name: "Construction Daily",
-        description: "Korean construction daily report with large lead infographic, concise Mermaid-style flow maps, and execution-gate Gantt UI.",
+        id: "saas-brief",
+        name: "SaaS Brief",
+        description: "Modern product/report surface with hero, summary cards, responsive grids, and design tokens.",
         artifactGoal: "review",
-        artifactType: "research-report",
-        template: "construction-daily",
+        artifactType: "strategy-brief",
+        template: "saas-brief",
         mode: "presentation",
         previewSecurity: "trusted"
       },
@@ -2888,6 +3131,36 @@ var require_presets = __commonJS({
         artifactGoal: "publish",
         artifactType: "research-report",
         template: "editorial",
+        mode: "blog",
+        previewSecurity: "sanitized"
+      },
+      {
+        id: "newsletter",
+        name: "Newsletter",
+        description: "Newspaper-style public summary with headline hierarchy, sections, and sidebars.",
+        artifactGoal: "publish",
+        artifactType: "research-report",
+        template: "newspaper",
+        mode: "blog",
+        previewSecurity: "sanitized"
+      },
+      {
+        id: "social-feed",
+        name: "Social Feed",
+        description: "Compact card feed for short updates, public snippets, and tag-driven summaries.",
+        artifactGoal: "publish",
+        artifactType: "interactive-explainer",
+        template: "social-feed",
+        mode: "blog",
+        previewSecurity: "sanitized"
+      },
+      {
+        id: "community-blog",
+        name: "Community Blog",
+        description: "Readable post layout for lessons, examples, open questions, and community sharing.",
+        artifactGoal: "publish",
+        artifactType: "research-report",
+        template: "community-blog",
         mode: "blog",
         previewSecurity: "sanitized"
       },
@@ -3216,16 +3489,16 @@ var MarktlExportModal = class extends import_obsidian.Modal {
     header.createEl("span", { cls: "marktl-choice-step", text: "4" });
     const copy = header.createDiv();
     copy.createEl("h3", { text: "\uAE30\uC900 \uB9E5\uB77D \uB178\uD2B8" });
-    copy.createEl("p", { text: "\uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9\uD560\uC9C0, \uC0AC\uC6A9\uC790\uAC00 \uC9C0\uC815\uD55C \uAE30\uC900 \uB178\uD2B8\uC758 \uC77C\uC815\xB7\uACF5\uC815 \uB9E5\uB77D\uC744 \uD568\uAED8 \uC0AC\uC6A9\uD560\uC9C0 \uC815\uD569\uB2C8\uB2E4." });
+    copy.createEl("p", { text: "\uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9\uD560\uC9C0, \uC0AC\uC6A9\uC790\uAC00 \uC9C0\uC815\uD55C \uAE30\uC900 \uB178\uD2B8\uC758 \uBC30\uACBD\xB7\uACB0\uC815\xB7\uC6A9\uC5B4\xB7\uB9E5\uB77D\uC744 \uD568\uAED8 \uC0AC\uC6A9\uD560\uC9C0 \uC815\uD569\uB2C8\uB2E4." });
     const modeGrid = section.createDiv({ cls: "marktl-choice-grid marktl-context-grid" });
     const activeOnly = modeGrid.createEl("button", {
       cls: `marktl-choice-card${this.options.contextPackMode !== "reference-note" ? " is-selected" : ""}`,
       type: "button"
     });
     activeOnly.setAttr("aria-pressed", String(this.options.contextPackMode !== "reference-note"));
-    activeOnly.setAttr("title", "\uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9: \uB2F9\uC77C \uB178\uD2B8\uC758 \uB0B4\uC6A9\uB9CC\uC73C\uB85C HTML\uC744 \uB9CC\uB4ED\uB2C8\uB2E4.");
+    activeOnly.setAttr("title", "\uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9: \uD604\uC7AC \uB178\uD2B8\uC758 \uB0B4\uC6A9\uB9CC\uC73C\uB85C HTML\uC744 \uB9CC\uB4ED\uB2C8\uB2E4.");
     activeOnly.createEl("strong", { text: "\uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9" });
-    activeOnly.createEl("span", { text: "\uB2F9\uC77C \uB178\uD2B8\uC758 \uB0B4\uC6A9\uB9CC\uC73C\uB85C HTML\uC744 \uB9CC\uB4ED\uB2C8\uB2E4." });
+    activeOnly.createEl("span", { text: "\uD604\uC7AC \uB178\uD2B8\uC758 \uB0B4\uC6A9\uB9CC\uC73C\uB85C HTML\uC744 \uB9CC\uB4ED\uB2C8\uB2E4." });
     activeOnly.addEventListener("click", () => {
       this.options.contextPackMode = "none";
       this.onOpen();
@@ -3235,9 +3508,9 @@ var MarktlExportModal = class extends import_obsidian.Modal {
       type: "button"
     });
     reference.setAttr("aria-pressed", String(this.options.contextPackMode === "reference-note"));
-    reference.setAttr("title", "\uC9C0\uC815 \uAE30\uC900 \uB178\uD2B8 \uC0AC\uC6A9: \uC120\uD0DD\uD55C \uC885\uD569/\uB9C8\uC77C\uC2A4\uD1A4 \uB178\uD2B8\uC758 \uC77C\uC815, \uAC04\uD2B8, \uACF5\uC815 \uB9E5\uB77D\uC744 \uCC38\uACE0\uD569\uB2C8\uB2E4.");
+    reference.setAttr("title", "\uC9C0\uC815 \uAE30\uC900 \uB178\uD2B8 \uC0AC\uC6A9: \uC120\uD0DD\uD55C \uB178\uD2B8\uC758 \uBC30\uACBD, \uACB0\uC815, \uC6A9\uC5B4, \uAE30\uC900 \uB9E5\uB77D\uC744 \uCC38\uACE0\uD569\uB2C8\uB2E4.");
     reference.createEl("strong", { text: "\uC9C0\uC815 \uAE30\uC900 \uB178\uD2B8 \uC0AC\uC6A9" });
-    reference.createEl("span", { text: "\uC120\uD0DD\uD55C \uC885\uD569/\uB9C8\uC77C\uC2A4\uD1A4 \uB178\uD2B8\uC758 \uC77C\uC815, \uAC04\uD2B8, \uACF5\uC815 \uB9E5\uB77D\uC744 \uCC38\uACE0\uD569\uB2C8\uB2E4." });
+    reference.createEl("span", { text: "\uC120\uD0DD\uD55C \uB178\uD2B8\uC758 \uBC30\uACBD, \uACB0\uC815, \uC6A9\uC5B4, \uAE30\uC900 \uB9E5\uB77D\uC744 \uCC38\uACE0\uD569\uB2C8\uB2E4." });
     reference.addEventListener("click", () => {
       this.options.contextPackMode = "reference-note";
       if (!this.options.referenceContextNotePath) {
@@ -4032,7 +4305,7 @@ var MarktlSettingTab = class extends import_obsidian6.PluginSettingTab {
         await this.applyDefaultSelection({ exportGenre: value });
       });
     });
-    new import_obsidian6.Setting(containerEl).setName("\uC791\uC131 \uAE4A\uC774").setDesc("\uACF5\uC0AC\uC77C\uBCF4\uB294 \uAC04\uB2E8 \uAE30\uB85D, \uD45C\uC900 \uC77C\uBCF4, \uC885\uD569\xB7\uB9C8\uC77C\uC2A4\uD1A4 3\uB2E8\uACC4\uB97C \uC0AC\uC6A9\uD569\uB2C8\uB2E4.").addDropdown((dropdown) => {
+    new import_obsidian6.Setting(containerEl).setName("\uC791\uC131 \uAE4A\uC774").setDesc("\uACB0\uACFC\uBB3C\uC758 \uBC00\uB3C4\uC640 \uC2DC\uAC01\uD654 \uAC15\uB3C4\uB97C \uC815\uD569\uB2C8\uB2E4.").addDropdown((dropdown) => {
       for (const depth of (0, import_export_profiles2.listExportDepths)()) {
         dropdown.addOption(depth.id, depth.label);
       }
@@ -4048,7 +4321,7 @@ var MarktlSettingTab = class extends import_obsidian6.PluginSettingTab {
         await this.applyDefaultSelection({ exportPurpose: value });
       });
     });
-    new import_obsidian6.Setting(containerEl).setName("\uAE30\uC900 \uB9E5\uB77D \uB178\uD2B8 \uACBD\uB85C").setDesc("\uC120\uD0DD \uC0AC\uD56D\uC785\uB2C8\uB2E4. \uBE44\uC6CC\uB450\uBA74 \uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9\uD569\uB2C8\uB2E4.").addText((text) => text.setPlaceholder("\uC608: \uD504\uB85C\uC81D\uD2B8/2026-06-11 \uC9C0\uC218\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uACF5\uC0AC\uC77C\uBCF4.md").setValue(this.plugin.settings.referenceContextNotePath).onChange(async (value) => {
+    new import_obsidian6.Setting(containerEl).setName("\uAE30\uC900 \uB9E5\uB77D \uB178\uD2B8 \uACBD\uB85C").setDesc("\uC120\uD0DD \uC0AC\uD56D\uC785\uB2C8\uB2E4. \uBE44\uC6CC\uB450\uBA74 \uD604\uC7AC \uB178\uD2B8\uB9CC \uC0AC\uC6A9\uD569\uB2C8\uB2E4.").addText((text) => text.setPlaceholder("\uC608: \uD504\uB85C\uC81D\uD2B8/\uAE30\uC900 \uD68C\uC758\uB85D \uB610\uB294 \uC774\uC804 \uC885\uD569\uB178\uD2B8.md").setValue(this.plugin.settings.referenceContextNotePath).onChange(async (value) => {
       this.plugin.settings.referenceContextNotePath = value.trim();
       this.plugin.settings.contextPackMode = this.plugin.settings.referenceContextNotePath ? "reference-note" : "none";
       await this.plugin.saveSettings();
@@ -4517,6 +4790,7 @@ var { injectReaderFeedback, shouldAttachReaderFeedback, validateGiscusConfig } =
 var { buildPagesUrl, buildPublishPath, buildShareHomeUrl, buildShortPagesUrl, inferPagesBaseUrl: inferPagesBaseUrl2, parseRepo, repairShareIndex, renderShareIndexHtml, updateShareIndex } = require_github_pages();
 var { repairObsidianSyntaxResidue } = require_html_repair();
 var { validateHtmlArtifact } = require_html_qa();
+var { injectShareHomeLink } = require_share_navigation();
 var { slugify } = require_html();
 var { migrateSettings } = require_settings();
 var { DEFAULT_SHARE_HOME_PROFILE_ID, buildDefaultShareHomeProfile, normalizeShareHomeProfiles: normalizeShareHomeProfiles3, resolveShareHomeProfile: resolveShareHomeProfile3 } = require_share_home_profiles();
@@ -4533,9 +4807,9 @@ var DEFAULT_SETTINGS = {
   artifactGoal: "read",
   artifactType: "faithful-note",
   template: "minimal",
-  exportGenre: "construction-daily",
+  exportGenre: "integrated-note",
   exportDepth: "standard",
-  exportPurpose: "field-review",
+  exportPurpose: "internal-share",
   referenceContextNotePath: "",
   aiProvider: "none",
   conversionMode: "preserve",
@@ -5142,7 +5416,9 @@ ${source}
       progress.addStep(result.usedFallback ? "Generated local fallback HTML." : "Generated AI HTML.");
       const shareMetadata = this.extractShareMetadata(markdown, outputPlan.basename);
       const shortId = buildShortId(outputPlan.basename);
-      const socialUrl = options.shareTarget === "github-pages" ? buildShortPagesUrl(this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo), shareHomeProfile.basePath, shortId) : "";
+      const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
+      const socialUrl = options.shareTarget === "github-pages" ? buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId) : "";
+      const shareHomeReturnUrl = options.shareTarget === "github-pages" ? buildShareHomeUrl(pagesBaseUrl, shareHomeProfile.basePath) : "";
       const socialImage = options.shareTarget === "github-pages" && assetResult.mappings[0] ? `${socialUrl}assets/${assetResult.mappings[0].destinationPath.split("/").pop() || ""}` : "";
       const socialHtml = injectSocialMeta(result.html, {
         title: shareMetadata.title,
@@ -5160,6 +5436,13 @@ ${source}
       html = this.repairHtmlHead(mermaidResult.html);
       if (mermaidResult.rendered > 0) {
         progress.addStep(`Rendered ${mermaidResult.rendered} Mermaid diagram(s) to static HTML/SVG.`);
+      }
+      if (shareHomeReturnUrl) {
+        html = this.repairHtmlHead(injectShareHomeLink(html, {
+          homeUrl: shareHomeReturnUrl,
+          label: "\uACF5\uC720 \uD648"
+        }));
+        progress.addStep("Added share hub home link.");
       }
       const repairedHtml = repairObsidianSyntaxResidue(html);
       if (repairedHtml !== html) {
@@ -5359,6 +5642,7 @@ ${source}
       const shortId = buildShortId(outputPlan.basename);
       const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
       const socialUrl = buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId);
+      const shareHomeReturnUrl = buildShareHomeUrl(pagesBaseUrl, shareHomeProfile.basePath);
       const thumbnailMapping = thumbnailFile ? await this.writeExternalThumbnailAsset(outputPlan, thumbnailFile) : null;
       const assetMappings = thumbnailMapping ? [thumbnailMapping] : [];
       const thumbnailPublicUrl = thumbnailMapping ? `${socialUrl}assets/${encodeURIComponent(thumbnailMapping.destinationPath.split("/").pop() || "thumbnail")}` : "";
@@ -5379,6 +5663,11 @@ ${source}
       if (feedbackResult.injected) {
         progress.addStep("Added Giscus reader feedback.");
       }
+      html = this.repairHtmlHead(injectShareHomeLink(html, {
+        homeUrl: shareHomeReturnUrl,
+        label: "\uACF5\uC720 \uD648"
+      }));
+      progress.addStep("Added share hub home link.");
       const repairedHtml = repairObsidianSyntaxResidue(html);
       if (repairedHtml !== html) {
         html = this.repairHtmlHead(repairedHtml);

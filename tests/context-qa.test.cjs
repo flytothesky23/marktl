@@ -45,6 +45,8 @@ Important linked note details.
   ], { kind: 'reference' });
 
   assert.match(context, /Reference context note is available/);
+  assert.match(context, /background, definitions, prior decisions/);
+  assert.doesNotMatch(context, /today\/current facts|continuing project context/);
   assert.match(context, /notes\/Context\.md/);
   assert.match(context, /Important linked note details/);
   assert.match(context, /```mermaid/);
@@ -70,8 +72,8 @@ test('validates generated HTML artifact basics and asset references', () => {
 });
 
 test('flags raw Obsidian-only blocks as fatal HTML QA', () => {
-  const warnings = validateHtmlArtifact('<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style></head><body><h1>공사일보</h1>\n```dataviewjs\ndv.pages()\n```\n</body></html>', {
-    exportGenre: 'construction-daily',
+  const warnings = validateHtmlArtifact('<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style></head><body><h1>통합 노트</h1>\n```dataviewjs\ndv.pages()\n```\n</body></html>', {
+    exportGenre: 'integrated-note',
     exportDepth: 'standard',
   });
 

@@ -7,9 +7,9 @@ export type PreviewSecurity = 'sanitized' | 'trusted';
 export type ShareTarget = 'local-link' | 'static-bundle' | 'github-pages';
 export type ContextPackMode = 'none' | 'linked-notes' | 'reference-note';
 export type ReaderFeedbackMode = 'none' | 'giscus';
-export type ExportGenre = 'construction-daily' | 'meeting-notes' | 'integrated-note' | 'report' | 'general-note' | 'compare-review' | 'presentation' | 'share-article';
-export type ExportDepth = 'brief' | 'standard' | 'milestone';
-export type ExportPurpose = 'internal-share' | 'field-review' | 'external-report' | 'public-archive' | 'presentation' | 'ai-rework';
+export type ExportGenre = 'meeting-notes' | 'integrated-note' | 'report' | 'general-note' | 'compare-review' | 'presentation' | 'research-paper' | 'share-article' | 'newspaper' | 'social-feed' | 'community-blog';
+export type ExportDepth = 'brief' | 'standard' | 'deep' | 'visual';
+export type ExportPurpose = 'internal-share' | 'review' | 'external-report' | 'public-archive' | 'presentation' | 'executive-brief' | 'community-share' | 'ai-rework';
 
 export interface ShareHomeProfile {
   id: string;

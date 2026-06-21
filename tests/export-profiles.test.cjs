@@ -12,30 +12,39 @@ const { buildSelectionPrompt } = require('../src/core/prompt-composer.js');
 
 test('maps visible selection axes to internal execution profiles', () => {
   const standard = getExecutionProfile({
-    exportGenre: 'construction-daily',
+    exportGenre: 'integrated-note',
     exportDepth: 'standard',
-    exportPurpose: 'field-review',
+    exportPurpose: 'review',
   });
   const brief = getExecutionProfile({
-    exportGenre: 'construction-daily',
+    exportGenre: 'general-note',
     exportDepth: 'brief',
     exportPurpose: 'internal-share',
   });
-  const milestone = getExecutionProfile({
-    exportGenre: 'construction-daily',
-    exportDepth: 'milestone',
+  const visualPaper = getExecutionProfile({
+    exportGenre: 'research-paper',
+    exportDepth: 'visual',
     exportPurpose: 'external-report',
   });
+  const legacy = getExecutionProfile({
+    exportGenre: 'construction-daily',
+    exportDepth: 'milestone',
+    exportPurpose: 'field-review',
+  });
 
-  assert.equal(listExportGenres().find((item) => item.id === 'construction-daily').label, '공사일보');
-  assert.deepEqual(listExportDepths().map((item) => item.id), ['brief', 'standard', 'milestone']);
-  assert.ok(listExportPurposes().some((item) => item.id === 'field-review'));
+  assert.deepEqual(listExportDepths().map((item) => item.id), ['brief', 'standard', 'deep', 'visual']);
+  assert.ok(listExportGenres().some((item) => item.id === 'newspaper'));
+  assert.ok(listExportGenres().some((item) => item.id === 'social-feed'));
+  assert.ok(listExportPurposes().some((item) => item.id === 'executive-brief'));
   assert.equal(standard.artifactGoal, 'review');
-  assert.equal(standard.template, 'construction-daily');
+  assert.equal(standard.template, 'dashboard');
   assert.equal(brief.artifactGoal, 'read');
   assert.equal(brief.conversionMode, 'preserve');
-  assert.equal(milestone.artifactType, 'strategy-brief');
-  assert.equal(milestone.previewSecurity, 'trusted');
+  assert.equal(visualPaper.template, 'saas-brief');
+  assert.equal(visualPaper.previewSecurity, 'trusted');
+  assert.equal(legacy.exportGenre, 'integrated-note');
+  assert.equal(legacy.exportDepth, 'deep');
+  assert.equal(legacy.exportPurpose, 'review');
 });
 
 test('preserves operational settings while applying selected execution profile', () => {
@@ -56,28 +65,29 @@ test('preserves operational settings while applying selected execution profile',
   assert.equal(options.copyShareLinkAfterExport, true);
 });
 
-test('builds construction daily prompt contracts for all depth levels', () => {
+test('builds generalized prompt contracts for all selection axes', () => {
   const brief = buildSelectionPrompt({
-    exportGenre: 'construction-daily',
+    exportGenre: 'general-note',
     exportDepth: 'brief',
     exportPurpose: 'internal-share',
   });
-  const standard = buildSelectionPrompt({
-    exportGenre: 'construction-daily',
-    exportDepth: 'standard',
-    exportPurpose: 'field-review',
-    referenceContextNotePath: 'Projects/2026-06-11 공사일보.md',
+  const visual = buildSelectionPrompt({
+    exportGenre: 'social-feed',
+    exportDepth: 'visual',
+    exportPurpose: 'community-share',
   });
-  const milestone = buildSelectionPrompt({
-    exportGenre: 'construction-daily',
-    exportDepth: 'milestone',
-    exportPurpose: 'external-report',
-    referenceContextNotePath: 'Projects/2026-06-11 공사일보.md',
+  const reference = buildSelectionPrompt({
+    exportGenre: 'integrated-note',
+    exportDepth: 'deep',
+    exportPurpose: 'review',
+    referenceContextNotePath: 'Projects/Baseline.md',
   });
 
-  assert.match(brief, /Do not force Gantt/);
-  assert.match(standard, /active note is the source of today\/current facts/i);
-  assert.match(standard, /기준 대비 변경\/확인 필요/);
-  assert.match(milestone, /plan-versus-actual/);
-  assert.match(milestone, /Mermaid\/Gantt/);
+  assert.match(brief, /faithful readable note/i);
+  assert.match(visual, /social-feed style artifact/i);
+  assert.match(visual, /visual-first structure/i);
+  assert.match(reference, /active note remains the primary source of current facts/i);
+  assert.match(reference, /context change or item needing confirmation/i);
+  assert.match(reference, /Design system instruction/);
+  assert.doesNotMatch(reference, /Mermaid\/Gantt|plan-versus-actual|today\/current facts/);
 });

@@ -52,8 +52,8 @@ test('external HTML QA keeps fatal checks but skips generated-interactive expect
   const warnings = validateHtmlArtifact('<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{}</style></head><body><h1>완성 HTML</h1></body></html>', {
     trusted: true,
     artifactGoal: 'publish',
-    exportGenre: 'construction-daily',
-    exportDepth: 'milestone',
+    exportGenre: 'integrated-note',
+    exportDepth: 'deep',
     externalHtml: true,
   });
   assert.deepEqual(warnings, []);

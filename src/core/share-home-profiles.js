@@ -3,7 +3,7 @@ const { buildShareHomeUrl, inferPagesBaseUrl, normalizePublishPath } = require('
 const DEFAULT_SHARE_HOME_PROFILE_ID = 'jisu-construction';
 const DEFAULT_SHARE_HOME_TITLE = '유네코 지수 통합선별공장 프로젝트';
 const DEFAULT_SHARE_HOME_EYEBROW = '통합선별공장 Archive';
-const DEFAULT_SHARE_HOME_DESCRIPTION = '공사일보, 회의록, 보고서를 프로젝트별 허브에서 빠르게 찾고 여는 MarkTL 공유 아카이브.';
+const DEFAULT_SHARE_HOME_DESCRIPTION = '노트, 회의록, 보고서, 기사형 HTML을 허브별로 빠르게 찾고 여는 MarkTL 공유 아카이브.';
 
 function cleanProfileText(value, fallback = '') {
   const text = String(value || '')

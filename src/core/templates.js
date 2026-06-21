@@ -230,25 +230,109 @@ const templates = [
     `,
   },
   {
-    id: 'construction-daily',
-    name: 'Construction Daily',
-    description: 'Field-report layout with large lead visual, concise flow maps, and execution-gate Gantt sections.',
+    id: 'saas-brief',
+    name: 'SaaS Brief',
+    description: 'Modern product-report surface with design tokens, strong hero, summary cards, and dense scan-friendly sections.',
     css: `
-      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f7f3eb; }
-      main { max-width: 1180px; margin: 0 auto; padding: 34px 24px 72px; }
-      article { background: rgba(255,255,255,.74); border: 1px solid #d9cfc0; border-radius: 8px; padding: 30px; box-shadow: 0 18px 44px rgba(23,32,51,.08); }
-      h1 { font-size: clamp(2.4rem, 5vw, 5.5rem); line-height: .98; letter-spacing: 0; margin: 0 0 22px; color: #172033; }
-      h2 { margin: 42px 0 16px; color: #174ea6; border-left: 6px solid #f97316; padding-left: 12px; font-size: clamp(1.5rem, 3vw, 2.4rem); }
-      h3 { margin: 24px 0 10px; color: #1f2937; }
-      p, li { line-height: 1.68; }
-      table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d9e2ec; border-radius: 8px; overflow: hidden; }
-      th, td { border-bottom: 1px solid #d9e2ec; padding: 10px 12px; text-align: left; vertical-align: top; }
-      th { background: #10233f; color: #fff; }
+      :root { color-scheme: light; --bg:#f4f7fb; --surface:#ffffff; --surface-2:#eef6ff; --text:#0f172a; --muted:#56657a; --line:#d9e2ef; --accent:#0ea5e9; --accent-2:#22c55e; --warn:#f97316; --radius:8px; }
+      body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 8% 0%, #e0f2fe, transparent 30%), var(--bg); }
+      main { max-width: 1180px; margin: 0 auto; padding: 34px 22px 72px; }
+      article { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+      article > * { grid-column: 1 / -1; background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; box-shadow: 0 12px 34px rgba(15, 23, 42, .06); }
+      h1 { font-size: clamp(2.2rem, 6vw, 5.4rem); line-height: 1; margin: 0; border-top: 5px solid var(--accent); }
+      h2 { font-size: clamp(1.45rem, 3vw, 2.4rem); color: #075985; }
+      h3 { color: #164e63; }
+      p, li { line-height: 1.65; color: var(--muted); }
+      strong { color: var(--text); }
+      table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+      th, td { border-bottom: 1px solid var(--line); padding: 11px 12px; text-align: left; vertical-align: top; }
+      th { background: #0f172a; color: #f8fafc; }
+      img { max-width: 100%; height: auto; border-radius: var(--radius); display: block; }
+      pre { overflow: auto; background: #0f172a; color: #f8fafc; border-radius: var(--radius); padding: 16px; }
+      blockquote, .callout { border-left: 5px solid var(--accent); background: var(--surface-2); border-radius: var(--radius); padding: 14px 18px; }
+      @media (min-width: 860px) { article > h2 + p, article > h2 + ul, article > h2 + ol, article > h2 + table { grid-column: span 6; } }
+      @media (max-width: 760px) { main { padding: 18px 12px 56px; } article > * { padding: 18px; } table { display: block; overflow-x: auto; } }
+    `,
+  },
+  {
+    id: 'paper',
+    name: 'Paper',
+    description: 'Restrained research-paper layout for source-heavy technical notes and thesis-driven writing.',
+    css: `
+      :root { --bg:#f7f7f4; --paper:#fffefb; --text:#111827; --muted:#4b5563; --line:#d6d3cc; --accent:#374151; }
+      body { margin: 0; font-family: "Source Serif 4", Georgia, "Times New Roman", serif; color: var(--text); background: var(--bg); }
+      main { max-width: 940px; margin: 0 auto; padding: 58px 28px 86px; }
+      article { background: var(--paper); border: 1px solid var(--line); padding: clamp(28px, 5vw, 58px); }
+      h1 { font-size: clamp(2.2rem, 6vw, 4.8rem); line-height: 1.04; margin-top: 0; }
+      h2 { margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--accent); }
+      p, li { font-size: 18px; line-height: 1.78; color: var(--muted); }
+      blockquote, .callout { border-left: 4px solid var(--accent); background: #f1f5f9; padding: 14px 18px; }
+      table { width: 100%; border-collapse: collapse; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 15px; background: white; }
+      th, td { border: 1px solid var(--line); padding: 10px; }
+      pre { overflow: auto; background: #111827; color: #f8fafc; padding: 16px; border-radius: 8px; }
+      img { max-width: 100%; height: auto; display: block; margin: 22px auto; }
+    `,
+  },
+  {
+    id: 'newspaper',
+    name: 'Newspaper',
+    description: 'Newsletter/newspaper layout with headline hierarchy, decks, sidebars, and article rhythm.',
+    css: `
+      :root { --ink:#171717; --muted:#525252; --paper:#fffaf0; --line:#d7c7a5; --accent:#b45309; }
+      body { margin: 0; background: #ede5d4; color: var(--ink); font-family: Georgia, "Times New Roman", serif; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 18px 72px; }
+      article { background: var(--paper); border: 1px solid var(--line); padding: clamp(24px, 4vw, 48px); column-gap: 32px; }
+      h1 { font-size: clamp(2.4rem, 7vw, 6rem); line-height: .96; margin: 0 0 18px; border-bottom: 4px double var(--ink); padding-bottom: 16px; }
+      h2 { break-after: avoid; margin-top: 36px; color: var(--accent); font-size: 1.8rem; }
+      h3 { font-family: ui-sans-serif, system-ui, sans-serif; text-transform: uppercase; font-size: .85rem; letter-spacing: .12em; }
+      p, li { font-size: 18px; line-height: 1.72; color: var(--muted); }
+      blockquote, .callout { border: 1px solid var(--line); background: #fff4d6; padding: 16px; font-size: 1.15rem; }
+      table { width: 100%; border-collapse: collapse; background: #fff; font-family: ui-sans-serif, system-ui, sans-serif; }
+      th, td { border-bottom: 1px solid var(--line); padding: 10px; text-align: left; }
+      img { max-width: 100%; height: auto; display: block; margin: 22px auto; filter: saturate(.92); }
+      pre { overflow: auto; background: #1c1917; color: #fff7ed; padding: 16px; }
+      @media (min-width: 980px) { article { column-count: 2; } h1, h2, h3, table, pre, img, blockquote, .callout { column-span: all; } }
+    `,
+  },
+  {
+    id: 'social-feed',
+    name: 'Social Feed',
+    description: 'Compact feed-style layout for short updates, reusable snippets, and tag-driven summaries.',
+    css: `
+      :root { --bg:#f8fafc; --surface:#ffffff; --text:#111827; --muted:#64748b; --line:#e2e8f0; --accent:#7c3aed; --accent-2:#06b6d4; }
+      body { margin: 0; background: linear-gradient(180deg, #eef2ff, var(--bg)); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { max-width: 860px; margin: 0 auto; padding: 28px 16px 70px; }
+      article { display: grid; gap: 14px; }
+      article > * { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; box-shadow: 0 10px 28px rgba(15, 23, 42, .05); }
+      h1 { font-size: clamp(2rem, 7vw, 4.6rem); line-height: 1; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; }
+      h2 { font-size: 1.25rem; color: var(--accent); }
+      p, li { line-height: 1.55; color: var(--muted); }
+      ul, ol { padding-left: 26px; }
+      blockquote, .callout { border: 1px solid #ddd6fe; background: #f5f3ff; }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th, td { border-bottom: 1px solid var(--line); padding: 8px; }
       img { max-width: 100%; height: auto; border-radius: 8px; display: block; }
-      pre { overflow: auto; background: #111827; color: #f8fafc; border-radius: 8px; padding: 16px; }
-      .callout { border-left: 5px solid #174ea6; background: #eff6ff; border-radius: 8px; padding: 14px 18px; }
-      .marktl-mermaid-rendered, .marktl-mermaid-source { margin: 22px 0; }
-      @media (max-width: 760px) { main { padding: 18px 12px 52px; } article { padding: 20px; } table { display: block; overflow-x: auto; } }
+      pre { overflow: auto; background: #111827; color: #f8fafc; border-radius: 8px; padding: 14px; }
+    `,
+  },
+  {
+    id: 'community-blog',
+    name: 'Community Blog',
+    description: 'Readable community post layout for lessons, examples, comments, and follow-up questions.',
+    css: `
+      :root { --bg:#f4f8f7; --surface:#ffffff; --text:#10201b; --muted:#52645f; --line:#d8e5e1; --accent:#0f766e; --accent-2:#f59e0b; }
+      body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { max-width: 980px; margin: 0 auto; padding: 36px 18px 76px; }
+      article { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: clamp(22px, 4vw, 44px); }
+      h1 { font-size: clamp(2.2rem, 7vw, 5rem); line-height: 1.02; margin-top: 0; }
+      h2 { margin-top: 40px; color: var(--accent); }
+      h3 { color: #134e4a; }
+      p, li { font-size: 17px; line-height: 1.7; color: var(--muted); }
+      blockquote, .callout { border-left: 5px solid var(--accent-2); background: #fffbeb; border-radius: 8px; padding: 14px 18px; }
+      table { width: 100%; border-collapse: collapse; background: #fbfefd; }
+      th, td { border-bottom: 1px solid var(--line); padding: 10px; text-align: left; }
+      img { max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 20px auto; }
+      pre { overflow: auto; background: #10201b; color: #ecfdf5; border-radius: 8px; padding: 16px; }
     `,
   },
   {

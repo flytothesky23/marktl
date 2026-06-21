@@ -66,7 +66,7 @@ export class MarktlSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('작성 깊이')
-      .setDesc('공사일보는 간단 기록, 표준 일보, 종합·마일스톤 3단계를 사용합니다.')
+      .setDesc('결과물의 밀도와 시각화 강도를 정합니다.')
       .addDropdown((dropdown) => {
         for (const depth of listExportDepths()) {
           dropdown.addOption(depth.id, depth.label);
@@ -92,7 +92,7 @@ export class MarktlSettingTab extends PluginSettingTab {
       .setName('기준 맥락 노트 경로')
       .setDesc('선택 사항입니다. 비워두면 현재 노트만 사용합니다.')
       .addText((text) => text
-        .setPlaceholder('예: 프로젝트/2026-06-11 지수통합선별공장 공사일보.md')
+        .setPlaceholder('예: 프로젝트/기준 회의록 또는 이전 종합노트.md')
         .setValue(this.plugin.settings.referenceContextNotePath)
         .onChange(async (value) => {
           this.plugin.settings.referenceContextNotePath = value.trim();

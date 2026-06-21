@@ -300,17 +300,14 @@ function getInteractionStandard(artifactGoal, template, trusted, options = {}) {
   if (!trusted) {
     return 'Keep interaction affordances static: anchors, tables, checklists, and copy-ready text blocks only. Do not add editable playground controls, state JSON panels, or scripts.';
   }
-  if (template === 'construction-daily') {
-    const depth = options.exportDepth || 'standard';
-    const depthInstruction = {
-      brief: 'For brief daily logs, keep the page compact and do not force Mermaid, Gantt, execution gates, or large baseline sections unless the active note explicitly contains them.',
-      standard: 'For standard daily reports, include compact Mermaid/Gantt/process context only when the active or reference note provides enough schedule/process material.',
-      milestone: 'For milestone reports, include a visible baseline schedule/process section and an HTML/CSS execution-gate or Gantt-style view when the reference note provides schedule or process material.',
-    }[depth] || '';
-    return `Build a Korean construction daily report, not a generic article. On desktop, use a first-screen two-column hero where the left side contains the title and concise project summary and the right side renders the primary infographic or lead image at comparable visual weight when an image exists. On mobile, do not preserve the desktop side-by-side composition; stack the hero in this reader order: kicker/date, primary infographic or lead image, title, then summary. Convert Obsidian callouts, DataviewJS, and raw markdown syntax into clean reader-facing HTML; never show raw markers such as [!abstract]+, dataviewjs, frontmatter, or code used only for Obsidian rendering. ${depthInstruction} Use Korean-only reader tags and card-ready summary text around 50 characters. Keep all controls local-only and self-contained.`;
-  }
   if (artifactGoal === 'tune' || template === 'playground') {
     return 'Use local-only editable controls, state JSON, and copy-next-prompt affordances, but label why the controls exist and what the reader should do next. Keep everything self-contained.';
+  }
+  if (template === 'saas-brief') {
+    return 'Use a polished SaaS/product-brief style only when it clarifies the selected genre: strong hero, compact KPI or summary cards, responsive grids, and concise evidence blocks. Do not force operational metrics when the note does not provide them.';
+  }
+  if (['newspaper', 'social-feed', 'community-blog', 'paper'].includes(template)) {
+    return 'Respect the selected editorial genre. Use local-only navigation or copy buttons only when they help reading or sharing; otherwise prioritize typography, section rhythm, and source-faithful content.';
   }
   return 'Use local-only navigation, section collapse, copy summary/outline/prompt buttons, filters, or annotations only when they directly help the selected artifact goal. Do not add generic tuning playgrounds, state JSON panels, sliders, or editable fields unless the artifact goal is tune or the template is playground. Any control must have a visible purpose label and an obvious next action.';
 }
