@@ -1883,6 +1883,7 @@ var require_github_pages = __commonJS({
         hasDescriptionOption ? "" : "\uACF5\uC720 HTML\uC744 \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uC544\uCE74\uC774\uBE0C."
       );
       const metaDescription = description || title;
+      const descriptionHtml = description ? `      <p class="hero-copy">${escapeHtml(description)}</p>` : "";
       const baseUrl = String(options.baseUrl || "").replace(/\/+$/g, "");
       const items = repairShareItems(Array.isArray(index == null ? void 0 : index.items) ? index.items : []).map((item, itemIndex) => normalizeArchiveItem(item, itemIndex, baseUrl));
       const tagCounts = /* @__PURE__ */ new Map();
@@ -1922,7 +1923,7 @@ var require_github_pages = __commonJS({
     <div class="hero-panel">
       <p class="eyebrow">${escapeHtml(eyebrow)}</p>
       <h1>${escapeHtml(title)}</h1>
-      ${description ? `<p class="hero-copy">${escapeHtml(description)}</p>` : ""}
+${descriptionHtml}
       <section class="toolbar" aria-label="\uAC80\uC0C9\uACFC \uD544\uD130">
         <input class="search" id="search" type="search" placeholder="\uBB38\uC11C, \uD604\uC7A5, \uD68C\uC758, \uD0DC\uADF8 \uAC80\uC0C9" aria-label="\uBB38\uC11C \uAC80\uC0C9">
         <div class="filters"><button class="active" type="button" data-filter="">\uC804\uCCB4</button>${typeButtons}${tagButtons}</div>

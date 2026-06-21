@@ -170,6 +170,7 @@ function renderShareIndexHtml(index, options = {}) {
     hasDescriptionOption ? '' : '공유 HTML을 빠르게 찾고 여는 MarkTL 아카이브.',
   );
   const metaDescription = description || title;
+  const descriptionHtml = description ? `      <p class="hero-copy">${escapeHtml(description)}</p>` : '';
   const baseUrl = String(options.baseUrl || '').replace(/\/+$/g, '');
   const items = repairShareItems(Array.isArray(index?.items) ? index.items : [])
     .map((item, itemIndex) => normalizeArchiveItem(item, itemIndex, baseUrl));
@@ -219,7 +220,7 @@ function renderShareIndexHtml(index, options = {}) {
     <div class="hero-panel">
       <p class="eyebrow">${escapeHtml(eyebrow)}</p>
       <h1>${escapeHtml(title)}</h1>
-      ${description ? `<p class="hero-copy">${escapeHtml(description)}</p>` : ''}
+${descriptionHtml}
       <section class="toolbar" aria-label="검색과 필터">
         <input class="search" id="search" type="search" placeholder="문서, 현장, 회의, 태그 검색" aria-label="문서 검색">
         <div class="filters"><button class="active" type="button" data-filter="">전체</button>${typeButtons}${tagButtons}</div>
