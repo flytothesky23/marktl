@@ -250,3 +250,17 @@ test('renders share home page with custom hub identity', () => {
   assert.match(html, /관심 분야별 HTML을 모아두는 공개 허브입니다\./);
   assert.match(html, /<meta name="description" content="관심 분야별 HTML을 모아두는 공개 허브입니다\.">/);
 });
+
+test('omits visible share home description when description is intentionally blank', () => {
+  const html = renderShareIndexHtml({
+    items: [],
+  }, {
+    title: '유네코 지수 통합선별공장 프로젝트',
+    eyebrow: '통합선별공장 Archive',
+    description: '',
+  });
+
+  assert.doesNotMatch(html, /class="hero-copy"/);
+  assert.doesNotMatch(html, /MarkTL 공유 아카이브/);
+  assert.match(html, /<meta name="description" content="유네코 지수 통합선별공장 프로젝트">/);
+});

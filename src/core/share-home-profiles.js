@@ -44,6 +44,7 @@ function normalizeShareHomeProfile(profile, settings = {}, index = 0, usedIds = 
   const raw = profile && typeof profile === 'object' ? profile : {};
   const baseFallback = index === 0 ? fallback.basePath : `marktl/hub-${index + 1}`;
   const idFallback = index === 0 ? fallback.id : `share-hub-${index + 1}`;
+  const descriptionFallback = index === 0 ? fallback.description : DEFAULT_SHARE_HOME_DESCRIPTION;
   const normalized = {
     id: normalizeShareHomeProfileId(raw.id || raw.key || raw.name, idFallback),
     title: cleanProfileText(raw.title || raw.name, index === 0 ? fallback.title : `공유 허브 ${index + 1}`),
@@ -51,7 +52,9 @@ function normalizeShareHomeProfile(profile, settings = {}, index = 0, usedIds = 
       ? normalizePublishPath(raw.basePath)
       : baseFallback,
     eyebrow: cleanProfileText(raw.eyebrow || raw.badge, index === 0 ? fallback.eyebrow : 'MarkTL Archive'),
-    description: cleanProfileText(raw.description, index === 0 ? fallback.description : DEFAULT_SHARE_HOME_DESCRIPTION),
+    description: Object.prototype.hasOwnProperty.call(raw, 'description')
+      ? cleanProfileText(raw.description, '')
+      : descriptionFallback,
   };
 
   let id = normalized.id;
@@ -98,7 +101,7 @@ function createShareHomeProfile(existingProfiles = [], seed = {}) {
     title: seed.title || `새 공유 허브 ${index}`,
     basePath: Object.prototype.hasOwnProperty.call(seed, 'basePath') ? seed.basePath : `marktl/hub-${index}`,
     eyebrow: seed.eyebrow || 'MarkTL Archive',
-    description: seed.description || DEFAULT_SHARE_HOME_DESCRIPTION,
+    description: Object.prototype.hasOwnProperty.call(seed, 'description') ? seed.description : DEFAULT_SHARE_HOME_DESCRIPTION,
   }, {}, index - 1, usedIds);
 }
 

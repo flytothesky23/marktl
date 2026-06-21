@@ -40,6 +40,14 @@ test('normalizes multiple share hubs and resolves the active hub', () => {
   assert.equal(active.title, '리서치 아카이브');
 });
 
+test('preserves an intentionally blank share hub description', () => {
+  const profiles = normalizeShareHomeProfiles([
+    { id: 'jisu', title: '지수 통합선별', basePath: '/marktl/', eyebrow: 'JISU', description: '' },
+  ]);
+
+  assert.equal(profiles[0].description, '');
+});
+
 test('creates a new share hub without colliding with existing ids', () => {
   const next = createShareHomeProfile([
     { id: 'share-hub-2', title: 'Existing', basePath: 'marktl/existing', eyebrow: 'Archive', description: 'Existing' },
