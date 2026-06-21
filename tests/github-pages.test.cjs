@@ -251,6 +251,21 @@ test('renders share home page with custom hub identity', () => {
   assert.match(html, /<meta name="description" content="관심 분야별 HTML을 모아두는 공개 허브입니다\.">/);
 });
 
+test('renders a share home date sort toggle', () => {
+  const html = renderShareIndexHtml({
+    items: [
+      { title: '2026-06-18 문서', slug: 'new', url: 'https://example.com/new/', updatedAt: '2026-06-18T00:00:00.000Z' },
+      { title: '2026-06-11 문서', slug: 'old', url: 'https://example.com/old/', updatedAt: '2026-06-11T00:00:00.000Z' },
+    ],
+  });
+
+  assert.match(html, /id="sortToggle"/);
+  assert.match(html, /최신순/);
+  assert.match(html, /오래된순/);
+  assert.match(html, /data-updated="2026-06-18T00:00:00\.000Z"/);
+  assert.match(html, /sortDirection='desc'/);
+});
+
 test('omits visible share home description when description is intentionally blank', () => {
   const html = renderShareIndexHtml({
     items: [],
