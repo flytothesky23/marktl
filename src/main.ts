@@ -1684,14 +1684,37 @@ ${value}
   }
 
   async replacePublishedShareThumbnail(target: PublishedShareItem, file: File, shareHomeProfileId = ''): Promise<{ updatedCount: number; index: PublishedShareIndex; thumbnailUrl: string }> {
+    return this.enqueuePublishedShareMutation(() => this.replacePublishedShareThumbnailNow(target, file, shareHomeProfileId));
+  }
+
+  private async replacePublishedShareThumbnailNow(target: PublishedShareItem, file: File, shareHomeProfileId = ''): Promise<{ updatedCount: number; index: PublishedShareIndex; thumbnailUrl: string }> {
     if (!this.isSupportedExternalThumbnail(file)) {
       throw new Error('썸네일은 PNG, JPG, WebP, GIF, AVIF, SVG 이미지만 업로드할 수 있습니다.');
     }
     const extension = externalThumbnailExtension(file.name);
     const assetName = `thumbnail-${Date.now().toString(36)}${extension}`;
+    const data = await file.arrayBuffer();
+    const maxAttempts = 3;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        return await this.replacePublishedShareThumbnailAttempt(target, shareHomeProfileId, assetName, data);
+      } catch (error) {
+        lastError = error;
+        if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
+          throw error;
+        }
+        await this.sleep(350 * attempt);
+      }
+    }
+
+    throw lastError instanceof Error ? lastError : new Error(String(lastError || 'Thumbnail replacement failed.'));
+  }
+
+  private async replacePublishedShareThumbnailAttempt(target: PublishedShareItem, shareHomeProfileId: string, assetName: string, data: ArrayBuffer): Promise<{ updatedCount: number; index: PublishedShareIndex; thumbnailUrl: string }> {
     const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
     const targetKeys = this.shareDeleteKeys(target);
-    const data = await file.arrayBuffer();
     const now = new Date().toISOString();
     let updatedCount = 0;
     let lastThumbnailUrl = '';
@@ -1732,6 +1755,15 @@ ${value}
     });
     await this.writePublishedShareIndex(context, nextIndex);
     return { updatedCount, index: nextIndex, thumbnailUrl: lastThumbnailUrl };
+  }
+
+  private isGithubContentConflict(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error || '');
+    return /does not match|sha.*match|409|conflict/i.test(message);
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
   }
 
   shareDeleteKeys(item: PublishedShareItem): string[] {

@@ -6380,14 +6380,33 @@ ${value}`;
     return removedPathCount;
   }
   async replacePublishedShareThumbnail(target, file, shareHomeProfileId = "") {
+    return this.enqueuePublishedShareMutation(() => this.replacePublishedShareThumbnailNow(target, file, shareHomeProfileId));
+  }
+  async replacePublishedShareThumbnailNow(target, file, shareHomeProfileId = "") {
     if (!this.isSupportedExternalThumbnail(file)) {
       throw new Error("\uC378\uB124\uC77C\uC740 PNG, JPG, WebP, GIF, AVIF, SVG \uC774\uBBF8\uC9C0\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     }
     const extension = externalThumbnailExtension(file.name);
     const assetName = `thumbnail-${Date.now().toString(36)}${extension}`;
+    const data = await file.arrayBuffer();
+    const maxAttempts = 3;
+    let lastError;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        return await this.replacePublishedShareThumbnailAttempt(target, shareHomeProfileId, assetName, data);
+      } catch (error) {
+        lastError = error;
+        if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
+          throw error;
+        }
+        await this.sleep(350 * attempt);
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(String(lastError || "Thumbnail replacement failed."));
+  }
+  async replacePublishedShareThumbnailAttempt(target, shareHomeProfileId, assetName, data) {
     const { context, index } = await this.loadPublishedShareIndex(shareHomeProfileId);
     const targetKeys = this.shareDeleteKeys(target);
-    const data = await file.arrayBuffer();
     const now = (/* @__PURE__ */ new Date()).toISOString();
     let updatedCount = 0;
     let lastThumbnailUrl = "";
@@ -6423,6 +6442,13 @@ ${value}`;
     });
     await this.writePublishedShareIndex(context, nextIndex);
     return { updatedCount, index: nextIndex, thumbnailUrl: lastThumbnailUrl };
+  }
+  isGithubContentConflict(error) {
+    const message = error instanceof Error ? error.message : String(error || "");
+    return /does not match|sha.*match|409|conflict/i.test(message);
+  }
+  sleep(ms) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
   }
   shareDeleteKeys(item) {
     return buildShareDeleteKeys(item);
