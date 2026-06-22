@@ -6250,7 +6250,7 @@ ${value}`;
   async loadPublishedShareIndex(shareHomeProfileId = "") {
     await this.refreshSettingsFromDisk();
     const context = this.getGithubPagesContext(shareHomeProfileId || this.settings.activeShareHomeProfileId);
-    const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
+    const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath, true);
     return {
       context,
       index: repairShareIndex(existing || { items: [] })
@@ -6288,8 +6288,13 @@ ${value}`;
       description: context.shareHomeProfile.description,
       baseUrl: buildShareHomeUrl(context.pagesBaseUrl, context.basePath).replace(/\/+$/g, "")
     });
-    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2));
-    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html);
+    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2), {
+      retryConflicts: false,
+      preferTreeSha: true
+    });
+    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html, {
+      preferTreeSha: true
+    });
   }
   enqueuePublishedShareMutation(operation) {
     const next = this.publishedShareMutationQueue.then(operation, operation);
@@ -6389,7 +6394,7 @@ ${value}`;
     const extension = externalThumbnailExtension(file.name);
     const assetName = `thumbnail-${Date.now().toString(36)}${extension}`;
     const data = await file.arrayBuffer();
-    const maxAttempts = 3;
+    const maxAttempts = 5;
     let lastError;
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
@@ -6613,8 +6618,25 @@ ${value}`;
     };
   }
   async publishShareIndex(owner, repo, branch, basePath, entry, pagesBaseUrl, shareHomeProfile) {
+    const maxAttempts = 5;
+    let lastError;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        await this.publishShareIndexAttempt(owner, repo, branch, basePath, entry, pagesBaseUrl, shareHomeProfile);
+        return;
+      } catch (error) {
+        lastError = error;
+        if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
+          throw error;
+        }
+        await this.sleep(450 * attempt);
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(String(lastError || "Share index publish failed."));
+  }
+  async publishShareIndexAttempt(owner, repo, branch, basePath, entry, pagesBaseUrl, shareHomeProfile) {
     const indexPath = buildPublishPath(basePath, "", "index.json");
-    const existing = await this.getGithubJson(owner, repo, branch, indexPath);
+    const existing = await this.getGithubJson(owner, repo, branch, indexPath, true);
     const index = updateShareIndex(existing, entry);
     const html = renderShareIndexHtml(index, {
       title: shareHomeProfile.title,
@@ -6622,17 +6644,33 @@ ${value}`;
       description: shareHomeProfile.description,
       baseUrl: buildShareHomeUrl(pagesBaseUrl, basePath).replace(/\/+$/g, "")
     });
-    await this.putGithubTextFile(owner, repo, branch, indexPath, JSON.stringify(index, null, 2));
-    await this.putGithubTextFile(owner, repo, branch, buildPublishPath(basePath, "", "index.html"), html);
+    await this.putGithubTextFile(owner, repo, branch, indexPath, JSON.stringify(index, null, 2), {
+      retryConflicts: false,
+      preferTreeSha: true
+    });
+    await this.putGithubTextFile(owner, repo, branch, buildPublishPath(basePath, "", "index.html"), html, {
+      preferTreeSha: true
+    });
   }
-  async getGithubJson(owner, repo, branch, publishPath) {
+  async getGithubJson(owner, repo, branch, publishPath, preferTreeBlob = false) {
     var _a;
+    if (preferTreeBlob) {
+      const freshText = await this.getGithubTextFromTree(owner, repo, branch, publishPath);
+      if (freshText === null) {
+        return null;
+      }
+      try {
+        return JSON.parse(freshText);
+      } catch (e) {
+        return null;
+      }
+    }
     const token = this.settings.githubToken.trim();
     const url = this.githubContentsUrl(owner, repo, publishPath);
     const response = await (0, import_obsidian8.requestUrl)({
       url: `${url}?ref=${encodeURIComponent(branch)}`,
       method: "GET",
-      headers: this.githubHeaders(token),
+      headers: this.githubNoCacheHeaders(token),
       throw: false
     });
     if (response.status < 200 || response.status >= 300) {
@@ -6644,21 +6682,34 @@ ${value}`;
       return null;
     }
   }
-  async putGithubTextFile(owner, repo, branch, publishPath, text) {
+  async putGithubTextFile(owner, repo, branch, publishPath, text, options = {}) {
     const encoded = new TextEncoder().encode(text);
-    await this.putGithubFile(owner, repo, branch, publishPath, encoded.buffer);
+    await this.putGithubFile(owner, repo, branch, publishPath, encoded.buffer, options);
   }
-  async putGithubFile(owner, repo, branch, publishPath, data) {
+  async putGithubFile(owner, repo, branch, publishPath, data, options = {}) {
+    const maxAttempts = options.retryConflicts === false ? 1 : 6;
+    let lastError = null;
+    let preferTreeSha = options.preferTreeSha === true;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        await this.putGithubFileAttempt(owner, repo, branch, publishPath, data, preferTreeSha);
+        return;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error || "GitHub upload failed."));
+        if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
+          throw lastError;
+        }
+        preferTreeSha = true;
+        await this.sleep(Math.min(450 * attempt, 1800));
+      }
+    }
+    throw lastError || new Error(`GitHub upload failed for ${publishPath}`);
+  }
+  async putGithubFileAttempt(owner, repo, branch, publishPath, data, preferTreeSha = false) {
     var _a;
     const token = this.settings.githubToken.trim();
     const url = this.githubContentsUrl(owner, repo, publishPath);
-    const existing = await (0, import_obsidian8.requestUrl)({
-      url: `${url}?ref=${encodeURIComponent(branch)}`,
-      method: "GET",
-      headers: this.githubHeaders(token),
-      throw: false
-    });
-    const existingJson = existing.status >= 200 && existing.status < 300 ? existing.json : null;
+    const existingSha = preferTreeSha ? await this.getGithubTreeFileSha(owner, repo, branch, publishPath) : await this.getGithubContentsFileSha(owner, repo, branch, publishPath);
     const response = await (0, import_obsidian8.requestUrl)({
       url,
       method: "PUT",
@@ -6670,7 +6721,7 @@ ${value}`;
         message: `Publish MarkTL export ${publishPath}`,
         content: this.arrayBufferToBase64(data),
         branch,
-        sha: existingJson == null ? void 0 : existingJson.sha
+        sha: existingSha
       }),
       throw: false
     });
@@ -6678,6 +6729,83 @@ ${value}`;
       const message = ((_a = response.json) == null ? void 0 : _a.message) || response.text || `GitHub upload failed with HTTP ${response.status}`;
       throw new Error(`GitHub upload failed for ${publishPath}: ${message}`);
     }
+  }
+  async getGithubContentsFileSha(owner, repo, branch, publishPath) {
+    var _a, _b;
+    const token = this.settings.githubToken.trim();
+    const url = this.githubContentsUrl(owner, repo, publishPath);
+    const existing = await (0, import_obsidian8.requestUrl)({
+      url: `${url}?ref=${encodeURIComponent(branch)}`,
+      method: "GET",
+      headers: this.githubNoCacheHeaders(token),
+      throw: false
+    });
+    if (existing.status === 404) {
+      return void 0;
+    }
+    if (existing.status < 200 || existing.status >= 300) {
+      const message = ((_a = existing.json) == null ? void 0 : _a.message) || existing.text || `GitHub lookup failed with HTTP ${existing.status}`;
+      throw new Error(`GitHub lookup failed for ${publishPath}: ${message}`);
+    }
+    return (_b = existing.json) == null ? void 0 : _b.sha;
+  }
+  async getGithubTreeFileSha(owner, repo, branch, publishPath) {
+    var _a, _b, _c, _d, _e;
+    const token = this.settings.githubToken.trim();
+    const refPath = branch.split("/").filter(Boolean).map(encodeURIComponent).join("/");
+    const refResponse = await (0, import_obsidian8.requestUrl)({
+      url: `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/ref/heads/${refPath}`,
+      method: "GET",
+      headers: this.githubNoCacheHeaders(token),
+      throw: false
+    });
+    if (refResponse.status < 200 || refResponse.status >= 300) {
+      const message = ((_a = refResponse.json) == null ? void 0 : _a.message) || refResponse.text || `GitHub ref lookup failed with HTTP ${refResponse.status}`;
+      throw new Error(`GitHub ref lookup failed for ${branch}: ${message}`);
+    }
+    const treeSha = (_c = (_b = refResponse.json) == null ? void 0 : _b.object) == null ? void 0 : _c.sha;
+    if (!treeSha) {
+      return void 0;
+    }
+    const treeResponse = await (0, import_obsidian8.requestUrl)({
+      url: `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(treeSha)}?recursive=1`,
+      method: "GET",
+      headers: this.githubNoCacheHeaders(token),
+      throw: false
+    });
+    if (treeResponse.status < 200 || treeResponse.status >= 300) {
+      const message = ((_d = treeResponse.json) == null ? void 0 : _d.message) || treeResponse.text || `GitHub tree lookup failed with HTTP ${treeResponse.status}`;
+      throw new Error(`GitHub tree lookup failed for ${branch}: ${message}`);
+    }
+    const cleanPath = normalizePublishPath(publishPath);
+    const entry = Array.isArray((_e = treeResponse.json) == null ? void 0 : _e.tree) ? treeResponse.json.tree.find((item) => (item == null ? void 0 : item.path) === cleanPath && (item == null ? void 0 : item.type) === "blob") : null;
+    return entry == null ? void 0 : entry.sha;
+  }
+  async getGithubTextFromTree(owner, repo, branch, publishPath) {
+    var _a, _b, _c;
+    const blobSha = await this.getGithubTreeFileSha(owner, repo, branch, publishPath);
+    if (!blobSha) {
+      return null;
+    }
+    const token = this.settings.githubToken.trim();
+    const blobResponse = await (0, import_obsidian8.requestUrl)({
+      url: `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/blobs/${encodeURIComponent(blobSha)}`,
+      method: "GET",
+      headers: this.githubNoCacheHeaders(token),
+      throw: false
+    });
+    if (blobResponse.status === 404) {
+      return null;
+    }
+    if (blobResponse.status < 200 || blobResponse.status >= 300) {
+      const message = ((_a = blobResponse.json) == null ? void 0 : _a.message) || blobResponse.text || `GitHub blob lookup failed with HTTP ${blobResponse.status}`;
+      throw new Error(`GitHub blob lookup failed for ${publishPath}: ${message}`);
+    }
+    const content = String(((_b = blobResponse.json) == null ? void 0 : _b.content) || "");
+    if (String(((_c = blobResponse.json) == null ? void 0 : _c.encoding) || "").toLowerCase() === "base64") {
+      return this.base64ToText(content);
+    }
+    return content;
   }
   githubContentsUrl(owner, repo, publishPath) {
     return `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${publishPath.split("/").filter(Boolean).map(encodeURIComponent).join("/")}`;
@@ -6687,6 +6815,13 @@ ${value}`;
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28"
+    };
+  }
+  githubNoCacheHeaders(token) {
+    return {
+      ...this.githubHeaders(token),
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache"
     };
   }
   arrayBufferToBase64(data) {

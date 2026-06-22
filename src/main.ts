@@ -117,6 +117,11 @@ interface PublishedShareIndex {
   items: PublishedShareItem[];
 }
 
+interface GithubPutFileOptions {
+  retryConflicts?: boolean;
+  preferTreeSha?: boolean;
+}
+
 class MarktlExternalHtmlThumbnailModal extends Modal {
   private htmlFileName: string;
   private onChooseThumbnail: () => void;
@@ -1542,7 +1547,7 @@ ${value}
   async loadPublishedShareIndex(shareHomeProfileId = ''): Promise<{ context: GithubPagesContext; index: PublishedShareIndex }> {
     await this.refreshSettingsFromDisk();
     const context = this.getGithubPagesContext(shareHomeProfileId || this.settings.activeShareHomeProfileId);
-    const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath);
+    const existing = await this.getGithubJson(context.owner, context.repo, context.branch, context.indexPath, true);
     return {
       context,
       index: repairShareIndex(existing || { items: [] }),
@@ -1585,8 +1590,13 @@ ${value}
       description: context.shareHomeProfile.description,
       baseUrl: buildShareHomeUrl(context.pagesBaseUrl, context.basePath).replace(/\/+$/g, ''),
     });
-    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2));
-    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html);
+    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexPath, JSON.stringify(index, null, 2), {
+      retryConflicts: false,
+      preferTreeSha: true,
+    });
+    await this.putGithubTextFile(context.owner, context.repo, context.branch, context.indexHtmlPath, html, {
+      preferTreeSha: true,
+    });
   }
 
   private enqueuePublishedShareMutation<T>(operation: () => Promise<T>): Promise<T> {
@@ -1694,7 +1704,7 @@ ${value}
     const extension = externalThumbnailExtension(file.name);
     const assetName = `thumbnail-${Date.now().toString(36)}${extension}`;
     const data = await file.arrayBuffer();
-    const maxAttempts = 3;
+    const maxAttempts = 5;
     let lastError: unknown;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -1960,8 +1970,28 @@ ${value}
   }
 
   private async publishShareIndex(owner: string, repo: string, branch: string, basePath: string, entry: PublishedShareItem & { slug: string; title: string; url: string; sourcePath: string }, pagesBaseUrl: string, shareHomeProfile: ShareHomeProfile): Promise<void> {
+    const maxAttempts = 5;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        await this.publishShareIndexAttempt(owner, repo, branch, basePath, entry, pagesBaseUrl, shareHomeProfile);
+        return;
+      } catch (error) {
+        lastError = error;
+        if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
+          throw error;
+        }
+        await this.sleep(450 * attempt);
+      }
+    }
+
+    throw lastError instanceof Error ? lastError : new Error(String(lastError || 'Share index publish failed.'));
+  }
+
+  private async publishShareIndexAttempt(owner: string, repo: string, branch: string, basePath: string, entry: PublishedShareItem & { slug: string; title: string; url: string; sourcePath: string }, pagesBaseUrl: string, shareHomeProfile: ShareHomeProfile): Promise<void> {
     const indexPath = buildPublishPath(basePath, '', 'index.json');
-    const existing = await this.getGithubJson(owner, repo, branch, indexPath);
+    const existing = await this.getGithubJson(owner, repo, branch, indexPath, true);
     const index = updateShareIndex(existing, entry);
     const html = renderShareIndexHtml(index, {
       title: shareHomeProfile.title,
@@ -1969,17 +1999,33 @@ ${value}
       description: shareHomeProfile.description,
       baseUrl: buildShareHomeUrl(pagesBaseUrl, basePath).replace(/\/+$/g, ''),
     });
-    await this.putGithubTextFile(owner, repo, branch, indexPath, JSON.stringify(index, null, 2));
-    await this.putGithubTextFile(owner, repo, branch, buildPublishPath(basePath, '', 'index.html'), html);
+    await this.putGithubTextFile(owner, repo, branch, indexPath, JSON.stringify(index, null, 2), {
+      retryConflicts: false,
+      preferTreeSha: true,
+    });
+    await this.putGithubTextFile(owner, repo, branch, buildPublishPath(basePath, '', 'index.html'), html, {
+      preferTreeSha: true,
+    });
   }
 
-  private async getGithubJson(owner: string, repo: string, branch: string, publishPath: string): Promise<unknown> {
+  private async getGithubJson(owner: string, repo: string, branch: string, publishPath: string, preferTreeBlob = false): Promise<unknown> {
+    if (preferTreeBlob) {
+      const freshText = await this.getGithubTextFromTree(owner, repo, branch, publishPath);
+      if (freshText === null) {
+        return null;
+      }
+      try {
+        return JSON.parse(freshText);
+      } catch {
+        return null;
+      }
+    }
     const token = this.settings.githubToken.trim();
     const url = this.githubContentsUrl(owner, repo, publishPath);
     const response = await requestUrl({
       url: `${url}?ref=${encodeURIComponent(branch)}`,
       method: 'GET',
-      headers: this.githubHeaders(token),
+      headers: this.githubNoCacheHeaders(token),
       throw: false,
     });
     if (response.status < 200 || response.status >= 300) {
@@ -1992,21 +2038,39 @@ ${value}
     }
   }
 
-  private async putGithubTextFile(owner: string, repo: string, branch: string, publishPath: string, text: string): Promise<void> {
+  private async putGithubTextFile(owner: string, repo: string, branch: string, publishPath: string, text: string, options: GithubPutFileOptions = {}): Promise<void> {
     const encoded = new TextEncoder().encode(text);
-    await this.putGithubFile(owner, repo, branch, publishPath, encoded.buffer);
+    await this.putGithubFile(owner, repo, branch, publishPath, encoded.buffer, options);
   }
 
-  private async putGithubFile(owner: string, repo: string, branch: string, publishPath: string, data: ArrayBuffer): Promise<void> {
+  private async putGithubFile(owner: string, repo: string, branch: string, publishPath: string, data: ArrayBuffer, options: GithubPutFileOptions = {}): Promise<void> {
+    const maxAttempts = options.retryConflicts === false ? 1 : 6;
+    let lastError: Error | null = null;
+    let preferTreeSha = options.preferTreeSha === true;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        await this.putGithubFileAttempt(owner, repo, branch, publishPath, data, preferTreeSha);
+        return;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error || 'GitHub upload failed.'));
+        if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
+          throw lastError;
+        }
+        preferTreeSha = true;
+        await this.sleep(Math.min(450 * attempt, 1800));
+      }
+    }
+
+    throw lastError || new Error(`GitHub upload failed for ${publishPath}`);
+  }
+
+  private async putGithubFileAttempt(owner: string, repo: string, branch: string, publishPath: string, data: ArrayBuffer, preferTreeSha = false): Promise<void> {
     const token = this.settings.githubToken.trim();
     const url = this.githubContentsUrl(owner, repo, publishPath);
-    const existing = await requestUrl({
-      url: `${url}?ref=${encodeURIComponent(branch)}`,
-      method: 'GET',
-      headers: this.githubHeaders(token),
-      throw: false,
-    });
-    const existingJson = existing.status >= 200 && existing.status < 300 ? existing.json : null;
+    const existingSha = preferTreeSha
+      ? await this.getGithubTreeFileSha(owner, repo, branch, publishPath)
+      : await this.getGithubContentsFileSha(owner, repo, branch, publishPath);
     const response = await requestUrl({
       url,
       method: 'PUT',
@@ -2018,7 +2082,7 @@ ${value}
         message: `Publish MarkTL export ${publishPath}`,
         content: this.arrayBufferToBase64(data),
         branch,
-        sha: existingJson?.sha,
+        sha: existingSha,
       }),
       throw: false,
     });
@@ -2026,6 +2090,85 @@ ${value}
       const message = response.json?.message || response.text || `GitHub upload failed with HTTP ${response.status}`;
       throw new Error(`GitHub upload failed for ${publishPath}: ${message}`);
     }
+  }
+
+  private async getGithubContentsFileSha(owner: string, repo: string, branch: string, publishPath: string): Promise<string | undefined> {
+    const token = this.settings.githubToken.trim();
+    const url = this.githubContentsUrl(owner, repo, publishPath);
+    const existing = await requestUrl({
+      url: `${url}?ref=${encodeURIComponent(branch)}`,
+      method: 'GET',
+      headers: this.githubNoCacheHeaders(token),
+      throw: false,
+    });
+    if (existing.status === 404) {
+      return undefined;
+    }
+    if (existing.status < 200 || existing.status >= 300) {
+      const message = existing.json?.message || existing.text || `GitHub lookup failed with HTTP ${existing.status}`;
+      throw new Error(`GitHub lookup failed for ${publishPath}: ${message}`);
+    }
+    return existing.json?.sha;
+  }
+
+  private async getGithubTreeFileSha(owner: string, repo: string, branch: string, publishPath: string): Promise<string | undefined> {
+    const token = this.settings.githubToken.trim();
+    const refPath = branch.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+    const refResponse = await requestUrl({
+      url: `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/ref/heads/${refPath}`,
+      method: 'GET',
+      headers: this.githubNoCacheHeaders(token),
+      throw: false,
+    });
+    if (refResponse.status < 200 || refResponse.status >= 300) {
+      const message = refResponse.json?.message || refResponse.text || `GitHub ref lookup failed with HTTP ${refResponse.status}`;
+      throw new Error(`GitHub ref lookup failed for ${branch}: ${message}`);
+    }
+    const treeSha = refResponse.json?.object?.sha;
+    if (!treeSha) {
+      return undefined;
+    }
+    const treeResponse = await requestUrl({
+      url: `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(treeSha)}?recursive=1`,
+      method: 'GET',
+      headers: this.githubNoCacheHeaders(token),
+      throw: false,
+    });
+    if (treeResponse.status < 200 || treeResponse.status >= 300) {
+      const message = treeResponse.json?.message || treeResponse.text || `GitHub tree lookup failed with HTTP ${treeResponse.status}`;
+      throw new Error(`GitHub tree lookup failed for ${branch}: ${message}`);
+    }
+    const cleanPath = normalizePublishPath(publishPath);
+    const entry = Array.isArray(treeResponse.json?.tree)
+      ? treeResponse.json.tree.find((item: { path?: string; type?: string; sha?: string }) => item?.path === cleanPath && item?.type === 'blob')
+      : null;
+    return entry?.sha;
+  }
+
+  private async getGithubTextFromTree(owner: string, repo: string, branch: string, publishPath: string): Promise<string | null> {
+    const blobSha = await this.getGithubTreeFileSha(owner, repo, branch, publishPath);
+    if (!blobSha) {
+      return null;
+    }
+    const token = this.settings.githubToken.trim();
+    const blobResponse = await requestUrl({
+      url: `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/blobs/${encodeURIComponent(blobSha)}`,
+      method: 'GET',
+      headers: this.githubNoCacheHeaders(token),
+      throw: false,
+    });
+    if (blobResponse.status === 404) {
+      return null;
+    }
+    if (blobResponse.status < 200 || blobResponse.status >= 300) {
+      const message = blobResponse.json?.message || blobResponse.text || `GitHub blob lookup failed with HTTP ${blobResponse.status}`;
+      throw new Error(`GitHub blob lookup failed for ${publishPath}: ${message}`);
+    }
+    const content = String(blobResponse.json?.content || '');
+    if (String(blobResponse.json?.encoding || '').toLowerCase() === 'base64') {
+      return this.base64ToText(content);
+    }
+    return content;
   }
 
   private githubContentsUrl(owner: string, repo: string, publishPath: string): string {
@@ -2037,6 +2180,14 @@ ${value}
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
+    };
+  }
+
+  private githubNoCacheHeaders(token: string): Record<string, string> {
+    return {
+      ...this.githubHeaders(token),
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
     };
   }
 

@@ -39,6 +39,11 @@ test('checked-in bundle is generated from source and keeps release markers', () 
       'deleteAllPublishedShareItems',
       'shareHomeProfileId',
       'deleteGithubPathRecursive',
+      'putGithubFileAttempt',
+      'publishShareIndexAttempt',
+      'getGithubTreeFileSha',
+      'getGithubTextFromTree',
+      'githubNoCacheHeaders',
       'repairShareIndex',
       'saas-brief',
       'community-blog',
@@ -64,8 +69,14 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(mainSource, /repairAllPublishedShareIndexes/);
   assert.match(mainSource, /deletePublishedShareItem/);
   assert.match(mainSource, /replacePublishedShareThumbnail/);
+  assert.match(mainSource, /const maxAttempts = options\.retryConflicts === false \? 1 : 6/);
+  assert.match(mainSource, /preferTreeSha = true/);
   assert.match(mainSource, /getGithubPagesContext\(shareHomeProfileId/);
   assert.match(mainSource, /deleteGithubPathRecursive/);
+  assert.match(mainSource, /getGithubTreeFileSha/);
+  assert.match(mainSource, /getGithubJson\(owner, repo, branch, indexPath, true\)/);
+  assert.match(mainSource, /retryConflicts: false/);
+  assert.match(mainSource, /Cache-Control/);
   assert.match(readRepoFile('src/export-modal.ts'), /openPublishedHtmlManager\(selectedProfile\.id\)/);
   assert.match(mainSource, /githubShareHomeTitle === 'MarkTL Shared HTML'/);
   assert.match(modalSource, /게시된 MarkTL HTML/);
