@@ -9,6 +9,7 @@ function escapeHtml(value) {
 
 function slugify(value) {
   return String(value)
+    .normalize('NFC')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9가-힣]+/g, '-')

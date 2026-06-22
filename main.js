@@ -103,7 +103,7 @@ var require_html = __commonJS({
       return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     }
     function slugify2(value) {
-      return String(value).trim().toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "note";
+      return String(value).normalize("NFC").trim().toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "note";
     }
     module2.exports = {
       escapeHtml,
@@ -5839,7 +5839,7 @@ ${source}
       const outputPlan = await this.prepareExternalHtmlOutputPlan(file.name);
       const sourcePath = `External HTML file: ${file.name}`;
       const metadata = extractExternalHtmlMetadata(rawHtml, file.name);
-      const shortId = buildShortId(outputPlan.basename);
+      const shortId = buildShortId(`${outputPlan.basename}|${file.name.normalize("NFC")}`);
       const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl2(this.settings.githubRepo);
       const socialUrl = buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId);
       const shareHomeReturnUrl = buildShareHomeUrl(pagesBaseUrl, shareHomeProfile.basePath);

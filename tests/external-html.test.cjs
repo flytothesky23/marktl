@@ -17,6 +17,15 @@ test('builds a stable slug from uploaded HTML file names', () => {
   assert.equal(basenameFromHtmlFileName('/tmp/My Research Page.htm'), 'my-research-page');
 });
 
+test('keeps decomposed Korean file names distinct for same-day uploads', () => {
+  const daily = '2026-06-19_지수 통합선별공장_공사일보.html';
+  const integrated = '2026-06-19_지수통합선별공장_프로젝트관리표_통합노트.html';
+
+  assert.equal(basenameFromHtmlFileName(daily), '2026-06-19-지수-통합선별공장-공사일보');
+  assert.equal(basenameFromHtmlFileName(integrated), '2026-06-19-지수통합선별공장-프로젝트관리표-통합노트');
+  assert.notEqual(basenameFromHtmlFileName(daily), basenameFromHtmlFileName(integrated));
+});
+
 test('extracts metadata from an existing HTML document', () => {
   const metadata = extractExternalHtmlMetadata(`<!doctype html>
 <html><head><title>MCP와 API</title><meta name="description" content="AI 에이전트 입문"></head>

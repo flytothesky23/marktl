@@ -1006,7 +1006,7 @@ ${value}
       const outputPlan = await this.prepareExternalHtmlOutputPlan(file.name);
       const sourcePath = `External HTML file: ${file.name}`;
       const metadata = extractExternalHtmlMetadata(rawHtml, file.name);
-      const shortId = buildShortId(outputPlan.basename);
+      const shortId = buildShortId(`${outputPlan.basename}|${file.name.normalize('NFC')}`);
       const pagesBaseUrl = this.settings.githubPagesBaseUrl.trim() || inferPagesBaseUrl(this.settings.githubRepo);
       const socialUrl = buildShortPagesUrl(pagesBaseUrl, shareHomeProfile.basePath, shortId);
       const shareHomeReturnUrl = buildShareHomeUrl(pagesBaseUrl, shareHomeProfile.basePath);
