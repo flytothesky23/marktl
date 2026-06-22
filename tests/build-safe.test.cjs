@@ -30,7 +30,9 @@ test('checked-in bundle is generated from source and keeps release markers', () 
     assert.equal(checkedIn, generated, 'main.js must match a fresh source build');
 
     for (const marker of [
-      'height:180px',
+      'height:206px',
+      'height:178px',
+      'grid-template-rows:repeat(7,minmax(0,1fr))',
       'padding:9px 10px 12px',
       'renderShareIndexHtml',
       'function calendarTypes',
@@ -101,7 +103,9 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(rendererSource, /repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(rendererSource, /repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(rendererSource, /minmax\(190px,222px\)/);
-  assert.match(rendererSource, /height:180px;min-height:180px/);
+  assert.match(rendererSource, /height:206px;min-height:206px/);
+  assert.match(rendererSource, /height:178px;min-height:178px/);
+  assert.match(rendererSource, /grid-template-rows:repeat\(7,minmax\(0,1fr\)\)/);
   assert.match(rendererSource, /function calendarTypes/);
   assert.match(rendererSource, /function calendarClass/);
   assert.match(rendererSource, /type-mixed/);
