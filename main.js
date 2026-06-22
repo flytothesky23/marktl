@@ -2034,16 +2034,30 @@ document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new D
       if (!entry || typeof entry !== "object") {
         return null;
       }
+      const sourcePath = cleanSharePath(entry.sourcePath, "");
+      const sourcePathKey = buildSourcePathKey(sourcePath || entry.sourcePathKey || "");
+      const date = cleanShareDate([entry.date, entry.title, sourcePath, entry.slug, entry.updatedAt].filter(Boolean).join(" "));
       const normalized = {
         ...entry,
         schemaVersion: 2,
-        updatedAt: entry.updatedAt || now || (/* @__PURE__ */ new Date()).toISOString()
+        updatedAt: entry.updatedAt || now || (/* @__PURE__ */ new Date()).toISOString(),
+        artifactType: cleanArchiveField(entry.artifactType, 64, ""),
+        date,
+        sourcePath,
+        sourcePathKey,
+        slug: cleanArchiveField(entry.slug, 160, ""),
+        shortId: cleanArchiveField(entry.shortId, 32, ""),
+        url: cleanShareUrl(entry.url),
+        canonicalUrl: cleanShareUrl(entry.canonicalUrl),
+        thumbnailUrl: cleanShareUrl(entry.thumbnailUrl),
+        image: cleanShareUrl(entry.image),
+        imageUrl: cleanShareUrl(entry.imageUrl),
+        coverUrl: cleanShareUrl(entry.coverUrl)
       };
-      normalized.sourcePathKey = normalized.sourcePathKey || buildSourcePathKey(normalized.sourcePath || "");
       normalized.title = recoverShareTitle(normalized);
       normalized.excerpt = cleanArchiveText(normalized.excerpt || "", "");
       normalized.tags = normalizeTags(normalized.tags);
-      return normalized;
+      return compactShareEntry(normalized);
     }
     function repairShareItems(items) {
       return items.map((item) => normalizeShareEntry(item, item == null ? void 0 : item.updatedAt)).filter(Boolean);
@@ -2089,10 +2103,15 @@ document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new D
       return normalizeIndexKey(value).replace(/\/+$/g, "");
     }
     function buildSourcePathKey(value) {
-      return normalizeIndexKey(value);
+      const key = normalizeIndexKey(value);
+      return key.length > 360 ? "" : key;
     }
     function normalizeIndexKey(value) {
-      return repairMojibake(decodeArchiveComponent(value)).normalize("NFC").replace(/\\/g, "/").replace(/\s+/g, " ").trim().toLowerCase();
+      const repaired = repairMojibake(decodeArchiveComponent(value));
+      if (looksLikeMojibake(repaired)) {
+        return "";
+      }
+      return repaired.normalize("NFC").replace(/\\/g, "/").replace(/\s+/g, " ").trim().toLowerCase();
     }
     function recoverShareTitle(item) {
       const candidates = [
@@ -2134,6 +2153,64 @@ document.getElementById('prevMonth').addEventListener('click',()=>{calDate=new D
         return "";
       }
       return cleanArchiveText(cleaned, "");
+    }
+    function cleanArchiveField(value, limit = 220, fallback = "") {
+      const cleaned = cleanArchiveText(value, fallback);
+      if (!cleaned) {
+        return fallback;
+      }
+      return cleaned.length > limit ? `${cleaned.slice(0, Math.max(0, limit - 3)).trim()}...` : cleaned;
+    }
+    function cleanSharePath(value, fallback = "") {
+      const repaired = repairMojibake(decodeArchiveComponent(value)).normalize("NFC").replace(/\\/g, "/").replace(/\s+/g, " ").trim();
+      if (!repaired || looksLikeMojibake(repaired) || repaired.length > 520) {
+        return fallback;
+      }
+      return repaired;
+    }
+    function cleanShareUrl(value) {
+      const text = repairMojibake(decodeArchiveComponent(value)).trim();
+      if (!text || looksLikeMojibake(text) || text.length > 640 || /^data:/i.test(text)) {
+        return "";
+      }
+      return text;
+    }
+    function compactShareEntry(entry) {
+      const ordered = {};
+      for (const key of [
+        "schemaVersion",
+        "slug",
+        "shortId",
+        "title",
+        "date",
+        "url",
+        "canonicalUrl",
+        "sourcePath",
+        "sourcePathKey",
+        "artifactType",
+        "excerpt",
+        "tags",
+        "thumbnailUrl",
+        "image",
+        "imageUrl",
+        "coverUrl",
+        "updatedAt",
+        "publishedByHost"
+      ]) {
+        const value = entry[key];
+        if (value === void 0 || value === null || value === "") {
+          continue;
+        }
+        if (Array.isArray(value) && !value.length) {
+          continue;
+        }
+        ordered[key] = value;
+      }
+      return ordered;
+    }
+    function cleanShareDate(value) {
+      const match = String(value || "").match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+      return match ? match[1] : "";
     }
     function isGenericShareTitle(value) {
       const text = repairMojibake(value).toLowerCase().replace(/\s+/g, " ").trim();
@@ -6450,7 +6527,11 @@ ${value}`;
   }
   isGithubContentConflict(error) {
     const message = error instanceof Error ? error.message : String(error || "");
-    return /does not match|sha.*match|409|conflict/i.test(message);
+    return /does not match|sha.*match|409|conflict|not a fast forward/i.test(message);
+  }
+  isGithubContentsTooLarge(error) {
+    const message = error instanceof Error ? error.message : String(error || "");
+    return /file is too large|too large to be processed|local clone/i.test(message);
   }
   sleep(ms) {
     return new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -6696,6 +6777,10 @@ ${value}`;
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error || "GitHub upload failed."));
+        if (this.isGithubContentsTooLarge(error)) {
+          await this.putGithubFileViaGitData(owner, repo, branch, publishPath, data);
+          return;
+        }
         if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
           throw lastError;
         }
@@ -6780,6 +6865,135 @@ ${value}`;
     const cleanPath = normalizePublishPath(publishPath);
     const entry = Array.isArray((_e = treeResponse.json) == null ? void 0 : _e.tree) ? treeResponse.json.tree.find((item) => (item == null ? void 0 : item.path) === cleanPath && (item == null ? void 0 : item.type) === "blob") : null;
     return entry == null ? void 0 : entry.sha;
+  }
+  async putGithubFileViaGitData(owner, repo, branch, publishPath, data) {
+    const maxAttempts = 5;
+    let lastError = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        await this.putGithubFileViaGitDataAttempt(owner, repo, branch, publishPath, data);
+        return;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error || "GitHub Git Data upload failed."));
+        if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
+          throw lastError;
+        }
+        await this.sleep(Math.min(500 * attempt, 2e3));
+      }
+    }
+    throw lastError || new Error(`GitHub Git Data upload failed for ${publishPath}`);
+  }
+  async putGithubFileViaGitDataAttempt(owner, repo, branch, publishPath, data) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
+    const token = this.settings.githubToken.trim();
+    const repoUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+    const refPath = branch.split("/").filter(Boolean).map(encodeURIComponent).join("/");
+    const headers = {
+      ...this.githubNoCacheHeaders(token),
+      "Content-Type": "application/json"
+    };
+    const refResponse = await (0, import_obsidian8.requestUrl)({
+      url: `${repoUrl}/git/ref/heads/${refPath}`,
+      method: "GET",
+      headers,
+      throw: false
+    });
+    if (refResponse.status < 200 || refResponse.status >= 300) {
+      const message = ((_a = refResponse.json) == null ? void 0 : _a.message) || refResponse.text || `GitHub ref lookup failed with HTTP ${refResponse.status}`;
+      throw new Error(`GitHub ref lookup failed for ${branch}: ${message}`);
+    }
+    const parentSha = (_c = (_b = refResponse.json) == null ? void 0 : _b.object) == null ? void 0 : _c.sha;
+    if (!parentSha) {
+      throw new Error(`GitHub ref lookup failed for ${branch}: missing commit sha`);
+    }
+    const commitResponse = await (0, import_obsidian8.requestUrl)({
+      url: `${repoUrl}/git/commits/${encodeURIComponent(parentSha)}`,
+      method: "GET",
+      headers,
+      throw: false
+    });
+    if (commitResponse.status < 200 || commitResponse.status >= 300) {
+      const message = ((_d = commitResponse.json) == null ? void 0 : _d.message) || commitResponse.text || `GitHub commit lookup failed with HTTP ${commitResponse.status}`;
+      throw new Error(`GitHub commit lookup failed for ${parentSha}: ${message}`);
+    }
+    const baseTreeSha = (_f = (_e = commitResponse.json) == null ? void 0 : _e.tree) == null ? void 0 : _f.sha;
+    if (!baseTreeSha) {
+      throw new Error(`GitHub commit lookup failed for ${parentSha}: missing tree sha`);
+    }
+    const blobResponse = await (0, import_obsidian8.requestUrl)({
+      url: `${repoUrl}/git/blobs`,
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        content: this.arrayBufferToBase64(data),
+        encoding: "base64"
+      }),
+      throw: false
+    });
+    if (blobResponse.status < 200 || blobResponse.status >= 300) {
+      const message = ((_g = blobResponse.json) == null ? void 0 : _g.message) || blobResponse.text || `GitHub blob create failed with HTTP ${blobResponse.status}`;
+      throw new Error(`GitHub blob create failed for ${publishPath}: ${message}`);
+    }
+    const blobSha = (_h = blobResponse.json) == null ? void 0 : _h.sha;
+    if (!blobSha) {
+      throw new Error(`GitHub blob create failed for ${publishPath}: missing blob sha`);
+    }
+    const treeResponse = await (0, import_obsidian8.requestUrl)({
+      url: `${repoUrl}/git/trees`,
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: [{
+          path: normalizePublishPath(publishPath),
+          mode: "100644",
+          type: "blob",
+          sha: blobSha
+        }]
+      }),
+      throw: false
+    });
+    if (treeResponse.status < 200 || treeResponse.status >= 300) {
+      const message = ((_i = treeResponse.json) == null ? void 0 : _i.message) || treeResponse.text || `GitHub tree create failed with HTTP ${treeResponse.status}`;
+      throw new Error(`GitHub tree create failed for ${publishPath}: ${message}`);
+    }
+    const treeSha = (_j = treeResponse.json) == null ? void 0 : _j.sha;
+    if (!treeSha) {
+      throw new Error(`GitHub tree create failed for ${publishPath}: missing tree sha`);
+    }
+    const newCommitResponse = await (0, import_obsidian8.requestUrl)({
+      url: `${repoUrl}/git/commits`,
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        message: `Publish MarkTL export ${publishPath}`,
+        tree: treeSha,
+        parents: [parentSha]
+      }),
+      throw: false
+    });
+    if (newCommitResponse.status < 200 || newCommitResponse.status >= 300) {
+      const message = ((_k = newCommitResponse.json) == null ? void 0 : _k.message) || newCommitResponse.text || `GitHub commit create failed with HTTP ${newCommitResponse.status}`;
+      throw new Error(`GitHub commit create failed for ${publishPath}: ${message}`);
+    }
+    const newCommitSha = (_l = newCommitResponse.json) == null ? void 0 : _l.sha;
+    if (!newCommitSha) {
+      throw new Error(`GitHub commit create failed for ${publishPath}: missing commit sha`);
+    }
+    const updateRefResponse = await (0, import_obsidian8.requestUrl)({
+      url: `${repoUrl}/git/refs/heads/${refPath}`,
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        sha: newCommitSha,
+        force: false
+      }),
+      throw: false
+    });
+    if (updateRefResponse.status < 200 || updateRefResponse.status >= 300) {
+      const message = ((_m = updateRefResponse.json) == null ? void 0 : _m.message) || updateRefResponse.text || `GitHub ref update failed with HTTP ${updateRefResponse.status}`;
+      throw new Error(`GitHub ref update failed for ${publishPath}: ${message}`);
+    }
   }
   async getGithubTextFromTree(owner, repo, branch, publishPath) {
     var _a, _b, _c;

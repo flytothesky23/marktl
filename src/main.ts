@@ -1769,7 +1769,12 @@ ${value}
 
   private isGithubContentConflict(error: unknown): boolean {
     const message = error instanceof Error ? error.message : String(error || '');
-    return /does not match|sha.*match|409|conflict/i.test(message);
+    return /does not match|sha.*match|409|conflict|not a fast forward/i.test(message);
+  }
+
+  private isGithubContentsTooLarge(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error || '');
+    return /file is too large|too large to be processed|local clone/i.test(message);
   }
 
   private sleep(ms: number): Promise<void> {
@@ -2054,6 +2059,10 @@ ${value}
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error || 'GitHub upload failed.'));
+        if (this.isGithubContentsTooLarge(error)) {
+          await this.putGithubFileViaGitData(owner, repo, branch, publishPath, data);
+          return;
+        }
         if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
           throw lastError;
         }
@@ -2143,6 +2152,138 @@ ${value}
       ? treeResponse.json.tree.find((item: { path?: string; type?: string; sha?: string }) => item?.path === cleanPath && item?.type === 'blob')
       : null;
     return entry?.sha;
+  }
+
+  private async putGithubFileViaGitData(owner: string, repo: string, branch: string, publishPath: string, data: ArrayBuffer): Promise<void> {
+    const maxAttempts = 5;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        await this.putGithubFileViaGitDataAttempt(owner, repo, branch, publishPath, data);
+        return;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error || 'GitHub Git Data upload failed.'));
+        if (!this.isGithubContentConflict(error) || attempt >= maxAttempts) {
+          throw lastError;
+        }
+        await this.sleep(Math.min(500 * attempt, 2000));
+      }
+    }
+
+    throw lastError || new Error(`GitHub Git Data upload failed for ${publishPath}`);
+  }
+
+  private async putGithubFileViaGitDataAttempt(owner: string, repo: string, branch: string, publishPath: string, data: ArrayBuffer): Promise<void> {
+    const token = this.settings.githubToken.trim();
+    const repoUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+    const refPath = branch.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+    const headers = {
+      ...this.githubNoCacheHeaders(token),
+      'Content-Type': 'application/json',
+    };
+    const refResponse = await requestUrl({
+      url: `${repoUrl}/git/ref/heads/${refPath}`,
+      method: 'GET',
+      headers,
+      throw: false,
+    });
+    if (refResponse.status < 200 || refResponse.status >= 300) {
+      const message = refResponse.json?.message || refResponse.text || `GitHub ref lookup failed with HTTP ${refResponse.status}`;
+      throw new Error(`GitHub ref lookup failed for ${branch}: ${message}`);
+    }
+    const parentSha = refResponse.json?.object?.sha;
+    if (!parentSha) {
+      throw new Error(`GitHub ref lookup failed for ${branch}: missing commit sha`);
+    }
+    const commitResponse = await requestUrl({
+      url: `${repoUrl}/git/commits/${encodeURIComponent(parentSha)}`,
+      method: 'GET',
+      headers,
+      throw: false,
+    });
+    if (commitResponse.status < 200 || commitResponse.status >= 300) {
+      const message = commitResponse.json?.message || commitResponse.text || `GitHub commit lookup failed with HTTP ${commitResponse.status}`;
+      throw new Error(`GitHub commit lookup failed for ${parentSha}: ${message}`);
+    }
+    const baseTreeSha = commitResponse.json?.tree?.sha;
+    if (!baseTreeSha) {
+      throw new Error(`GitHub commit lookup failed for ${parentSha}: missing tree sha`);
+    }
+    const blobResponse = await requestUrl({
+      url: `${repoUrl}/git/blobs`,
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        content: this.arrayBufferToBase64(data),
+        encoding: 'base64',
+      }),
+      throw: false,
+    });
+    if (blobResponse.status < 200 || blobResponse.status >= 300) {
+      const message = blobResponse.json?.message || blobResponse.text || `GitHub blob create failed with HTTP ${blobResponse.status}`;
+      throw new Error(`GitHub blob create failed for ${publishPath}: ${message}`);
+    }
+    const blobSha = blobResponse.json?.sha;
+    if (!blobSha) {
+      throw new Error(`GitHub blob create failed for ${publishPath}: missing blob sha`);
+    }
+    const treeResponse = await requestUrl({
+      url: `${repoUrl}/git/trees`,
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: [{
+          path: normalizePublishPath(publishPath),
+          mode: '100644',
+          type: 'blob',
+          sha: blobSha,
+        }],
+      }),
+      throw: false,
+    });
+    if (treeResponse.status < 200 || treeResponse.status >= 300) {
+      const message = treeResponse.json?.message || treeResponse.text || `GitHub tree create failed with HTTP ${treeResponse.status}`;
+      throw new Error(`GitHub tree create failed for ${publishPath}: ${message}`);
+    }
+    const treeSha = treeResponse.json?.sha;
+    if (!treeSha) {
+      throw new Error(`GitHub tree create failed for ${publishPath}: missing tree sha`);
+    }
+    const newCommitResponse = await requestUrl({
+      url: `${repoUrl}/git/commits`,
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        message: `Publish MarkTL export ${publishPath}`,
+        tree: treeSha,
+        parents: [parentSha],
+      }),
+      throw: false,
+    });
+    if (newCommitResponse.status < 200 || newCommitResponse.status >= 300) {
+      const message = newCommitResponse.json?.message || newCommitResponse.text || `GitHub commit create failed with HTTP ${newCommitResponse.status}`;
+      throw new Error(`GitHub commit create failed for ${publishPath}: ${message}`);
+    }
+    const newCommitSha = newCommitResponse.json?.sha;
+    if (!newCommitSha) {
+      throw new Error(`GitHub commit create failed for ${publishPath}: missing commit sha`);
+    }
+    const updateRefResponse = await requestUrl({
+      url: `${repoUrl}/git/refs/heads/${refPath}`,
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        sha: newCommitSha,
+        force: false,
+      }),
+      throw: false,
+    });
+    if (updateRefResponse.status < 200 || updateRefResponse.status >= 300) {
+      const message = updateRefResponse.json?.message || updateRefResponse.text || `GitHub ref update failed with HTTP ${updateRefResponse.status}`;
+      throw new Error(`GitHub ref update failed for ${publishPath}: ${message}`);
+    }
   }
 
   private async getGithubTextFromTree(owner: string, repo: string, branch: string, publishPath: string): Promise<string | null> {

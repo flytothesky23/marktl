@@ -122,8 +122,42 @@ test('repairs legacy share index metadata and duplicate entries', () => {
 
   const alpha = repaired.items.find((item) => item.slug === 'alpha');
   assert.equal(alpha.title, '2026-06-16 지수통합선별공장 공사일보');
+  assert.equal(alpha.date, '2026-06-16');
   assert.equal(alpha.sourcePathKey, 'projects/2026-06-16 지수통합선별공장 공사일보.md');
   assert.deepEqual(alpha.tags, ['지수통합선별공장', '회의록', '검토중']);
+});
+
+test('compacts oversized damaged share index metadata', () => {
+  const damaged = 'ÃÂ'.repeat(120000);
+  const repaired = repairShareIndex({
+    updatedAt: '2026-06-22T00:00:00.000Z',
+    items: [{
+      slug: 'jisu-integrated-2026-06-19',
+      shortId: '1d2oul5',
+      title: '2026-06-19 지수통합선별공장 프로젝트관리표 통합노트',
+      url: 'https://example.com/marktl/s/1d2oul5/',
+      canonicalUrl: 'https://example.com/marktl/jisu-integrated-2026-06-19/',
+      sourcePath: damaged,
+      sourcePathKey: damaged,
+      artifactType: damaged,
+      thumbnailUrl: 'data:image/png;base64,' + damaged,
+      imageUrl: 'https://example.com/thumb.png',
+      excerpt: '정상 설명',
+      tags: ['project/지수통합선별공장'],
+      updatedAt: '2026-06-22T00:00:00.000Z',
+    }],
+  });
+
+  const text = JSON.stringify(repaired);
+  assert.ok(Buffer.byteLength(text) < 5000);
+  assert.equal(repaired.items.length, 1);
+  assert.equal(repaired.items[0].sourcePath, undefined);
+  assert.equal(repaired.items[0].sourcePathKey, undefined);
+  assert.equal(repaired.items[0].artifactType, undefined);
+  assert.equal(repaired.items[0].date, '2026-06-19');
+  assert.equal(repaired.items[0].thumbnailUrl, undefined);
+  assert.equal(repaired.items[0].imageUrl, 'https://example.com/thumb.png');
+  assert.deepEqual(repaired.items[0].tags, ['지수통합선별공장']);
 });
 
 test('removes multiple share index items by stable delete keys', () => {

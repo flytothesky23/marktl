@@ -343,16 +343,30 @@ function normalizeShareEntry(entry, now) {
   if (!entry || typeof entry !== 'object') {
     return null;
   }
+  const sourcePath = cleanSharePath(entry.sourcePath, '');
+  const sourcePathKey = buildSourcePathKey(sourcePath || entry.sourcePathKey || '');
+  const date = cleanShareDate([entry.date, entry.title, sourcePath, entry.slug, entry.updatedAt].filter(Boolean).join(' '));
   const normalized = {
     ...entry,
     schemaVersion: 2,
     updatedAt: entry.updatedAt || now || new Date().toISOString(),
+    artifactType: cleanArchiveField(entry.artifactType, 64, ''),
+    date,
+    sourcePath,
+    sourcePathKey,
+    slug: cleanArchiveField(entry.slug, 160, ''),
+    shortId: cleanArchiveField(entry.shortId, 32, ''),
+    url: cleanShareUrl(entry.url),
+    canonicalUrl: cleanShareUrl(entry.canonicalUrl),
+    thumbnailUrl: cleanShareUrl(entry.thumbnailUrl),
+    image: cleanShareUrl(entry.image),
+    imageUrl: cleanShareUrl(entry.imageUrl),
+    coverUrl: cleanShareUrl(entry.coverUrl),
   };
-  normalized.sourcePathKey = normalized.sourcePathKey || buildSourcePathKey(normalized.sourcePath || '');
   normalized.title = recoverShareTitle(normalized);
   normalized.excerpt = cleanArchiveText(normalized.excerpt || '', '');
   normalized.tags = normalizeTags(normalized.tags);
-  return normalized;
+  return compactShareEntry(normalized);
 }
 
 function repairShareItems(items) {
@@ -406,11 +420,16 @@ function normalizeUrlKey(value) {
 }
 
 function buildSourcePathKey(value) {
-  return normalizeIndexKey(value);
+  const key = normalizeIndexKey(value);
+  return key.length > 360 ? '' : key;
 }
 
 function normalizeIndexKey(value) {
-  return repairMojibake(decodeArchiveComponent(value))
+  const repaired = repairMojibake(decodeArchiveComponent(value));
+  if (looksLikeMojibake(repaired)) {
+    return '';
+  }
+  return repaired
     .normalize('NFC')
     .replace(/\\/g, '/')
     .replace(/\s+/g, ' ')
@@ -461,6 +480,73 @@ function normalizeTitleCandidate(value) {
     return '';
   }
   return cleanArchiveText(cleaned, '');
+}
+
+function cleanArchiveField(value, limit = 220, fallback = '') {
+  const cleaned = cleanArchiveText(value, fallback);
+  if (!cleaned) {
+    return fallback;
+  }
+  return cleaned.length > limit ? `${cleaned.slice(0, Math.max(0, limit - 3)).trim()}...` : cleaned;
+}
+
+function cleanSharePath(value, fallback = '') {
+  const repaired = repairMojibake(decodeArchiveComponent(value))
+    .normalize('NFC')
+    .replace(/\\/g, '/')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!repaired || looksLikeMojibake(repaired) || repaired.length > 520) {
+    return fallback;
+  }
+  return repaired;
+}
+
+function cleanShareUrl(value) {
+  const text = repairMojibake(decodeArchiveComponent(value)).trim();
+  if (!text || looksLikeMojibake(text) || text.length > 640 || /^data:/i.test(text)) {
+    return '';
+  }
+  return text;
+}
+
+function compactShareEntry(entry) {
+  const ordered = {};
+  for (const key of [
+    'schemaVersion',
+    'slug',
+    'shortId',
+    'title',
+    'date',
+    'url',
+    'canonicalUrl',
+    'sourcePath',
+    'sourcePathKey',
+    'artifactType',
+    'excerpt',
+    'tags',
+    'thumbnailUrl',
+    'image',
+    'imageUrl',
+    'coverUrl',
+    'updatedAt',
+    'publishedByHost',
+  ]) {
+    const value = entry[key];
+    if (value === undefined || value === null || value === '') {
+      continue;
+    }
+    if (Array.isArray(value) && !value.length) {
+      continue;
+    }
+    ordered[key] = value;
+  }
+  return ordered;
+}
+
+function cleanShareDate(value) {
+  const match = String(value || '').match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  return match ? match[1] : '';
 }
 
 function isGenericShareTitle(value) {

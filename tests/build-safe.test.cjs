@@ -41,6 +41,8 @@ test('checked-in bundle is generated from source and keeps release markers', () 
       'deleteGithubPathRecursive',
       'putGithubFileAttempt',
       'publishShareIndexAttempt',
+      'putGithubFileViaGitData',
+      'isGithubContentsTooLarge',
       'getGithubTreeFileSha',
       'getGithubTextFromTree',
       'githubNoCacheHeaders',
@@ -76,6 +78,8 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(mainSource, /getGithubTreeFileSha/);
   assert.match(mainSource, /getGithubJson\(owner, repo, branch, indexPath, true\)/);
   assert.match(mainSource, /retryConflicts: false/);
+  assert.match(mainSource, /putGithubFileViaGitData/);
+  assert.match(mainSource, /too large to be processed/);
   assert.match(mainSource, /Cache-Control/);
   assert.match(readRepoFile('src/export-modal.ts'), /openPublishedHtmlManager\(selectedProfile\.id\)/);
   assert.match(mainSource, /githubShareHomeTitle === 'MarkTL Shared HTML'/);
