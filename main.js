@@ -1879,8 +1879,8 @@ var require_github_pages = __commonJS({
       const eyebrow = cleanArchiveText(options.eyebrow || "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive", "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive");
       const hasDescriptionOption = Object.prototype.hasOwnProperty.call(options, "description");
       const description = cleanArchiveText(
-        hasDescriptionOption ? options.description : "\uB178\uD2B8, \uD68C\uC758\uB85D, \uBCF4\uACE0\uC11C, \uAE30\uC0AC\uD615 HTML\uC744 \uD5C8\uBE0C\uBCC4\uB85C \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uACF5\uC720 \uC544\uCE74\uC774\uBE0C.",
-        hasDescriptionOption ? "" : "\uACF5\uC720 HTML\uC744 \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uC544\uCE74\uC774\uBE0C."
+        hasDescriptionOption ? options.description : "",
+        ""
       );
       const metaDescription = description || title;
       const descriptionHtml = description ? `      <p class="hero-copy">${escapeHtml(description)}</p>` : "";
@@ -2286,7 +2286,7 @@ var require_share_home_profiles = __commonJS({
     var DEFAULT_SHARE_HOME_PROFILE_ID2 = "jisu-construction";
     var DEFAULT_SHARE_HOME_TITLE = "\uC720\uB124\uCF54 \uC9C0\uC218 \uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 \uD504\uB85C\uC81D\uD2B8";
     var DEFAULT_SHARE_HOME_EYEBROW = "\uD1B5\uD569\uC120\uBCC4\uACF5\uC7A5 Archive";
-    var DEFAULT_SHARE_HOME_DESCRIPTION = "\uB178\uD2B8, \uD68C\uC758\uB85D, \uBCF4\uACE0\uC11C, \uAE30\uC0AC\uD615 HTML\uC744 \uD5C8\uBE0C\uBCC4\uB85C \uBE60\uB974\uAC8C \uCC3E\uACE0 \uC5EC\uB294 MarkTL \uACF5\uC720 \uC544\uCE74\uC774\uBE0C.";
+    var DEFAULT_SHARE_HOME_DESCRIPTION = "";
     function cleanProfileText(value, fallback = "") {
       const text = String(value || "").replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
       return text || fallback;

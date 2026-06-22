@@ -22,6 +22,7 @@ test('seeds a share hub profile from legacy GitHub Pages settings', () => {
   assert.equal(normalized.activeShareHomeProfileId, 'jisu-construction');
   assert.equal(normalized.shareHomeProfiles[0].title, '유네코 지수 통합선별공장 프로젝트');
   assert.equal(normalized.shareHomeProfiles[0].basePath, 'marktl');
+  assert.equal(normalized.shareHomeProfiles[0].description, '');
 });
 
 test('normalizes multiple share hubs and resolves the active hub', () => {

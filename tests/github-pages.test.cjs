@@ -280,3 +280,13 @@ test('omits visible share home description when description is intentionally bla
   assert.doesNotMatch(html, /MarkTL 공유 아카이브/);
   assert.match(html, /<meta name="description" content="유네코 지수 통합선별공장 프로젝트">/);
 });
+
+test('omits visible share home description by default', () => {
+  const html = renderShareIndexHtml({
+    items: [],
+  });
+
+  assert.doesNotMatch(html, /class="hero-copy"/);
+  assert.doesNotMatch(html, /MarkTL 공유 아카이브/);
+  assert.match(html, /<meta name="description" content="유네코 지수 통합선별공장 프로젝트">/);
+});

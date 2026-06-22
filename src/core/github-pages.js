@@ -166,8 +166,8 @@ function renderShareIndexHtml(index, options = {}) {
   const eyebrow = cleanArchiveText(options.eyebrow || '통합선별공장 Archive', '통합선별공장 Archive');
   const hasDescriptionOption = Object.prototype.hasOwnProperty.call(options, 'description');
   const description = cleanArchiveText(
-    hasDescriptionOption ? options.description : '노트, 회의록, 보고서, 기사형 HTML을 허브별로 빠르게 찾고 여는 MarkTL 공유 아카이브.',
-    hasDescriptionOption ? '' : '공유 HTML을 빠르게 찾고 여는 MarkTL 아카이브.',
+    hasDescriptionOption ? options.description : '',
+    '',
   );
   const metaDescription = description || title;
   const descriptionHtml = description ? `      <p class="hero-copy">${escapeHtml(description)}</p>` : '';
