@@ -213,7 +213,8 @@ test('removes multiple share index items by stable delete keys', () => {
 test('renders share home page with published links', () => {
   const html = renderShareIndexHtml({
     items: [
-      { slug: 'alpha', title: '2026-06-11 지수통합선별공장 공사일보 1일차', url: 'https://example.com/alpha/', sourcePath: 'A.md', updatedAt: '2026-06-11', excerpt: 'First note', artifactType: 'faithful-note', tags: ['ai', 'strategy', '공사일보'] },
+      { slug: 'alpha', title: '2026-06-11 지수통합선별공장 공사일보 1일차', url: 'https://example.com/alpha/', sourcePath: 'A.md', updatedAt: '2026-06-11', excerpt: 'First note', artifactType: 'faithful-note', tags: ['ai', 'strategy', '공사일보', '프로젝트관리'] },
+      { slug: 'integrated', title: '2026-06-11 지수통합선별공장 프로젝트관리표 통합노트', url: 'https://example.com/integrated/', sourcePath: 'B.md', updatedAt: '2026-06-11', excerpt: 'Integrated note', artifactType: 'faithful-note', tags: ['통합노트', '프로젝트관리'] },
       { slug: 'broken', title: 'dell-aiìë²', url: 'https://example.com/broken/', sourcePath: 'Bad.md', updatedAt: '2026-01-02', excerpt: '<iframe src="https://example.com"', artifactType: 'HTML artifact', tags: ['- newsletter', 'newsletter', 'Yozm IT - 바이브 코딩의 진짜 시작은 이제부터다', 'project/지수통합선별공장', 'obsidian/project-management', 'dataviewjs', 'function/ops', 'doc/meeting', 'state/검토중'] },
       { slug: 'mojibake', title: 'ë°ì´ë¸ ì½ë©ì ì¢ë§', url: 'https://example.com/mojibake/', sourcePath: 'B.md', updatedAt: '2026-01-03', excerpt: 'ð§ Voice Briefing', artifactType: 'research-report', tags: ['ë°ì´ë¸ì½ë©'] },
       { slug: 'callout', title: 'MCP와 API', url: 'https://example.com/callout/', sourcePath: 'C.md', updatedAt: '2026-01-04', excerpt: '> [!summary] 한 줄 결론 API는 소프트웨어 기능으로 들어가는 문이고, MCP는 외부 도구를 연결합니다.', artifactType: 'note', tags: ['업무자동화'] },
@@ -233,6 +234,14 @@ test('renders share home page with published links', () => {
   assert.match(html, /padding:9px 10px 12px/);
   assert.match(html, /minmax\(190px,222px\)/);
   assert.match(html, /width:min\(222px,100%\);height:154px;min-height:154px/);
+  assert.match(html, /function calendarTypes/);
+  assert.match(html, /function calendarClass/);
+  assert.match(html, /type-mixed/);
+  assert.match(html, /\.cal-dot\.daily/);
+  assert.match(html, /\.cal-dot\.integrated/);
+  assert.match(html, /'cal-dot '\+calendarToken\(type\)/);
+  assert.match(html, /calendarLabel\(types,dayDocs\.length\)/);
+  assert.match(html, /복합/);
   assert.match(html, /class="tile"/);
   assert.match(html, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(html, /grid-template-columns:minmax\(142px,44%\) minmax\(0,1fr\);height:96px;min-height:0/);

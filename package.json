@@ -1,6 +1,6 @@
 {
   "name": "marktl",
-  "version": "0.19.7",
+  "version": "0.19.8",
   "description": "Flytothesky fork of MarkTL for exporting Markdown notes to templated HTML previews.",
   "main": "main.js",
   "scripts": {

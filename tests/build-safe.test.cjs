@@ -33,6 +33,9 @@ test('checked-in bundle is generated from source and keeps release markers', () 
       'height:180px',
       'padding:9px 10px 12px',
       'renderShareIndexHtml',
+      'function calendarTypes',
+      '.cal-dot.integrated',
+      'type-mixed',
       'Manage published MarkTL HTML',
       'Repair all MarkTL share hub indexes',
       'replacePublishedShareThumbnail',
@@ -99,6 +102,10 @@ test('source tree owns publish management and archive renderer hooks', () => {
   assert.match(rendererSource, /repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(rendererSource, /minmax\(190px,222px\)/);
   assert.match(rendererSource, /height:180px;min-height:180px/);
+  assert.match(rendererSource, /function calendarTypes/);
+  assert.match(rendererSource, /function calendarClass/);
+  assert.match(rendererSource, /type-mixed/);
+  assert.match(rendererSource, /\.cal-dot\.integrated/);
   assert.match(rendererSource, /minmax\(142px,44%\) minmax\(0,1fr\);height:96px;min-height:0/);
   assert.doesNotMatch(rendererSource, /object-fit:contain/);
   assert.doesNotMatch(rendererSource, /tile\[data-type="공사일보"]/);
