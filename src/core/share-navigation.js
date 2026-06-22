@@ -7,12 +7,55 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function ensureBlankFavicon(html) {
+  if (/<link\b(?=[^>]*\brel\s*=\s*["'][^"']*\b(?:shortcut\s+)?icon\b[^"']*["'])/i.test(html)) {
+    return html;
+  }
+  const link = '<link rel="icon" href="data:,">';
+  if (/<head\b[^>]*>/i.test(html)) {
+    return html.replace(/<head\b([^>]*)>/i, `<head$1>\n${link}`);
+  }
+  if (/<\/head>/i.test(html)) {
+    return html.replace(/<\/head>/i, `${link}\n</head>`);
+  }
+  return `${link}\n${html}`;
+}
+
+function preferLightTheme(html) {
+  let value = String(html || '');
+  value = value.replace(/<html\b([^>]*)>/i, (match, attrs) => {
+    if (/\bdata-theme\s*=/i.test(attrs)) {
+      return `<html${attrs.replace(/\sdata-theme\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/i, ' data-theme="light"')}>`;
+    }
+    return `<html${attrs} data-theme="light">`;
+  });
+  value = value.replace(/(<button\b[^>]*\bid\s*=\s*["']themeToggle["'][^>]*>)([^<]*)(<\/button>)/i, '$1다크 전환$3');
+  return ensureBlankFavicon(value);
+}
+
+function injectStyle(html, style) {
+  if (/data-marktl-share-home-style\b/i.test(html)) {
+    return html;
+  }
+  if (/<\/head>/i.test(html)) {
+    return html.replace(/<\/head>/i, `${style}\n</head>`);
+  }
+  return `${style}\n${html}`;
+}
+
+function injectIntoHeroActions(html, link) {
+  return html.replace(
+    /(<(?:div|nav|section)\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bhero-actions\b[^"']*["'])[^>]*>)([\s\S]*?)(<\/(?:div|nav|section)>)/i,
+    (_match, open, body, close) => `${open}${body}\n          ${link}${close}`,
+  );
+}
+
 function injectShareHomeLink(html, options = {}) {
   const homeUrl = String(options.homeUrl || '').trim();
+  let value = preferLightTheme(html);
   if (!homeUrl || !/^https?:\/\//i.test(homeUrl)) {
-    return String(html || '');
+    return value;
   }
-  let value = String(html || '');
   if (/data-marktl-share-home\b/i.test(value)) {
     return value;
   }
@@ -21,10 +64,8 @@ function injectShareHomeLink(html, options = {}) {
   const safeUrl = escapeHtml(homeUrl);
   const style = `
 <style data-marktl-share-home-style>
-  .marktl-share-home-button {
-    position: fixed;
-    top: max(14px, env(safe-area-inset-top));
-    right: max(14px, env(safe-area-inset-right));
+  .marktl-share-home-button,
+  .marktl-share-home-inline {
     z-index: 2147483000;
     display: inline-flex;
     align-items: center;
@@ -40,9 +81,20 @@ function injectShareHomeLink(html, options = {}) {
     backdrop-filter: blur(14px);
     font: 700 13px/1.1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     text-decoration: none;
+    white-space: nowrap;
   }
-  .marktl-share-home-button:hover { transform: translateY(-1px); box-shadow: 0 16px 38px rgba(15, 23, 42, .2); }
-  .marktl-share-home-button:focus-visible { outline: 3px solid rgba(59, 130, 246, .45); outline-offset: 3px; }
+  .marktl-share-home-button {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    right: max(14px, env(safe-area-inset-right));
+  }
+  .marktl-share-home-inline {
+    position: relative;
+  }
+  .marktl-share-home-button:hover,
+  .marktl-share-home-inline:hover { transform: translateY(-1px); box-shadow: 0 16px 38px rgba(15, 23, 42, .2); }
+  .marktl-share-home-button:focus-visible,
+  .marktl-share-home-inline:focus-visible { outline: 3px solid rgba(59, 130, 246, .45); outline-offset: 3px; }
   @media (prefers-color-scheme: dark) {
     .marktl-share-home-button {
       background: rgba(15, 23, 42, .86);
@@ -50,19 +102,19 @@ function injectShareHomeLink(html, options = {}) {
       border-color: rgba(148, 163, 184, .36);
     }
   }
-  @media print { .marktl-share-home-button { display: none !important; } }
+  @media print { .marktl-share-home-button, .marktl-share-home-inline { display: none !important; } }
 </style>`;
-  const link = `<a class="marktl-share-home-button" data-marktl-share-home href="${safeUrl}" rel="home">← ${label}</a>`;
+  const inlineLink = `<a class="btn marktl-share-home-inline" data-marktl-share-home href="${safeUrl}" rel="home">${label}</a>`;
+  const fixedLink = `<a class="marktl-share-home-button" data-marktl-share-home href="${safeUrl}" rel="home">${label}</a>`;
 
-  if (/<\/head>/i.test(value)) {
-    value = value.replace(/<\/head>/i, `${style}\n</head>`);
-  } else {
-    value = `${style}\n${value}`;
+  value = injectStyle(value, style);
+  if (/\bclass\s*=\s*["'][^"']*\bhero-actions\b/i.test(value)) {
+    return injectIntoHeroActions(value, inlineLink);
   }
   if (/<body\b([^>]*)>/i.test(value)) {
-    return value.replace(/<body\b([^>]*)>/i, `<body$1>\n${link}`);
+    return value.replace(/<body\b([^>]*)>/i, `<body$1>\n${fixedLink}`);
   }
-  return `${link}\n${value}`;
+  return `${fixedLink}\n${value}`;
 }
 
 module.exports = {

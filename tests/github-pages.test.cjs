@@ -249,6 +249,7 @@ test('renders share home page with custom hub identity', () => {
   assert.match(html, /Research Hub/);
   assert.match(html, /관심 분야별 HTML을 모아두는 공개 허브입니다\./);
   assert.match(html, /<meta name="description" content="관심 분야별 HTML을 모아두는 공개 허브입니다\.">/);
+  assert.match(html, /<link rel="icon" href="data:,">/);
 });
 
 test('renders a share home date sort toggle', () => {
